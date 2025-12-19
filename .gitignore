@@ -1,0 +1,41 @@
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+addons/
+# Go
+go.sum
+vendor/
+data/sql
+# Frontend
+node_modules/
+frontend/dist/
+frontend/build/
+*.log
+addons/
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.agent/
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+build/
+
+# Data (large files)
+data/icons/*.png
+data/items/*.csv
+
+# Temporary files
+*.tmp
+*.bak
+twow/
+ShellLab.code-workspace
+data/shellloot.db.backup
