@@ -1,0 +1,365 @@
+export namespace database {
+	
+	export class Category {
+	    id: number;
+	    key: string;
+	    name: string;
+	    parentId?: number;
+	    type: string;
+	    sortOrder: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Category(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.key = source["key"];
+	        this.name = source["name"];
+	        this.parentId = source["parentId"];
+	        this.type = source["type"];
+	        this.sortOrder = source["sortOrder"];
+	    }
+	}
+	export class Item {
+	    entry: number;
+	    name: string;
+	    description?: string;
+	    quality: number;
+	    itemLevel: number;
+	    requiredLevel: number;
+	    class: number;
+	    subClass: number;
+	    inventoryType: number;
+	    iconPath?: string;
+	    sellPrice?: number;
+	    bonding?: number;
+	    maxDurability?: number;
+	    statType1?: number;
+	    statValue1?: number;
+	    statType2?: number;
+	    statValue2?: number;
+	    statType3?: number;
+	    statValue3?: number;
+	    statType4?: number;
+	    statValue4?: number;
+	    statType5?: number;
+	    statValue5?: number;
+	    statType6?: number;
+	    statValue6?: number;
+	    statType7?: number;
+	    statValue7?: number;
+	    statType8?: number;
+	    statValue8?: number;
+	    statType9?: number;
+	    statValue9?: number;
+	    statType10?: number;
+	    statValue10?: number;
+	    delay?: number;
+	    dmgMin1?: number;
+	    dmgMax1?: number;
+	    dmgType1?: number;
+	    armor?: number;
+	    holyRes?: number;
+	    fireRes?: number;
+	    natureRes?: number;
+	    frostRes?: number;
+	    shadowRes?: number;
+	    arcaneRes?: number;
+	    spellId1?: number;
+	    spellTrigger1?: number;
+	    spellId2?: number;
+	    spellTrigger2?: number;
+	    spellId3?: number;
+	    spellTrigger3?: number;
+	    setId?: number;
+	    dropRate?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Item(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entry = source["entry"];
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.quality = source["quality"];
+	        this.itemLevel = source["itemLevel"];
+	        this.requiredLevel = source["requiredLevel"];
+	        this.class = source["class"];
+	        this.subClass = source["subClass"];
+	        this.inventoryType = source["inventoryType"];
+	        this.iconPath = source["iconPath"];
+	        this.sellPrice = source["sellPrice"];
+	        this.bonding = source["bonding"];
+	        this.maxDurability = source["maxDurability"];
+	        this.statType1 = source["statType1"];
+	        this.statValue1 = source["statValue1"];
+	        this.statType2 = source["statType2"];
+	        this.statValue2 = source["statValue2"];
+	        this.statType3 = source["statType3"];
+	        this.statValue3 = source["statValue3"];
+	        this.statType4 = source["statType4"];
+	        this.statValue4 = source["statValue4"];
+	        this.statType5 = source["statType5"];
+	        this.statValue5 = source["statValue5"];
+	        this.statType6 = source["statType6"];
+	        this.statValue6 = source["statValue6"];
+	        this.statType7 = source["statType7"];
+	        this.statValue7 = source["statValue7"];
+	        this.statType8 = source["statType8"];
+	        this.statValue8 = source["statValue8"];
+	        this.statType9 = source["statType9"];
+	        this.statValue9 = source["statValue9"];
+	        this.statType10 = source["statType10"];
+	        this.statValue10 = source["statValue10"];
+	        this.delay = source["delay"];
+	        this.dmgMin1 = source["dmgMin1"];
+	        this.dmgMax1 = source["dmgMax1"];
+	        this.dmgType1 = source["dmgType1"];
+	        this.armor = source["armor"];
+	        this.holyRes = source["holyRes"];
+	        this.fireRes = source["fireRes"];
+	        this.natureRes = source["natureRes"];
+	        this.frostRes = source["frostRes"];
+	        this.shadowRes = source["shadowRes"];
+	        this.arcaneRes = source["arcaneRes"];
+	        this.spellId1 = source["spellId1"];
+	        this.spellTrigger1 = source["spellTrigger1"];
+	        this.spellId2 = source["spellId2"];
+	        this.spellTrigger2 = source["spellTrigger2"];
+	        this.spellId3 = source["spellId3"];
+	        this.spellTrigger3 = source["spellTrigger3"];
+	        this.setId = source["setId"];
+	        this.dropRate = source["dropRate"];
+	    }
+	}
+	export class ItemSubClass {
+	    class: number;
+	    subClass: number;
+	    name: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ItemSubClass(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.class = source["class"];
+	        this.subClass = source["subClass"];
+	        this.name = source["name"];
+	    }
+	}
+	export class ItemClass {
+	    class: number;
+	    name: string;
+	    subClasses?: ItemSubClass[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ItemClass(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.class = source["class"];
+	        this.name = source["name"];
+	        this.subClasses = this.convertValues(source["subClasses"], ItemSubClass);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class SearchFilter {
+	    query: string;
+	    quality?: number[];
+	    class?: number[];
+	    subClass?: number[];
+	    inventoryType?: number[];
+	    minLevel?: number;
+	    maxLevel?: number;
+	    minReqLevel?: number;
+	    maxReqLevel?: number;
+	    limit: number;
+	    offset: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SearchFilter(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.query = source["query"];
+	        this.quality = source["quality"];
+	        this.class = source["class"];
+	        this.subClass = source["subClass"];
+	        this.inventoryType = source["inventoryType"];
+	        this.minLevel = source["minLevel"];
+	        this.maxLevel = source["maxLevel"];
+	        this.minReqLevel = source["minReqLevel"];
+	        this.maxReqLevel = source["maxReqLevel"];
+	        this.limit = source["limit"];
+	        this.offset = source["offset"];
+	    }
+	}
+	export class SearchResult {
+	    items: Item[];
+	    totalCount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SearchResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.items = this.convertValues(source["items"], Item);
+	        this.totalCount = source["totalCount"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class TooltipData {
+	    entry: number;
+	    name: string;
+	    quality: number;
+	    qualityName: string;
+	    itemLevel: number;
+	    requiredLevel: number;
+	    binding?: string;
+	    slotName?: string;
+	    typeName?: string;
+	    armor?: number;
+	    stats?: string[];
+	    damageText?: string;
+	    speedText?: string;
+	    dps?: string;
+	    resistances?: string[];
+	    spellEffects?: string[];
+	    description?: string;
+	    sellPrice?: string;
+	    setName?: string;
+	    durability?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new TooltipData(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entry = source["entry"];
+	        this.name = source["name"];
+	        this.quality = source["quality"];
+	        this.qualityName = source["qualityName"];
+	        this.itemLevel = source["itemLevel"];
+	        this.requiredLevel = source["requiredLevel"];
+	        this.binding = source["binding"];
+	        this.slotName = source["slotName"];
+	        this.typeName = source["typeName"];
+	        this.armor = source["armor"];
+	        this.stats = source["stats"];
+	        this.damageText = source["damageText"];
+	        this.speedText = source["speedText"];
+	        this.dps = source["dps"];
+	        this.resistances = source["resistances"];
+	        this.spellEffects = source["spellEffects"];
+	        this.description = source["description"];
+	        this.sellPrice = source["sellPrice"];
+	        this.setName = source["setName"];
+	        this.durability = source["durability"];
+	    }
+	}
+
+}
+
+export namespace main {
+	
+	export class LegacyLootItem {
+	    itemId: number;
+	    itemName: string;
+	    iconName: string;
+	    quality: number;
+	    dropChance?: string;
+	    slotType?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new LegacyLootItem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.itemId = source["itemId"];
+	        this.itemName = source["itemName"];
+	        this.iconName = source["iconName"];
+	        this.quality = source["quality"];
+	        this.dropChance = source["dropChance"];
+	        this.slotType = source["slotType"];
+	    }
+	}
+	export class LegacyBossLoot {
+	    bossName: string;
+	    items: LegacyLootItem[];
+	
+	    static createFrom(source: any = {}) {
+	        return new LegacyBossLoot(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bossName = source["bossName"];
+	        this.items = this.convertValues(source["items"], LegacyLootItem);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
