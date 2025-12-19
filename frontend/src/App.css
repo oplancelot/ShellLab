@@ -500,28 +500,6 @@ a:hover {
   padding: 10px;
 }
 
-/* Tooltip Arrow */
-.item-tooltip::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 8px solid transparent;
-  border-top-color: #4a3c6a;
-}
-
-.item-tooltip::before {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: -1px;
-  border: 7px solid transparent;
-  border-top-color: rgba(24, 18, 36, 0.98);
-  z-index: 1;
-}
 
 /* ===== Loading & Status ===== */
 .loading {

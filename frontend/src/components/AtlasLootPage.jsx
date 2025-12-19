@@ -51,10 +51,6 @@ function AtlasLootPage() {
         const containerRect = lootContainer ? lootContainer.getBoundingClientRect() : { left: 0, right: window.innerWidth, top: 0, bottom: window.innerHeight }
         const itemRect = e.currentTarget.getBoundingClientRect()
         
-        // Item center position
-        const itemCenterX = itemRect.left + itemRect.width / 2
-        const itemCenterY = itemRect.top + itemRect.height / 2
-        
         // Tooltip dimensions
         const tooltipWidth = 320
         const tooltipHeight = 400
@@ -84,37 +80,7 @@ function AtlasLootPage() {
             top = containerRect.top + 10
         }
         
-        // Calculate arrow position - which edge and where on that edge
-        let arrowEdge = 'top' // top, bottom, left, right
-        let arrowOffset = 50 // percentage along the edge
-        
-        // Determine which edge the arrow should be on based on item center relative to tooltip
-        const tooltipCenterX = left + tooltipWidth / 2
-        const tooltipCenterY = top + tooltipHeight / 2
-        
-        // If item center is above tooltip
-        if (itemCenterY < top) {
-            arrowEdge = 'top'
-            // Calculate horizontal position on top edge
-            arrowOffset = Math.max(10, Math.min(90, ((itemCenterX - left) / tooltipWidth) * 100))
-        }
-        // If item center is below tooltip
-        else if (itemCenterY > top + tooltipHeight) {
-            arrowEdge = 'bottom'
-            arrowOffset = Math.max(10, Math.min(90, ((itemCenterX - left) / tooltipWidth) * 100))
-        }
-        // If item center is to the left of tooltip
-        else if (itemCenterX < left) {
-            arrowEdge = 'left'
-            arrowOffset = Math.max(10, Math.min(90, ((itemCenterY - top) / tooltipHeight) * 100))
-        }
-        // If item center is to the right of tooltip
-        else if (itemCenterX > left + tooltipWidth) {
-            arrowEdge = 'right'
-            arrowOffset = Math.max(10, Math.min(90, ((itemCenterY - top) / tooltipHeight) * 100))
-        }
-        
-        setTooltipPos({ top, left, arrowEdge, arrowOffset })
+        setTooltipPos({ top, left })
         setHoveredItem(item.itemId)
     }
 
@@ -242,64 +208,9 @@ function AtlasLootPage() {
             zIndex: 10000,
         }
         
-        // Calculate arrow style based on edge and offset
-        const getArrowStyle = () => {
-            const { arrowEdge, arrowOffset } = tooltipPos
-            const base = {
-                position: 'absolute',
-                width: 0,
-                height: 0,
-                borderStyle: 'solid',
-            }
-            
-            switch (arrowEdge) {
-                case 'top':
-                    return {
-                        ...base,
-                        top: -8,
-                        left: `${arrowOffset}%`,
-                        transform: 'translateX(-50%)',
-                        borderWidth: '0 8px 8px 8px',
-                        borderColor: 'transparent transparent #4a3c6a transparent',
-                    }
-                case 'bottom':
-                    return {
-                        ...base,
-                        bottom: -8,
-                        left: `${arrowOffset}%`,
-                        transform: 'translateX(-50%)',
-                        borderWidth: '8px 8px 0 8px',
-                        borderColor: '#4a3c6a transparent transparent transparent',
-                    }
-                case 'left':
-                    return {
-                        ...base,
-                        left: -8,
-                        top: `${arrowOffset}%`,
-                        transform: 'translateY(-50%)',
-                        borderWidth: '8px 8px 8px 0',
-                        borderColor: 'transparent #4a3c6a transparent transparent',
-                    }
-                case 'right':
-                    return {
-                        ...base,
-                        right: -8,
-                        top: `${arrowOffset}%`,
-                        transform: 'translateY(-50%)',
-                        borderWidth: '8px 0 8px 8px',
-                        borderColor: 'transparent transparent transparent #4a3c6a',
-                    }
-                default:
-                    return { display: 'none' }
-            }
-        }
-        
-        const arrowStyle = getArrowStyle()
-        
         if (!tooltip) {
             return (
                 <div className="item-tooltip" style={tooltipStyle}>
-                    <div className="tooltip-arrow" style={arrowStyle}></div>
                     <div className="tooltip-name" style={{color: getQualityColor(item.quality)}}>
                         {item.itemName || 'Unknown Item'}
                     </div>
@@ -310,12 +221,11 @@ function AtlasLootPage() {
         
         return (
             <div 
-                className="item-tooltip" 
+                className="item-tooltip"
                 style={tooltipStyle}
                 onMouseEnter={() => setHoveredItem(item.itemId)}
                 onMouseLeave={() => setHoveredItem(null)}
             >
-                <div className="tooltip-arrow" style={arrowStyle}></div>
                 <div className="tooltip-name" style={{color: getQualityColor(tooltip.quality)}}>
                     {tooltip.name}
                 </div>
