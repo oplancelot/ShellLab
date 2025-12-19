@@ -140,6 +140,14 @@ function DatabasePage() {
                     {tooltip.typeName && <span className="tooltip-type">{tooltip.typeName}</span>}
                 </div>
                 
+                {tooltip.classes && (
+                    <div className="tooltip-classes">{tooltip.classes}</div>
+                )}
+                
+                {tooltip.races && (
+                    <div className="tooltip-races">{tooltip.races}</div>
+                )}
+                
                 {tooltip.damageText && (
                     <div className="tooltip-damage">
                         <span>{tooltip.damageText}</span>

@@ -9,7 +9,7 @@ addons/
 # Go
 go.sum
 vendor/
-data/sql
+data/sql/
 # Frontend
 node_modules/
 frontend/dist/
@@ -39,3 +39,5 @@ data/items/*.csv
 twow/
 ShellLab.code-workspace
 data/shellloot.db.backup
+data/shelllab.db-shm
+data/shelllab.db-wal

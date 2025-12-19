@@ -62,10 +62,16 @@ func (r *AtlasLootRepository) GetModules(categoryName string) ([]string, error) 
 	return modules, nil
 }
 
-// GetTables returns table names for a module
-func (r *AtlasLootRepository) GetTables(categoryName, moduleName string) ([]string, error) {
+// AtlasTable represents a loot table reference
+type AtlasTable struct {
+	Key         string `json:"key"`
+	DisplayName string `json:"displayName"`
+}
+
+// GetTables returns table references for a module
+func (r *AtlasLootRepository) GetTables(categoryName, moduleName string) ([]AtlasTable, error) {
 	rows, err := r.db.DB().Query(`
-		SELECT t.display_name
+		SELECT t.table_key, t.display_name
 		FROM atlasloot_tables t
 		JOIN atlasloot_modules m ON t.module_id = m.id
 		JOIN atlasloot_categories c ON m.category_id = c.id
@@ -77,13 +83,13 @@ func (r *AtlasLootRepository) GetTables(categoryName, moduleName string) ([]stri
 	}
 	defer rows.Close()
 
-	var tables []string
+	var tables []AtlasTable
 	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
+		var t AtlasTable
+		if err := rows.Scan(&t.Key, &t.DisplayName); err != nil {
 			return nil, err
 		}
-		tables = append(tables, name)
+		tables = append(tables, t)
 	}
 	return tables, nil
 }
@@ -98,7 +104,7 @@ type LootEntry struct {
 }
 
 // GetLootItems returns items for a specific table
-func (r *AtlasLootRepository) GetLootItems(categoryName, moduleName, tableName string) ([]*LootEntry, error) {
+func (r *AtlasLootRepository) GetLootItems(categoryName, moduleName, tableKey string) ([]*LootEntry, error) {
 	rows, err := r.db.DB().Query(`
 		SELECT 
 			al.item_id,
@@ -112,9 +118,9 @@ func (r *AtlasLootRepository) GetLootItems(categoryName, moduleName, tableName s
 		JOIN atlasloot_modules m ON t.module_id = m.id
 		JOIN atlasloot_categories c ON m.category_id = c.id
 		JOIN items i ON al.item_id = i.entry
-		WHERE c.display_name = ? AND m.display_name = ? AND t.display_name = ?
+		WHERE c.display_name = ? AND m.display_name = ? AND t.table_key = ?
 		ORDER BY al.sort_order, i.name
-	`, categoryName, moduleName, tableName)
+	`, categoryName, moduleName, tableKey)
 
 	if err != nil {
 		return nil, err
@@ -207,9 +213,12 @@ func (r *AtlasLootRepository) ClearAllData() error {
 	}
 
 	for _, table := range tables {
-		if _, err := tx.Exec(fmt.Sprintf("DELETE FROM %s", table)); err != nil {
+		res, err := tx.Exec(fmt.Sprintf("DELETE FROM %s", table))
+		if err != nil {
 			return err
 		}
+		count, _ := res.RowsAffected()
+		fmt.Printf("  Deleted %d rows from %s\n", count, table)
 	}
 
 	return tx.Commit()

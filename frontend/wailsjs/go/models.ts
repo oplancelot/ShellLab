@@ -1,5 +1,19 @@
 export namespace database {
 	
+	export class AtlasTable {
+	    key: string;
+	    displayName: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AtlasTable(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.key = source["key"];
+	        this.displayName = source["displayName"];
+	    }
+	}
 	export class Category {
 	    id: number;
 	    key: string;
@@ -36,6 +50,8 @@ export namespace database {
 	    sellPrice?: number;
 	    bonding?: number;
 	    maxDurability?: number;
+	    allowableClass: number;
+	    allowableRace: number;
 	    statType1?: number;
 	    statValue1?: number;
 	    statType2?: number;
@@ -95,6 +111,8 @@ export namespace database {
 	        this.sellPrice = source["sellPrice"];
 	        this.bonding = source["bonding"];
 	        this.maxDurability = source["maxDurability"];
+	        this.allowableClass = source["allowableClass"];
+	        this.allowableRace = source["allowableRace"];
 	        this.statType1 = source["statType1"];
 	        this.statValue1 = source["statValue1"];
 	        this.statType2 = source["statType2"];
@@ -186,6 +204,22 @@ export namespace database {
 		    return a;
 		}
 	}
+	export class ItemSetInfo {
+	    name: string;
+	    items: string[];
+	    bonuses: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ItemSetInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.items = source["items"];
+	        this.bonuses = source["bonuses"];
+	    }
+	}
 	
 	export class SearchFilter {
 	    query: string;
@@ -272,6 +306,9 @@ export namespace database {
 	    sellPrice?: string;
 	    setName?: string;
 	    durability?: string;
+	    classes?: string;
+	    races?: string;
+	    setInfo?: ItemSetInfo;
 	
 	    static createFrom(source: any = {}) {
 	        return new TooltipData(source);
@@ -299,7 +336,28 @@ export namespace database {
 	        this.sellPrice = source["sellPrice"];
 	        this.setName = source["setName"];
 	        this.durability = source["durability"];
+	        this.classes = source["classes"];
+	        this.races = source["races"];
+	        this.setInfo = this.convertValues(source["setInfo"], ItemSetInfo);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }

@@ -46,6 +46,10 @@ func main() {
 		extractFromSQL(sqlPath, jsonPath)
 	case "import-items":
 		importItems(dbPath, jsonPath, updateJsonPath)
+	case "import-spells":
+		importSpells(dbPath, "data/sql/aowow.sql")
+	case "import-itemsets":
+		importItemSets(dbPath, "data/sql/aowow.sql")
 	case "stats":
 		showStats(dbPath)
 	default:
@@ -201,50 +205,60 @@ func parseInsertValues(valueStr string, items map[string]map[string]interface{})
 			"requiredSkill":     parseInt(values[16]),
 			"requiredSkillRank": parseInt(values[17]),
 			"requiredSpell":     parseInt(values[18]),
-			"stackable":         parseInt(values[20]),
-			"bonding":           parseInt(values[27]),
-			"maxDurability":     parseInt(values[29]),
-			"statType1":         parseInt(values[22]),
-			"statValue1":        parseInt(values[23]),
-			"statType2":         parseInt(values[24]),
-			"statValue2":        parseInt(values[25]),
-			"statType3":         parseInt(values[26]),
-			"statValue3":        parseInt(values[27]),
-			"statType4":         parseInt(values[28]),
-			"statValue4":        parseInt(values[29]),
-			"statType5":         parseInt(values[30]),
-			"statValue5":        parseInt(values[31]),
-			"statType6":         parseInt(values[32]),
-			"statValue6":        parseInt(values[33]),
-			"statType7":         parseInt(values[34]),
-			"statValue7":        parseInt(values[35]),
-			"statType8":         parseInt(values[36]),
-			"statValue8":        parseInt(values[37]),
-			"statType9":         parseInt(values[38]),
-			"statValue9":        parseInt(values[39]),
-			"statType10":        parseInt(values[40]),
-			"statValue10":       parseInt(values[41]),
-			"delay":             parseInt(values[42]),
-			"dmgMin1":           parseFloat(values[44]),
-			"dmgMax1":           parseFloat(values[45]),
-			"dmgType1":          parseInt(values[46]),
-			"dmgMin2":           parseFloat(values[47]),
-			"dmgMax2":           parseFloat(values[48]),
-			"dmgType2":          parseInt(values[49]),
-			"armor":             parseInt(values[50]),
-			"holyRes":           parseInt(values[51]),
-			"fireRes":           parseInt(values[52]),
-			"natureRes":         parseInt(values[53]),
-			"frostRes":          parseInt(values[54]),
-			"shadowRes":         parseInt(values[55]),
-			"arcaneRes":         parseInt(values[56]),
-			"spellId1":          parseInt(values[57]),
-			"spellTrigger1":     parseInt(values[58]),
-			"spellId2":          parseInt(values[60]),
-			"spellTrigger2":     parseInt(values[61]),
-			"spellId3":          parseInt(values[63]),
-			"spellTrigger3":     parseInt(values[64]),
-			"setId":             parseInt(values[75]),
+			"stackable":         parseInt(values[24]),
+
+			// Stats (26-45)
+			"statType1":   parseInt(values[26]),
+			"statValue1":  parseInt(values[27]),
+			"statType2":   parseInt(values[28]),
+			"statValue2":  parseInt(values[29]),
+			"statType3":   parseInt(values[30]),
+			"statValue3":  parseInt(values[31]),
+			"statType4":   parseInt(values[32]),
+			"statValue4":  parseInt(values[33]),
+			"statType5":   parseInt(values[34]),
+			"statValue5":  parseInt(values[35]),
+			"statType6":   parseInt(values[36]),
+			"statValue6":  parseInt(values[37]),
+			"statType7":   parseInt(values[38]),
+			"statValue7":  parseInt(values[39]),
+			"statType8":   parseInt(values[40]),
+			"statValue8":  parseInt(values[41]),
+			"statType9":   parseInt(values[42]),
+			"statValue9":  parseInt(values[43]),
+			"statType10":  parseInt(values[44]),
+			"statValue10": parseInt(values[45]),
+
+			// Damage & Speed
+			"delay":    parseInt(values[46]),
+			"dmgMin1":  parseFloat(values[49]),
+			"dmgMax1":  parseFloat(values[50]),
+			"dmgType1": parseInt(values[51]),
+			"dmgMin2":  parseFloat(values[52]),
+			"dmgMax2":  parseFloat(values[53]),
+			"dmgType2": parseInt(values[54]),
+
+			// Defenses
+			"armor":     parseInt(values[65]),
+			"holyRes":   parseInt(values[66]),
+			"fireRes":   parseInt(values[67]),
+			"natureRes": parseInt(values[68]),
+			"frostRes":  parseInt(values[69]),
+			"shadowRes": parseInt(values[70]),
+			"arcaneRes": parseInt(values[71]),
+
+			// Spells
+			"spellId1":      parseInt(values[72]),
+			"spellTrigger1": parseInt(values[73]),
+			"spellId2":      parseInt(values[79]),
+			"spellTrigger2": parseInt(values[80]),
+			"spellId3":      parseInt(values[86]),
+			"spellTrigger3": parseInt(values[87]),
+
+			// Other
+			"bonding":       parseInt(values[107]),
+			"setId":         parseInt(values[116]),
+			"maxDurability": parseInt(values[117]),
 		}
 
 		items[entry] = item
@@ -412,12 +426,283 @@ func showStats(dbPath string) {
 	itemCount, _ := itemRepo.GetItemCount()
 	catCount, _ := catRepo.GetCategoryCount()
 
+	// Count spells
+	var spellCount int
+	db.DB().QueryRow("SELECT COUNT(*) FROM spells").Scan(&spellCount)
+
 	fmt.Println("=== Database Statistics ===")
 	fmt.Printf("Items:      %d\n", itemCount)
 	fmt.Printf("Categories: %d\n", catCount)
+	fmt.Printf("Spells:     %d\n", spellCount)
 
 	// Show file size
 	if info, err := os.Stat(dbPath); err == nil {
 		fmt.Printf("DB Size:    %.2f MB\n", float64(info.Size())/(1024*1024))
 	}
+}
+
+func importSpells(dbPath, sqlPath string) {
+	fmt.Println("===== Importing Spells from aowow.sql =====")
+
+	db, err := database.NewSQLiteDB(dbPath)
+	if err != nil {
+		fmt.Printf("ERROR: Failed to open database: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	// Create spells table
+	_, err = db.DB().Exec(`
+		DROP TABLE IF EXISTS spells;
+		CREATE TABLE IF NOT EXISTS spells (
+			id INTEGER PRIMARY KEY,
+			name TEXT,
+			description TEXT,
+			icon_id INTEGER DEFAULT 0,
+			base_points1 INTEGER DEFAULT 0,
+			base_points2 INTEGER DEFAULT 0,
+			base_points3 INTEGER DEFAULT 0
+		);
+		CREATE INDEX IF NOT EXISTS idx_spells_name ON spells(name);
+	`)
+	if err != nil {
+		fmt.Printf("ERROR: Failed to create table: %v\n", err)
+		os.Exit(1)
+	}
+
+	file, err := os.Open(sqlPath)
+	if err != nil {
+		fmt.Printf("ERROR: Failed to open SQL file: %v\n", err)
+		os.Exit(1)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 1024*1024), 100*1024*1024)
+
+	insertRegex := regexp.MustCompile(`^INSERT INTO \x60?aowow_spell\x60?`)
+	rowRegex := regexp.MustCompile(`\(([^)]*(?:\([^)]*\)[^)]*)*)\)`)
+
+	tx, _ := db.DB().Begin()
+	stmt, _ := tx.Prepare("INSERT OR REPLACE INTO spells (id, name, description, base_points1, base_points2, base_points3) VALUES (?, ?, ?, ?, ?, ?)")
+	defer stmt.Close()
+
+	lineCount := 0
+	spellCount := 0
+	inInsert := false
+	var valueBuffer strings.Builder
+
+	fmt.Println("Parsing SQL file...")
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		lineCount++
+
+		if insertRegex.MatchString(line) {
+			inInsert = true
+			if idx := strings.Index(line, "VALUES"); idx != -1 {
+				valueBuffer.WriteString(line[idx+6:])
+			}
+			continue
+		}
+
+		if inInsert {
+			valueBuffer.WriteString(" ")
+			valueBuffer.WriteString(line)
+
+			if strings.HasSuffix(strings.TrimSpace(line), ";") {
+				// Parse rows
+				rows := rowRegex.FindAllStringSubmatch(valueBuffer.String(), -1)
+				for _, row := range rows {
+					if len(row) < 2 {
+						continue
+					}
+
+					values := parseSQLRow(row[1])
+					// We expect at least ~70 columns.
+					// Strategy: ID is first. Description is 3rd string from end.
+					// Name is 1st string from end of strings (4th from end total?).
+					// Let's rely on finding string fields.
+					// Based on sample: ..., 'Name', 'Rank', 'Desc', 'Tooltip', 0, 0, 0, 1, 1, 1)
+					// So 6 ints at end.
+					// Then Tooltip, Desc, Rank, Name.
+
+					if len(values) < 20 {
+						continue
+					}
+
+					id := parseInt(values[0])
+
+					// Find the string block at the end
+					count := len(values)
+					// Assuming last 6 are numbers, so index count-7 is ToolTip
+					// count-8 is Description
+					// count-9 is Rank
+					// count-10 is Name
+
+					// Verify they are strings (quoted in SQL, but cleaned by parseSQLRow)
+					// We can just grab them by index logic if layout is consistent.
+					// aowow_spell has fixed columns.
+
+					nameIdx := count - 10
+					descIdx := count - 8
+
+					if nameIdx > 0 && descIdx > 0 && descIdx < count {
+						name := cleanStr(values[nameIdx])
+						desc := cleanStr(values[descIdx])
+
+						bp1 := 0
+						bp2 := 0
+						bp3 := 0
+						if len(values) > 40 {
+							bp1 = parseInt(values[37])
+							bp2 = parseInt(values[38])
+							bp3 = parseInt(values[39])
+						}
+
+						stmt.Exec(id, name, desc, bp1, bp2, bp3)
+						spellCount++
+					}
+				}
+
+				valueBuffer.Reset()
+				inInsert = false
+			}
+		}
+
+		if lineCount%50000 == 0 {
+			fmt.Printf("Processed %d lines, imported %d spells...\r", lineCount, spellCount)
+		}
+	}
+
+	tx.Commit()
+	fmt.Printf("\n✓ Imported %d spells\n", spellCount)
+}
+
+func importItemSets(dbPath, sqlPath string) {
+	fmt.Println("===== Importing Item Sets from aowow.sql =====")
+
+	db, err := database.NewSQLiteDB(dbPath)
+	if err != nil {
+		fmt.Printf("ERROR: Failed to open database: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	// Create item_sets table
+	_, err = db.DB().Exec(`
+		DROP TABLE IF EXISTS item_sets;
+		CREATE TABLE IF NOT EXISTS item_sets (
+			id INTEGER PRIMARY KEY,
+			name TEXT,
+			item_ids TEXT, -- JSON array
+			bonuses TEXT   -- JSON array of {threshold, spell_id}
+		);
+	`)
+	if err != nil {
+		fmt.Printf("ERROR: Failed to create table: %v\n", err)
+		os.Exit(1)
+	}
+
+	file, err := os.Open(sqlPath)
+	if err != nil {
+		fmt.Printf("ERROR: Failed to open SQL file: %v\n", err)
+		os.Exit(1)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 1024*1024), 100*1024*1024)
+
+	insertRegex := regexp.MustCompile(`^INSERT INTO \x60?aowow_itemset\x60?`)
+	rowRegex := regexp.MustCompile(`\(([^)]*(?:\([^)]*\)[^)]*)*)\)`)
+
+	tx, _ := db.DB().Begin()
+	stmt, _ := tx.Prepare("INSERT OR REPLACE INTO item_sets (id, name, item_ids, bonuses) VALUES (?, ?, ?, ?)")
+	defer stmt.Close()
+
+	lineCount := 0
+	setCount := 0
+	inInsert := false
+	var valueBuffer strings.Builder
+
+	fmt.Println("Parsing SQL file...")
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		lineCount++
+
+		if insertRegex.MatchString(line) {
+			inInsert = true
+			if idx := strings.Index(line, "VALUES"); idx != -1 {
+				valueBuffer.WriteString(line[idx+6:])
+			}
+			continue
+		}
+
+		if inInsert {
+			valueBuffer.WriteString(" ")
+			valueBuffer.WriteString(line)
+
+			if strings.HasSuffix(strings.TrimSpace(line), ";") {
+				rows := rowRegex.FindAllStringSubmatch(valueBuffer.String(), -1)
+				for _, row := range rows {
+					if len(row) < 2 {
+						continue
+					}
+
+					values := parseSQLRow(row[1])
+					// Structure: id, name, item1..10, spell1..8, bonus1..8, skillID, skillLevel
+					// Total columns: 1 + 1 + 10 + 8 + 8 + 1 + 1 = 30
+					if len(values) < 28 {
+						continue
+					}
+
+					id := parseInt(values[0])
+					name := cleanStr(values[1])
+
+					// Collect Items
+					var itemIDs []int
+					for i := 2; i <= 11; i++ {
+						iid := parseInt(values[i])
+						if iid > 0 {
+							itemIDs = append(itemIDs, iid)
+						}
+					}
+
+					// Collect Bonuses
+					// Spells are at 12..19 (8 spells)
+					// Bonuses are at 20..27 (8 thresholds)
+					type SetBonus struct {
+						Threshold int `json:"threshold"`
+						SpellID   int `json:"spellId"`
+					}
+					var bonuses []SetBonus
+					for i := 0; i < 8; i++ {
+						spellID := parseInt(values[12+i])
+						threshold := parseInt(values[20+i])
+						if spellID > 0 && threshold > 0 {
+							bonuses = append(bonuses, SetBonus{Threshold: threshold, SpellID: spellID})
+						}
+					}
+
+					itemsJson, _ := json.Marshal(itemIDs)
+					bonusesJson, _ := json.Marshal(bonuses)
+
+					stmt.Exec(id, name, string(itemsJson), string(bonusesJson))
+					setCount++
+				}
+
+				valueBuffer.Reset()
+				inInsert = false
+			}
+		}
+
+		if lineCount%50000 == 0 {
+			fmt.Printf("Processed %d lines, imported %d sets...\r", lineCount, setCount)
+		}
+	}
+
+	tx.Commit()
+	fmt.Printf("\n✓ Imported %d item sets\n", setCount)
 }

@@ -21,7 +21,7 @@ export function GetLoot(arg1:string,arg2:string,arg3:string):Promise<main.Legacy
 
 export function GetRootCategories():Promise<Array<database.Category>>;
 
-export function GetTables(arg1:string,arg2:string):Promise<Array<string>>;
+export function GetTables(arg1:string,arg2:string):Promise<Array<database.AtlasTable>>;
 
 export function GetTooltipData(arg1:number):Promise<database.TooltipData>;
 

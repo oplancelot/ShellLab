@@ -98,10 +98,20 @@ func main() {
 				return
 			}
 
-			// Download
-			url := fmt.Sprintf("https://wow.zamimg.com/images/wow/icons/medium/%s.jpg", strings.ToLower(name))
-
+			// Download (Try Turtle WoW first)
+			url := fmt.Sprintf("https://database.turtle-wow.org/images/icons/medium/%s.jpg", strings.ToLower(name))
 			resp, err := http.Get(url)
+
+			// If Turtle WoW fails or returns 404, try Zamimg
+			if err != nil || resp.StatusCode != 200 {
+				if resp != nil {
+					resp.Body.Close()
+				}
+				// Fallback to Zamimg
+				url = fmt.Sprintf("https://wow.zamimg.com/images/wow/icons/medium/%s.jpg", strings.ToLower(name))
+				resp, err = http.Get(url)
+			}
+
 			if err != nil {
 				mu.Lock()
 				failed++

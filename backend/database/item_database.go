@@ -85,28 +85,52 @@ type ItemTemplate struct {
 	Material      int `json:"material"`
 }
 
+// SetBonus represents a set bonus
+type SetBonus struct {
+	Threshold int `json:"threshold"`
+	SpellID   int `json:"spellId"`
+}
+
+// ItemSet represents an item set
+type ItemSet struct {
+	ID      int        `json:"id"`
+	Name    string     `json:"name"`
+	ItemIDs []int      `json:"itemIds"`
+	Bonuses []SetBonus `json:"bonuses"`
+}
+
+// ItemSetInfo represents set info for tooltip
+type ItemSetInfo struct {
+	Name    string   `json:"name"`
+	Items   []string `json:"items"`
+	Bonuses []string `json:"bonuses"`
+}
+
 // TooltipData represents data for rendering a tooltip
 type TooltipData struct {
-	Entry         int      `json:"entry"`
-	Name          string   `json:"name"`
-	Quality       int      `json:"quality"`
-	QualityName   string   `json:"qualityName"`
-	ItemLevel     int      `json:"itemLevel"`
-	RequiredLevel int      `json:"requiredLevel"`
-	Binding       string   `json:"binding,omitempty"`
-	SlotName      string   `json:"slotName,omitempty"`
-	TypeName      string   `json:"typeName,omitempty"`
-	Armor         int      `json:"armor,omitempty"`
-	Stats         []string `json:"stats,omitempty"`
-	DamageText    string   `json:"damageText,omitempty"`
-	SpeedText     string   `json:"speedText,omitempty"`
-	DPS           string   `json:"dps,omitempty"`
-	Resistances   []string `json:"resistances,omitempty"`
-	SpellEffects  []string `json:"spellEffects,omitempty"`
-	Description   string   `json:"description,omitempty"`
-	SellPrice     string   `json:"sellPrice,omitempty"`
-	SetName       string   `json:"setName,omitempty"`
-	Durability    string   `json:"durability,omitempty"`
+	Entry         int          `json:"entry"`
+	Name          string       `json:"name"`
+	Quality       int          `json:"quality"`
+	QualityName   string       `json:"qualityName"`
+	ItemLevel     int          `json:"itemLevel"`
+	RequiredLevel int          `json:"requiredLevel"`
+	Binding       string       `json:"binding,omitempty"`
+	SlotName      string       `json:"slotName,omitempty"`
+	TypeName      string       `json:"typeName,omitempty"`
+	Armor         int          `json:"armor,omitempty"`
+	Stats         []string     `json:"stats,omitempty"`
+	DamageText    string       `json:"damageText,omitempty"`
+	SpeedText     string       `json:"speedText,omitempty"`
+	DPS           string       `json:"dps,omitempty"`
+	Resistances   []string     `json:"resistances,omitempty"`
+	SpellEffects  []string     `json:"spellEffects,omitempty"`
+	Description   string       `json:"description,omitempty"`
+	SellPrice     string       `json:"sellPrice,omitempty"`
+	SetName       string       `json:"setName,omitempty"`
+	Durability    string       `json:"durability,omitempty"`
+	Classes       string       `json:"classes,omitempty"`
+	Races         string       `json:"races,omitempty"`
+	SetInfo       *ItemSetInfo `json:"setInfo,omitempty"`
 }
 
 // ItemDef represents a single item's metadata (simplified for AtlasLoot)
@@ -445,11 +469,6 @@ func getTypeName(class, subclass int) string {
 
 func parseStats(item *ItemTemplate) []string {
 	var stats []string
-	statNames := map[int]string{
-		0: "Mana", 1: "Health", 3: "Agility", 4: "Strength",
-		5: "Intellect", 6: "Spirit", 7: "Stamina",
-	}
-
 	statPairs := [][2]int{
 		{item.StatType1, item.StatValue1},
 		{item.StatType2, item.StatValue2},
@@ -465,7 +484,7 @@ func parseStats(item *ItemTemplate) []string {
 
 	for _, pair := range statPairs {
 		if pair[1] != 0 {
-			if name, ok := statNames[pair[0]]; ok {
+			if name := getStatName(pair[0]); name != "" {
 				prefix := "+"
 				if pair[1] < 0 {
 					prefix = ""
@@ -523,6 +542,22 @@ func parseSpellEffects(item *ItemTemplate) []string {
 	}
 
 	return effects
+}
+
+func getStatName(statType int) string {
+	statNames := map[int]string{
+		0: "Mana", 1: "Health", 3: "Agility", 4: "Strength",
+		5: "Intellect", 6: "Spirit", 7: "Stamina",
+		12: "Defense Rating", 13: "Dodge Rating", 14: "Parry Rating",
+		15: "Block Rating", 16: "Hit Melee Rating", 17: "Hit Ranged Rating",
+		18: "Hit Spell Rating", 19: "Crit Melee Rating", 20: "Crit Ranged Rating",
+		21: "Crit Spell Rating", 31: "Hit Rating", 32: "Crit Rating",
+		35: "Resilience Rating", 36: "Haste Rating", 38: "Attack Power",
+		39: "Ranged Attack Power", 41: "Spell Healing", 42: "Spell Damage",
+		43: "Mana Regeneration", 44: "Armor Penetration Rating", 45: "Spell Power",
+		46: "Health Regeneration", 47: "Spell Penetration", 48: "Block Value",
+	}
+	return statNames[statType]
 }
 
 func formatMoney(copper int) string {

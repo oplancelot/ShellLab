@@ -212,26 +212,29 @@ func (a *App) GetInstances(categoryName string) []string {
 }
 
 // GetTables returns tables/bosses for a module (new API for 3-tier structure)
-func (a *App) GetTables(categoryName, moduleName string) []string {
+func (a *App) GetTables(categoryName, moduleName string) []database.AtlasTable {
 	fmt.Printf("[API] GetTables called for: %s / %s\n", categoryName, moduleName)
 	tables, err := a.atlasLootRepo.GetTables(categoryName, moduleName)
 	if err != nil {
 		fmt.Printf("[API] Error: %v\n", err)
-		return []string{}
+		return []database.AtlasTable{}
 	}
 	return tables
 }
 
 // GetLoot returns loot for a specific table (legacy API)
-func (a *App) GetLoot(categoryName, instanceName, bossName string) *LegacyBossLoot {
-	fmt.Printf("[API] GetLoot called: %s / %s / %s\n", categoryName, instanceName, bossName)
+func (a *App) GetLoot(categoryName, instanceName, bossKey string) *LegacyBossLoot {
+	fmt.Printf("[API] GetLoot called: %s / %s / %s\n", categoryName, instanceName, bossKey)
 
 	// Query atlasloot tables directly
-	lootEntries, err := a.atlasLootRepo.GetLootItems(categoryName, instanceName, bossName)
+	lootEntries, err := a.atlasLootRepo.GetLootItems(categoryName, instanceName, bossKey)
 	if err != nil {
 		fmt.Printf("[API] Error getting loot: %v\n", err)
-		return &LegacyBossLoot{BossName: bossName, Items: []LegacyLootItem{}}
+		return &LegacyBossLoot{BossName: bossKey, Items: []LegacyLootItem{}}
 	}
+
+	// Figure out boss display name for return (using bossKey as fallback)
+	bossName := bossKey
 
 	// Convert to legacy format
 	var lootItems []LegacyLootItem

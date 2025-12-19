@@ -155,12 +155,40 @@ func getDisplayName(tableName string, displayNames map[string]string) string {
 		displayName = cleanTableName(tableName)
 	}
 
-	// Add wing suffix for Dire Maul to distinguish East/North/West
-	if strings.HasPrefix(tableName, "DME") {
+	// Class names list
+	classes := []string{"Druid", "Hunter", "Mage", "Paladin", "Priest", "Rogue", "Shaman", "Warlock", "Warrior"}
+
+	// Special handling for class sets to make them more descriptive
+	if strings.Contains(displayName, "Class Set") || strings.Contains(displayName, "Tier") {
+		for _, class := range classes {
+			if strings.Contains(tableName, class) {
+				if !strings.Contains(displayName, class) {
+					displayName = class + " " + displayName
+				}
+				break
+			}
+		}
+	} else {
+		// General class name addition if missing
+		for _, class := range classes {
+			if strings.Contains(tableName, class) && !strings.Contains(displayName, class) {
+				displayName = class + " " + displayName
+				break
+			}
+		}
+	}
+
+	// Handle Compact suffix if it survived cleaning
+	if strings.HasSuffix(displayName, " C") {
+		displayName = strings.TrimSuffix(displayName, " C") + " (Compact)"
+	}
+
+	// Add wing suffix for Dire Maul
+	if strings.HasPrefix(tableName, "DME") && !strings.Contains(displayName, "East") {
 		displayName = displayName + " (East)"
-	} else if strings.HasPrefix(tableName, "DMN") {
+	} else if strings.HasPrefix(tableName, "DMN") && !strings.Contains(displayName, "North") {
 		displayName = displayName + " (North)"
-	} else if strings.HasPrefix(tableName, "DMW") {
+	} else if strings.HasPrefix(tableName, "DMW") && !strings.Contains(displayName, "West") {
 		displayName = displayName + " (West)"
 	}
 
@@ -248,7 +276,19 @@ func parseLuaFile(path string) (map[string]*LootTable, error) {
 		}
 	}
 
-	return tables, nil
+	// Filter out "Compact" tables if the main table exists
+	filtered := make(map[string]*LootTable)
+	for name, table := range tables {
+		if strings.HasSuffix(name, "C") {
+			baseName := strings.TrimSuffix(name, "C")
+			if _, exists := tables[baseName]; exists {
+				continue // Skip compact version if main version exists
+			}
+		}
+		filtered[name] = table
+	}
+
+	return filtered, nil
 }
 
 func groupTablesByInstance(tables map[string]*LootTable) map[string][]string {
@@ -363,28 +403,19 @@ func extractDisplayNameFromEntry(content string, alRegex *regexp.Regexp) string 
 		return ""
 	}
 
-	if len(alMatches) == 1 {
-		return alMatches[0][1]
-	}
-
-	// For multiple AL[] references, determine which one is the display name
-	// by checking if it's followed by suffix indicators
-	for i, match := range alMatches {
+	// Join multiple AL[] references for more descriptive names (especially for Sets)
+	var parts []string
+	for _, match := range alMatches {
 		text := match[1]
-		// Skip common suffixes
-		if text == "Rare" || text == "Summon" || text == "Quest" {
+		// Skip common non-descriptive suffixes
+		if text == "Rare" || text == "Summon" || text == "Quest" || text == "Enchants" {
 			continue
 		}
-		// Skip if this looks like a category/instance name and there's a next one
-		if i < len(alMatches)-1 {
-			nextText := alMatches[i+1][1]
-			if nextText != "Rare" && nextText != "Summon" && nextText != "Quest" {
-				// Both are content, take the second (likely boss name)
-				return nextText
-			}
-		}
-		// This is the display name
-		return text
+		parts = append(parts, text)
+	}
+
+	if len(parts) > 0 {
+		return strings.Join(parts, " - ")
 	}
 
 	return ""
@@ -399,11 +430,14 @@ func cleanTableName(name string) string {
 		}
 	}
 
-	// Insert spaces before capital letters
+	// Insert spaces before capital letters, but skip if previous was capital or it is the first
 	result := ""
 	for i, r := range name {
 		if i > 0 && r >= 'A' && r <= 'Z' {
-			result += " "
+			prev := rune(name[i-1])
+			if !(prev >= 'A' && prev <= 'Z') {
+				result += " "
+			}
 		}
 		result += string(r)
 	}

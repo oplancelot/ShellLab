@@ -68,7 +68,7 @@ ShellLab/
 │   └── extract_atlasloot/     # Loot table extractor
 ├── data/                       # Data files
 │   ├── sql/                   # Source SQL dumps
-│   ├── shellloot.db           # Main database
+│   ├── shelllab.db            # Main database
 │   ├── item_template.json     # Base item data
 │   └── item_template_update.json  # Custom modifications
 ├── addons/AtlasLoot/          # Original addon source

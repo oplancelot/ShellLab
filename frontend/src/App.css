@@ -320,10 +320,6 @@ a:hover {
 
 /* ===== Tooltip (WoW Style) ===== */
 .item-tooltip {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 12px);
-  transform: translateX(-50%);
   background: linear-gradient(
     180deg,
     rgba(16, 12, 28, 0.98) 0%,
@@ -336,43 +332,12 @@ a:hover {
   max-width: 320px;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.9), 0 4px 20px rgba(0, 0, 0, 0.8),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  z-index: 10000;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.15s;
-  pointer-events: none;
+  pointer-events: auto;
+  user-select: text;
   font-family: "Friz Quadrata", Georgia, serif;
   font-size: 12px;
   line-height: 1.4;
   text-align: left;
-}
-
-/* Tooltip shows below for items near top of container */
-.loot-item.tooltip-below .item-tooltip {
-  bottom: auto;
-  top: calc(100% + 12px);
-}
-
-/* Arrow points up for bottom tooltips */
-.loot-item.tooltip-below .item-tooltip::after {
-  top: auto;
-  bottom: 100%;
-  border-top-color: transparent;
-  border-bottom-color: #4a3c6a;
-}
-
-.loot-item.tooltip-below .item-tooltip::before {
-  top: auto;
-  bottom: 100%;
-  margin-top: 0;
-  margin-bottom: -1px;
-  border-top-color: transparent;
-  border-bottom-color: rgba(24, 18, 36, 0.98);
-}
-
-.loot-item:hover .item-tooltip {
-  opacity: 1;
-  visibility: visible;
 }
 
 /* Tooltip Name */
@@ -381,6 +346,12 @@ a:hover {
   font-weight: bold;
   margin-bottom: 4px;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.tooltip-setname {
+  color: #ffd100;
+  font-size: 12px;
+  margin-bottom: 4px;
 }
 
 /* Item Level */
@@ -402,6 +373,12 @@ a:hover {
   justify-content: space-between;
   color: var(--text-primary);
   margin: 4px 0;
+}
+
+.tooltip-classes,
+.tooltip-races {
+  color: var(--text-primary);
+  margin: 2px 0;
 }
 
 /* Damage row */
@@ -469,6 +446,33 @@ a:hover {
 .tooltip-reqlevel {
   color: var(--text-primary);
   margin: 4px 0;
+}
+
+/* Set Info */
+.tooltip-set-info {
+  margin-top: 10px;
+}
+
+.tooltip-set-name {
+  color: var(--gold);
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.tooltip-set-item {
+  color: var(--q0);
+  margin-left: 10px;
+  font-size: 11px;
+}
+
+.tooltip-set-spacer {
+  height: 8px;
+}
+
+.tooltip-set-bonus {
+  color: var(--q2);
+  margin: 2px 0;
+  font-size: 11px;
 }
 
 /* Description (yellow/gold) */
