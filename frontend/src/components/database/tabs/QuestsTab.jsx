@@ -1,37 +1,59 @@
 import { useState, useEffect, useMemo } from 'react'
 import { FilterInput } from '../../FilterInput'
-import { GetQuestCategories, GetQuestsByCategory, filterItems } from '../../../utils/databaseApi'
+import { GetQuestCategoryGroups, GetQuestCategoriesByGroup, GetQuestsByEnhancedCategory, filterItems } from '../../../utils/databaseApi'
 
 function QuestsTab({ onNavigate }) {
-    const [questCategories, setQuestCategories] = useState([])
-    const [selectedQuestCategory, setSelectedQuestCategory] = useState(null)
+    const [groups, setGroups] = useState([])
+    const [categories, setCategories] = useState([])
     const [quests, setQuests] = useState([])
+    const [selectedGroup, setSelectedGroup] = useState(null)
+    const [selectedCategory, setSelectedCategory] = useState(null)
     const [loading, setLoading] = useState(false)
 
-    // Independent filter states
+    // Independent filter states for each column
+    const [groupFilter, setGroupFilter] = useState('')
     const [categoryFilter, setCategoryFilter] = useState('')
     const [questFilter, setQuestFilter] = useState('')
 
-    // Load quest categories on mount
+    // Load groups on mount
     useEffect(() => {
         setLoading(true)
-        GetQuestCategories()
-            .then(cats => {
-                setQuestCategories(cats || [])
+        GetQuestCategoryGroups()
+            .then(res => {
+                setGroups(res || [])
                 setLoading(false)
             })
             .catch(err => {
-                console.error("Failed to load quest categories:", err)
+                console.error("Failed to load quest groups:", err)
                 setLoading(false)
             })
     }, [])
 
-    // Load quests when a category is selected
+    // Load categories when group is selected
     useEffect(() => {
-        if (selectedQuestCategory !== null) {
+        if (selectedGroup) {
+            setLoading(true)
+            setCategories([])
+            setQuests([])
+            setSelectedCategory(null)
+            GetQuestCategoriesByGroup(selectedGroup.id)
+                .then(res => {
+                    setCategories(res || [])
+                    setLoading(false)
+                })
+                .catch(err => {
+                    console.error("Failed to load categories:", err)
+                    setLoading(false)
+                })
+        }
+    }, [selectedGroup])
+
+    // Load quests when category is selected
+    useEffect(() => {
+        if (selectedCategory) {
             setLoading(true)
             setQuests([])
-            GetQuestsByCategory(selectedQuestCategory.id)
+            GetQuestsByEnhancedCategory(selectedCategory.id)
                 .then(res => {
                     setQuests(res || [])
                     setLoading(false)
@@ -41,50 +63,71 @@ function QuestsTab({ onNavigate }) {
                     setLoading(false)
                 })
         }
-    }, [selectedQuestCategory])
+    }, [selectedCategory])
 
     // Filtered lists
-    const filteredQuestCategories = useMemo(() => filterItems(questCategories, categoryFilter), [questCategories, categoryFilter])
+    const filteredGroups = useMemo(() => filterItems(groups, groupFilter), [groups, groupFilter])
+    const filteredCategories = useMemo(() => filterItems(categories, categoryFilter), [categories, categoryFilter])
     const filteredQuests = useMemo(() => filterItems(quests, questFilter), [quests, questFilter])
 
     return (
         <>
-            {/* Quest Categories List */}
-            <aside className="sidebar" style={{ gridColumn: '1 / 2' }}>
+            {/* 1. Groups */}
+            <aside className="sidebar">
                 <FilterInput 
-                    placeholder="Filter categories..." 
-                    onFilterChange={setCategoryFilter}
+                    placeholder="Filter groups..." 
+                    onFilterChange={setGroupFilter}
                     style={{ width: '100%', marginBottom: '8px' }}
                 />
-                <h2>Categories ({filteredQuestCategories.length})</h2>
+                <h2>Quest Types ({filteredGroups.length})</h2>
                 <div className="list">
-                    {loading && questCategories.length === 0 && (
-                        <div className="loading">Loading categories...</div>
-                    )}
-                    {filteredQuestCategories.map(cat => (
-                        <div
-                            key={cat.id}
-                            className={`item ${selectedQuestCategory?.id === cat.id ? 'active' : ''}`}
+                    {filteredGroups.map(group => (
+                        <button
+                            key={group.id}
+                            className={selectedGroup?.id === group.id ? 'active' : ''}
                             onClick={() => {
-                                setSelectedQuestCategory(cat)
+                                setSelectedGroup(group)
+                                setCategoryFilter('')
                                 setQuestFilter('')
                             }}
                         >
-                            {cat.name} ({cat.count})
-                        </div>
+                            {group.name}
+                        </button>
                     ))}
                 </div>
             </aside>
 
-            {/* Quest List */}
-            <section className="loot" style={{ gridColumn: '2 / -1' }}>
+            {/* 2. Categories */}
+            <section className="instances">
+                <FilterInput 
+                    placeholder="Filter zones/categories..." 
+                    onFilterChange={setCategoryFilter}
+                    style={{ width: '100%', marginBottom: '8px' }}
+                />
+                <h2>{selectedGroup ? `${selectedGroup.name} (${filteredCategories.length})` : 'Select Type'}</h2>
+                <div className="list">
+                    {filteredCategories.map(cat => (
+                        <div
+                            key={cat.id}
+                            className={`item ${selectedCategory?.id === cat.id ? 'active' : ''}`}
+                            onClick={() => {
+                                setSelectedCategory(cat)
+                                setQuestFilter('')
+                            }}
+                        >
+                            {cat.name} ({cat.questCount})
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* 3. Quests List */}
+            <section className="loot" style={{ gridColumn: '3 / -1' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                    <h2 style={{ margin: 0 }}>
-                        {selectedQuestCategory 
-                            ? `${selectedQuestCategory.name} (${filteredQuests.length})` 
-                            : 'Select a Category'}
+                    <h2 style={{ margin: 0, color: '#FFD100' }}>
+                        {selectedCategory ? `${selectedCategory.name} (${filteredQuests.length})` : 'Select Category'}
                     </h2>
-                    {selectedQuestCategory && (
+                    {quests.length > 0 && (
                         <FilterInput 
                             placeholder="Filter quests..." 
                             onFilterChange={setQuestFilter}
@@ -92,54 +135,50 @@ function QuestsTab({ onNavigate }) {
                         />
                     )}
                 </div>
+
+                {loading && selectedCategory && <div className="loading">Loading quests...</div>}
                 
-                {loading && selectedQuestCategory && (
-                    <div className="loading">Loading quests...</div>
+                {!selectedCategory && (
+                    <p className="placeholder">Select a category to browse quests.</p>
                 )}
-                
-                {quests.length > 0 && (
-                    <div className="loot-items">
-                        {filteredQuests.map(quest => (
-                            <div 
-                                key={quest.entry}
-                                className="loot-item"
-                                onClick={() => onNavigate('quest', quest.entry)}
-                                style={{ borderLeft: '3px solid #FFD100', cursor: 'pointer' }}
-                            >
-                                <div className="item-icon-placeholder" style={{ 
-                                    background: '#FFD100',
-                                    color: '#000',
-                                    fontWeight: 'bold',
-                                    fontSize: '11px'
-                                }}>
-                                    {quest.questLevel > 0 ? quest.questLevel : '-'}
-                                </div>
-                                
-                                <span className="item-id">[{quest.entry}]</span>
-                                
-                                <span style={{ color: '#FFD100', fontWeight: 'bold' }}>
-                                    {quest.title}
-                                </span>
 
-                                <span style={{ marginLeft: '10px', fontSize: '11px', color: '#888' }}>
-                                    {quest.minLevel > 0 && `Requires Lvl ${quest.minLevel}`}
-                                </span>
-
-                                <span style={{ marginLeft: 'auto', color: '#fff', fontSize: '11px' }}>
-                                    {quest.type === 1 && <span style={{color: '#1eff00', marginRight: '5px'}}>[Group]</span>}
-                                    {quest.type === 41 && <span style={{color: '#ff8000', marginRight: '5px'}}>[PvP]</span>}
-                                    {quest.type === 62 && <span style={{color: '#a335ee', marginRight: '5px'}}>[Raid]</span>}
-                                    {quest.type === 81 && <span style={{color: '#a335ee', marginRight: '5px'}}>[Dungeon]</span>}
-                                    XP: {quest.rewardXp > 0 ? quest.rewardXp : '-'}
-                                </span>
+                <div className="loot-items">
+                    {filteredQuests.map(quest => (
+                        <div 
+                            key={quest.entry}
+                            className="loot-item"
+                            onClick={() => onNavigate('quest', quest.entry)}
+                            style={{ borderLeft: '3px solid #FFD100', cursor: 'pointer' }}
+                        >
+                            <div className="item-icon-placeholder" style={{ 
+                                background: '#FFD100',
+                                color: '#000',
+                                fontWeight: 'bold',
+                                fontSize: '11px'
+                            }}>
+                                {quest.questLevel > 0 ? quest.questLevel : '-'}
                             </div>
-                        ))}
-                    </div>
-                )}
-                
-                {!selectedQuestCategory && (
-                    <p className="placeholder">Select a category to browse Quests</p>
-                )}
+                            
+                            <span className="item-id">[{quest.entry}]</span>
+                            
+                            <span style={{ color: '#FFD100', fontWeight: 'bold' }}>
+                                {quest.title}
+                            </span>
+
+                            <span style={{ marginLeft: '10px', fontSize: '11px', color: '#888' }}>
+                                {quest.minLevel > 0 && `Requires Lvl ${quest.minLevel}`}
+                            </span>
+
+                            <span style={{ marginLeft: 'auto', color: '#fff', fontSize: '11px' }}>
+                                {quest.type === 1 && <span style={{color: '#1eff00', marginRight: '5px'}}>[Group]</span>}
+                                {quest.type === 41 && <span style={{color: '#ff8000', marginRight: '5px'}}>[PvP]</span>}
+                                {quest.type === 62 && <span style={{color: '#a335ee', marginRight: '5px'}}>[Raid]</span>}
+                                {quest.type === 81 && <span style={{color: '#a335ee', marginRight: '5px'}}>[Dungeon]</span>}
+                                XP: {quest.rewardXp > 0 ? quest.rewardXp : '-'}
+                            </span>
+                        </div>
+                    ))}
+                </div>
             </section>
         </>
     )

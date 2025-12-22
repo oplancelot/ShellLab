@@ -1,146 +1,145 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { FilterInput } from '../../FilterInput'
-import { SearchSpells } from '../../../utils/databaseApi'
-
-// Alphabet for quick navigation
-const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+import { GetSpellSkillCategories, GetSpellSkillsByCategory, GetSpellsBySkill, filterItems } from '../../../utils/databaseApi'
 
 function SpellsTab() {
+    const [categories, setCategories] = useState([])
+    const [skills, setSkills] = useState([])
     const [spells, setSpells] = useState([])
+    const [selectedCategory, setSelectedCategory] = useState(null)
+    const [selectedSkill, setSelectedSkill] = useState(null)
     const [loading, setLoading] = useState(false)
-    const [searchQuery, setSearchQuery] = useState('')
-    const [selectedLetter, setSelectedLetter] = useState(null)
+
+    // Independent filter states for each column
+    const [categoryFilter, setCategoryFilter] = useState('')
+    const [skillFilter, setSkillFilter] = useState('')
     const [spellFilter, setSpellFilter] = useState('')
 
-    const handleSearch = () => {
-        if (!searchQuery.trim()) return
+    // Load categories on mount
+    useEffect(() => {
         setLoading(true)
-        setSelectedLetter(null)
-        SearchSpells(searchQuery)
-            .then(res => {
-                setSpells(res || [])
+        GetSpellSkillCategories()
+            .then(cats => {
+                setCategories(cats || [])
                 setLoading(false)
             })
             .catch(err => {
-                console.error("Failed to search spells:", err)
+                console.error("Failed to load spell categories:", err)
                 setLoading(false)
             })
-    }
+    }, [])
 
-    const handleLetterClick = (letter) => {
-        setSelectedLetter(letter)
-        setLoading(true)
-        setSearchQuery('')
-        // Search for spells starting with this letter
-        SearchSpells(letter)
-            .then(res => {
-                // Filter to only those starting with the letter
-                const filtered = (res || []).filter(s => 
-                    s.name && s.name.toUpperCase().startsWith(letter)
-                )
-                setSpells(filtered)
-                setLoading(false)
-            })
-            .catch(err => {
-                console.error("Failed to browse spells:", err)
-                setLoading(false)
-            })
-    }
+    // Load skills when category is selected
+    useEffect(() => {
+        if (selectedCategory) {
+            setLoading(true)
+            setSkills([])
+            setSpells([])
+            setSelectedSkill(null)
+            GetSpellSkillsByCategory(selectedCategory.id)
+                .then(res => {
+                    setSkills(res || [])
+                    setLoading(false)
+                })
+                .catch(err => {
+                    console.error("Failed to load skills:", err)
+                    setLoading(false)
+                })
+        }
+    }, [selectedCategory])
 
-    // Filter spells by current filter text
-    const filteredSpells = useMemo(() => {
-        if (!spellFilter.trim()) return spells
-        const filter = spellFilter.toLowerCase()
-        return spells.filter(spell => 
-            (spell.name && spell.name.toLowerCase().includes(filter)) ||
-            (spell.subname && spell.subname.toLowerCase().includes(filter)) ||
-            (spell.entry && spell.entry.toString().includes(filter))
-        )
-    }, [spells, spellFilter])
+    // Load spells when skill is selected
+    useEffect(() => {
+        if (selectedSkill) {
+            setLoading(true)
+            setSpells([])
+            GetSpellsBySkill(selectedSkill.id)
+                .then(res => {
+                    setSpells(res || [])
+                    setLoading(false)
+                })
+                .catch(err => {
+                    console.error("Failed to load spells:", err)
+                    setLoading(false)
+                })
+        }
+    }, [selectedSkill])
+
+    // Filtered lists
+    const filteredCategories = useMemo(() => filterItems(categories, categoryFilter), [categories, categoryFilter])
+    const filteredSkills = useMemo(() => filterItems(skills, skillFilter), [skills, skillFilter])
+    const filteredSpells = useMemo(() => filterItems(spells, spellFilter), [spells, spellFilter])
 
     return (
         <>
-            {/* Left sidebar - alphabet navigation */}
-            <aside className="sidebar" style={{ gridColumn: '1 / 2' }}>
-                <h2>Browse A-Z</h2>
-                <div className="list" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                    {LETTERS.map(letter => (
+            {/* 1. Categories */}
+            <aside className="sidebar">
+                <FilterInput 
+                    placeholder="Filter categories..." 
+                    onFilterChange={setCategoryFilter}
+                    style={{ width: '100%', marginBottom: '8px' }}
+                />
+                <h2>Categories ({filteredCategories.length})</h2>
+                <div className="list">
+                    {filteredCategories.map(cat => (
                         <button
-                            key={letter}
-                            className={selectedLetter === letter ? 'active' : ''}
-                            onClick={() => handleLetterClick(letter)}
-                            style={{
-                                width: '32px',
-                                height: '32px',
-                                padding: 0,
-                                fontSize: '14px',
-                                fontWeight: 'bold'
+                            key={cat.id}
+                            className={selectedCategory?.id === cat.id ? 'active' : ''}
+                            onClick={() => {
+                                setSelectedCategory(cat)
+                                setSkillFilter('')
+                                setSpellFilter('')
                             }}
                         >
-                            {letter}
+                            {cat.name}
                         </button>
                     ))}
                 </div>
-                
-                <div style={{ marginTop: '20px', borderTop: '1px solid #404040', paddingTop: '15px' }}>
-                    <h2>Search</h2>
-                    <input 
-                        type="text" 
-                        placeholder="Search spells..." 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        style={{
-                            width: '100%',
-                            padding: '8px',
-                            background: '#242424',
-                            border: '1px solid #404040',
-                            color: '#fff',
-                            fontSize: '13px',
-                            marginBottom: '8px'
-                        }}
-                    />
-                    <button 
-                        onClick={handleSearch}
-                        style={{
-                            width: '100%',
-                            padding: '8px',
-                            background: '#772ce8',
-                            color: '#fff',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontWeight: 'bold'
-                        }}
-                    >
-                        Search
-                    </button>
-                </div>
             </aside>
 
-            {/* Right - spell list */}
-            <section className="loot" style={{ gridColumn: '2 / -1' }}>
+            {/* 2. Skills */}
+            <section className="instances">
+                <FilterInput 
+                    placeholder="Filter skills..." 
+                    onFilterChange={setSkillFilter}
+                    style={{ width: '100%', marginBottom: '8px' }}
+                />
+                <h2>{selectedCategory ? `${selectedCategory.name} (${filteredSkills.length})` : 'Select Category'}</h2>
+                <div className="list">
+                    {filteredSkills.map(skill => (
+                        <div
+                            key={skill.id}
+                            className={`item ${selectedSkill?.id === skill.id ? 'active' : ''}`}
+                            onClick={() => {
+                                setSelectedSkill(skill)
+                                setSpellFilter('')
+                            }}
+                        >
+                            {skill.name} ({skill.spellCount})
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* 3. Spells List */}
+            <section className="loot" style={{ gridColumn: '3 / -1' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                     <h2 style={{ margin: 0, color: '#772ce8' }}>
-                        {selectedLetter 
-                            ? `Spells: ${selectedLetter} (${filteredSpells.length})`
-                            : spells.length > 0 
-                                ? `Search Results (${filteredSpells.length})`
-                                : 'Spells Database'
-                        }
+                        {selectedSkill ? `${selectedSkill.name} (${filteredSpells.length})` : 'Select Skill'}
                     </h2>
                     {spells.length > 0 && (
                         <FilterInput 
-                            placeholder="Filter results..." 
+                            placeholder="Filter spells..." 
                             onFilterChange={setSpellFilter}
                             style={{ maxWidth: '300px' }}
                         />
                     )}
                 </div>
 
-                {loading && <div className="loading">Searching spells...</div>}
+                {loading && selectedSkill && <div className="loading">Loading spells...</div>}
                 
-                {!loading && spells.length === 0 && (
-                    <p className="placeholder">Select a letter or search for spells by name.</p>
+                {!selectedSkill && (
+                    <p className="placeholder">Select a skill to browse spells.</p>
                 )}
 
                 <div className="loot-items">

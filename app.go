@@ -453,3 +453,73 @@ func (a *App) enrichItemIcon(item *database.Item) *database.Item {
 	}
 	return item
 }
+
+// === Spell Skills API (3-level navigation) ===
+
+// GetSpellSkillCategories returns spell skill categories (Class Skills, Professions, etc.)
+func (a *App) GetSpellSkillCategories() []*database.SpellSkillCategory {
+	fmt.Println("[API] GetSpellSkillCategories called")
+	cats, err := a.itemRepo.GetSpellSkillCategories()
+	if err != nil {
+		fmt.Printf("[API] Error: %v\n", err)
+		return []*database.SpellSkillCategory{}
+	}
+	return cats
+}
+
+// GetSpellSkillsByCategory returns skills for a category
+func (a *App) GetSpellSkillsByCategory(categoryID int) []*database.SpellSkill {
+	fmt.Printf("[API] GetSpellSkillsByCategory called: %d\n", categoryID)
+	skills, err := a.itemRepo.GetSpellSkillsByCategory(categoryID)
+	if err != nil {
+		fmt.Printf("[API] Error: %v\n", err)
+		return []*database.SpellSkill{}
+	}
+	return skills
+}
+
+// GetSpellsBySkill returns spells for a skill
+func (a *App) GetSpellsBySkill(skillID int) []*database.Spell {
+	fmt.Printf("[API] GetSpellsBySkill called: %d\n", skillID)
+	spells, err := a.itemRepo.GetSpellsBySkill(skillID)
+	if err != nil {
+		fmt.Printf("[API] Error: %v\n", err)
+		return []*database.Spell{}
+	}
+	return spells
+}
+
+// === Enhanced Quest Categories API (3-level navigation) ===
+
+// GetQuestCategoryGroups returns quest category groups (Zones, Class Quests, etc.)
+func (a *App) GetQuestCategoryGroups() []*database.QuestCategoryGroup {
+	fmt.Println("[API] GetQuestCategoryGroups called")
+	groups, err := a.itemRepo.GetQuestCategoryGroups()
+	if err != nil {
+		fmt.Printf("[API] Error: %v\n", err)
+		return []*database.QuestCategoryGroup{}
+	}
+	return groups
+}
+
+// GetQuestCategoriesByGroup returns categories for a group
+func (a *App) GetQuestCategoriesByGroup(groupID int) []*database.QuestCategoryEnhanced {
+	fmt.Printf("[API] GetQuestCategoriesByGroup called: %d\n", groupID)
+	cats, err := a.itemRepo.GetQuestCategoriesByGroup(groupID)
+	if err != nil {
+		fmt.Printf("[API] Error: %v\n", err)
+		return []*database.QuestCategoryEnhanced{}
+	}
+	return cats
+}
+
+// GetQuestsByEnhancedCategory returns quests for a category (ZoneOrSort value)
+func (a *App) GetQuestsByEnhancedCategory(categoryID int) []*database.Quest {
+	fmt.Printf("[API] GetQuestsByEnhancedCategory called: %d\n", categoryID)
+	quests, err := a.itemRepo.GetQuestsByEnhancedCategory(categoryID)
+	if err != nil {
+		fmt.Printf("[API] Error: %v\n", err)
+		return []*database.Quest{}
+	}
+	return quests
+}

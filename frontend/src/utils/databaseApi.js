@@ -105,6 +105,50 @@ export const GetFactions = () => {
     return Promise.resolve([])
 }
 
+// Spell Skills APIs (3-level navigation)
+export const GetSpellSkillCategories = () => {
+    if (window?.go?.main?.App?.GetSpellSkillCategories) {
+        return window.go.main.App.GetSpellSkillCategories()
+    }
+    return Promise.resolve([])
+}
+
+export const GetSpellSkillsByCategory = (categoryId) => {
+    if (window?.go?.main?.App?.GetSpellSkillsByCategory) {
+        return window.go.main.App.GetSpellSkillsByCategory(categoryId)
+    }
+    return Promise.resolve([])
+}
+
+export const GetSpellsBySkill = (skillId) => {
+    if (window?.go?.main?.App?.GetSpellsBySkill) {
+        return window.go.main.App.GetSpellsBySkill(skillId)
+    }
+    return Promise.resolve([])
+}
+
+// Enhanced Quest Categories APIs (3-level navigation)
+export const GetQuestCategoryGroups = () => {
+    if (window?.go?.main?.App?.GetQuestCategoryGroups) {
+        return window.go.main.App.GetQuestCategoryGroups()
+    }
+    return Promise.resolve([])
+}
+
+export const GetQuestCategoriesByGroup = (groupId) => {
+    if (window?.go?.main?.App?.GetQuestCategoriesByGroup) {
+        return window.go.main.App.GetQuestCategoriesByGroup(groupId)
+    }
+    return Promise.resolve([])
+}
+
+export const GetQuestsByEnhancedCategory = (categoryId) => {
+    if (window?.go?.main?.App?.GetQuestsByEnhancedCategory) {
+        return window.go.main.App.GetQuestsByEnhancedCategory(categoryId)
+    }
+    return Promise.resolve([])
+}
+
 // Filter helper function
 export const filterItems = (items, filter) => {
     if (!filter || !filter.trim()) return items || []
