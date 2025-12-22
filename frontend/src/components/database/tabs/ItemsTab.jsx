@@ -96,12 +96,14 @@ function ItemsTab({ tooltipHook }) {
         <>
             {/* 1. Classes */}
             <aside className="sidebar">
-                <FilterInput 
-                    placeholder="Filter classes..." 
-                    onFilterChange={setClassFilter}
-                    style={{ width: '100%', marginBottom: '8px' }}
-                />
-                <h2>Item Class ({filteredClasses.length})</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
+                    <h2 style={{ margin: 0, fontSize: '15px' }}>Item Class ({filteredClasses.length})</h2>
+                    <FilterInput 
+                        placeholder="Filter classes..." 
+                        onFilterChange={setClassFilter}
+                        style={{ width: '100%' }}
+                    />
+                </div>
                 <div className="list">
                     {filteredClasses.map(cls => (
                         <button
@@ -125,12 +127,14 @@ function ItemsTab({ tooltipHook }) {
 
             {/* 2. SubClasses */}
             <section className="instances">
-                <FilterInput 
-                    placeholder="Filter types..." 
-                    onFilterChange={setSubClassFilter}
-                    style={{ width: '100%', marginBottom: '8px' }}
-                />
-                <h2>{selectedClass ? `${selectedClass.name} (${filteredSubClasses.length})` : 'Select Class'}</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
+                    <h2 style={{ margin: 0, fontSize: '15px' }}>{selectedClass ? `${selectedClass.name} (${filteredSubClasses.length})` : 'Select Class'}</h2>
+                    <FilterInput 
+                        placeholder="Filter types..." 
+                        onFilterChange={setSubClassFilter}
+                        style={{ width: '100%' }}
+                    />
+                </div>
                 <div className="list">
                     {filteredSubClasses.map(sc => (
                         <div
@@ -151,12 +155,14 @@ function ItemsTab({ tooltipHook }) {
 
             {/* 3. Inventory Slots (Third Level) */}
             <section className="instances">
-                <FilterInput 
-                    placeholder="Filter slots..." 
-                    onFilterChange={setSlotFilter}
-                    style={{ width: '100%', marginBottom: '8px' }}
-                />
-                <h2>{selectedSubClass ? `Slot (${filteredSlots.length})` : 'Select Type'}</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
+                    <h2 style={{ margin: 0, fontSize: '15px' }}>{selectedSubClass ? `Slot (${filteredSlots.length})` : 'Select Type'}</h2>
+                    <FilterInput 
+                        placeholder="Filter slots..." 
+                        onFilterChange={setSlotFilter}
+                        style={{ width: '100%' }}
+                    />
+                </div>
                 <div className="list">
                     {filteredSlots.map(slot => (
                         <div
@@ -187,12 +193,12 @@ function ItemsTab({ tooltipHook }) {
 
             {/* 4. Items List */}
             <section className="loot">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                    <h2 style={{ margin: 0 }}>{selectedSubClass ? `${selectedSlot ? selectedSlot.name : selectedSubClass.name} (${filteredItems.length})` : 'Select SubClass'}</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
+                    <h2 style={{ margin: 0, fontSize: '15px' }}>{selectedSubClass ? `${selectedSlot ? selectedSlot.name : selectedSubClass.name} (${filteredItems.length})` : 'Select SubClass'}</h2>
                     <FilterInput 
                         placeholder="Filter items..." 
                         onFilterChange={setItemFilter}
-                        style={{ flex: 1, maxWidth: '300px' }}
+                        style={{ width: '100%' }}
                     />
                 </div>
                 {loading && <div className="loading">Loading items...</div>}
