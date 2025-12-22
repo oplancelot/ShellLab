@@ -427,6 +427,30 @@ export namespace database {
 	    }
 	}
 	
+	export class LootItem {
+	    itemId: number;
+	    itemName: string;
+	    icon: string;
+	    quality: number;
+	    chance: number;
+	    minCount: number;
+	    maxCount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new LootItem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.itemId = source["itemId"];
+	        this.itemName = source["itemName"];
+	        this.icon = source["icon"];
+	        this.quality = source["quality"];
+	        this.chance = source["chance"];
+	        this.minCount = source["minCount"];
+	        this.maxCount = source["maxCount"];
+	    }
+	}
 	export class ObjectType {
 	    id: number;
 	    name: string;

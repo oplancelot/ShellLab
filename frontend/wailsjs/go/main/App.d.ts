@@ -17,6 +17,8 @@ export function GetCategoryItems(arg1:number):Promise<Array<database.Item>>;
 
 export function GetChildCategories(arg1:number):Promise<Array<database.Category>>;
 
+export function GetCreatureLoot(arg1:number):Promise<Array<database.LootItem>>;
+
 export function GetCreatureTypes():Promise<Array<database.CreatureType>>;
 
 export function GetFactions():Promise<Array<database.Faction>>;

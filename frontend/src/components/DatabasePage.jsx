@@ -103,6 +103,13 @@ const GetFactions = () => {
     return Promise.resolve([])
 }
 
+const GetCreatureLoot = (entry) => {
+    if (window?.go?.main?.App?.GetCreatureLoot) {
+        return window.go.main.App.GetCreatureLoot(entry)
+    }
+    return Promise.resolve([])
+}
+
 function DatabasePage() {
     const [activeTab, setActiveTab] = useState('items')
     
@@ -125,6 +132,9 @@ function DatabasePage() {
     const [selectedCreatureType, setSelectedCreatureType] = useState(null)
     const [creatures, setCreatures] = useState([])
     const [npcsLoading, setNpcsLoading] = useState(false)
+    const [expandedCreatureId, setExpandedCreatureId] = useState(null)
+    const [creatureLoot, setCreatureLoot] = useState({})
+    const [lootLoading, setLootLoading] = useState(false)
 
     // Quests Tab State
     const [questCategories, setQuestCategories] = useState([])
@@ -371,7 +381,43 @@ function DatabasePage() {
         }
     }, [items])
 
+    const toggleCreatureLoot = (entry) => {
+        if (expandedCreatureId === entry) {
+            setExpandedCreatureId(null)
+            return
+        }
+
+        setExpandedCreatureId(entry)
+        if (!creatureLoot[entry]) {
+            setLootLoading(true)
+            GetCreatureLoot(entry)
+                .then(loot => {
+                    setCreatureLoot(prev => ({ ...prev, [entry]: loot }))
+                    setLootLoading(false)
+                    // Preload icons/tooltips for loot?
+                    // Maybe just fetch icons.
+                })
+                .catch(err => {
+                    console.error("Failed to get creature loot:", err)
+                    setLootLoading(false)
+                })
+        }
+    }
+
     const getQualityClass = (quality) => `q${quality || 0}`
+    
+    const getQualityColor = (quality) => {
+        const colors = {
+            0: '#9d9d9d', // Poor
+            1: '#ffffff', // Common
+            2: '#1eff00', // Uncommon
+            3: '#0070dd', // Rare
+            4: '#a335ee', // Epic
+            5: '#ff8000', // Legendary
+            6: '#e6cc80'  // Artifact
+        }
+        return colors[quality] || '#ffffff'
+    }
 
     // Render tooltip content using shared component
     const renderTooltip = (item) => {
@@ -675,56 +721,134 @@ function DatabasePage() {
                                         <div 
                                             key={creature.entry}
                                             className="loot-item"
+                                            onClick={() => toggleCreatureLoot(creature.entry)}
                                             style={{ 
                                                 borderLeft: creature.rank >= 3 ? '3px solid #a335ee' 
                                                     : creature.rank >= 1 ? '3px solid #ff8000' 
-                                                    : '3px solid #1eff00'
+                                                    : '3px solid #1eff00',
+                                                cursor: 'pointer',
+                                                flexDirection: 'column',
+                                                alignItems: 'stretch',
+                                                padding: '0'
                                             }}
                                         >
-                                            <div className="item-icon-placeholder" style={{ 
-                                                background: creature.rank >= 3 ? '#a335ee' 
-                                                    : creature.rank >= 1 ? '#ff8000' 
-                                                    : '#555',
-                                                color: '#fff',
-                                                fontWeight: 'bold',
-                                                fontSize: '10px'
-                                            }}>
-                                                {creature.levelMin === creature.levelMax 
-                                                    ? creature.levelMin 
-                                                    : `${creature.levelMin}-${creature.levelMax}`}
+                                            <div style={{ display: 'flex', alignItems: 'center', padding: '8px' }}>
+                                                <div className="item-icon-placeholder" style={{ 
+                                                    background: creature.rank >= 3 ? '#a335ee' 
+                                                        : creature.rank >= 1 ? '#ff8000' 
+                                                        : '#555',
+                                                    color: '#fff',
+                                                    fontWeight: 'bold',
+                                                    fontSize: '10px'
+                                                }}>
+                                                    {creature.levelMin === creature.levelMax 
+                                                        ? creature.levelMin 
+                                                        : `${creature.levelMin}-${creature.levelMax}`}
+                                                </div>
+                                                
+                                                <span className="item-id">[{creature.entry}]</span>
+                                                
+                                                <span style={{ 
+                                                    color: creature.rank >= 3 ? '#a335ee' 
+                                                        : creature.rank >= 1 ? '#ff8000' 
+                                                        : '#fff',
+                                                    fontWeight: creature.rank >= 1 ? 'bold' : 'normal'
+                                                }}>
+                                                    {creature.name}
+                                                    {creature.subname && (
+                                                        <span style={{ color: '#888', fontWeight: 'normal', marginLeft: '5px' }}>
+                                                            &lt;{creature.subname}&gt;
+                                                        </span>
+                                                    )}
+                                                </span>
+                                                
+                                                <span style={{ 
+                                                    marginLeft: 'auto', 
+                                                    color: '#888',
+                                                    fontSize: '11px',
+                                                    display: 'flex',
+                                                    alignItems: 'center'
+                                                }}>
+                                                    {creature.rankName !== 'Normal' && (
+                                                        <span style={{ 
+                                                            color: creature.rank >= 3 ? '#a335ee' : '#ff8000',
+                                                            marginRight: '8px'
+                                                        }}>
+                                                            [{creature.rankName}]
+                                                        </span>
+                                                    )}
+                                                    HP: {creature.healthMax.toLocaleString()}
+                                                    <span style={{ marginLeft: '10px', fontSize: '10px', color: '#666' }}>
+                                                        {expandedCreatureId === creature.entry ? '▲' : '▼'}
+                                                    </span>
+                                                </span>
                                             </div>
-                                            
-                                            <span className="item-id">[{creature.entry}]</span>
-                                            
-                                            <span style={{ 
-                                                color: creature.rank >= 3 ? '#a335ee' 
-                                                    : creature.rank >= 1 ? '#ff8000' 
-                                                    : '#fff',
-                                                fontWeight: creature.rank >= 1 ? 'bold' : 'normal'
-                                            }}>
-                                                {creature.name}
-                                                {creature.subname && (
-                                                    <span style={{ color: '#888', fontWeight: 'normal', marginLeft: '5px' }}>
-                                                        &lt;{creature.subname}&gt;
-                                                    </span>
-                                                )}
-                                            </span>
-                                            
-                                            <span style={{ 
-                                                marginLeft: 'auto', 
-                                                color: '#888',
-                                                fontSize: '11px'
-                                            }}>
-                                                {creature.rankName !== 'Normal' && (
-                                                    <span style={{ 
-                                                        color: creature.rank >= 3 ? '#a335ee' : '#ff8000',
-                                                        marginRight: '8px'
-                                                    }}>
-                                                        [{creature.rankName}]
-                                                    </span>
-                                                )}
-                                                HP: {creature.healthMax.toLocaleString()}
-                                            </span>
+
+                                            {/* Expanded Loot Panel */}
+                                            {expandedCreatureId === creature.entry && (
+                                                <div style={{ 
+                                                    background: '#1a1a1a', 
+                                                    borderTop: '1px solid #404040', 
+                                                    padding: '10px',
+                                                    animation: 'fadeIn 0.2s',
+                                                    cursor: 'default'
+                                                }} onClick={(e) => e.stopPropagation()}>
+                                                    <h4 style={{ margin: '0 0 10px 0', color: '#FFD100', fontSize: '12px', borderBottom: '1px solid #333', paddingBottom: '5px' }}>
+                                                        Loot Table
+                                                    </h4>
+                                                    
+                                                    {lootLoading && !creatureLoot[creature.entry] && (
+                                                        <div className="loading" style={{ fontSize: '11px' }}>Loading loot...</div>
+                                                    )}
+
+                                                    {creatureLoot[creature.entry] && creatureLoot[creature.entry].length === 0 && (
+                                                        <div style={{ color: '#888', fontSize: '11px', fontStyle: 'italic' }}>No loot found.</div>
+                                                    )}
+
+                                                    {creatureLoot[creature.entry] && (
+                                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '5px' }}>
+                                                            {creatureLoot[creature.entry].sort((a,b) => b.chance - a.chance).map((item, idx) => (
+                                                                <div 
+                                                                    key={idx} 
+                                                                    style={{ display: 'flex', alignItems: 'center', background: '#242424', padding: '4px', borderRadius: '3px' }}
+                                                                    onMouseEnter={(e) => {
+                                                                        setHoveredItem(item.itemId)
+                                                                        if (!tooltipCache[item.itemId]) {
+                                                                            loadTooltipData(item.itemId)
+                                                                        }
+                                                                    }}
+                                                                    onMouseLeave={() => setHoveredItem(null)}
+                                                                >
+                                                                    <div className="item-icon-placeholder" style={{ 
+                                                                        width: '24px', height: '24px', fontSize: '8px', marginRight: '5px',
+                                                                        border: `1px solid ${getQualityColor(item.quality)}`
+                                                                    }}>
+                                                                        {item.icon ? (
+                                                                             <img src={`/items/icons/${item.icon}.jpg`} style={{ width: '100%', height: '100%' }} />
+                                                                        ) : '?'}
+                                                                    </div>
+                                                                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+                                                                        <span style={{ 
+                                                                            color: getQualityColor(item.quality), 
+                                                                            fontSize: '11px', 
+                                                                            fontWeight: 'bold',
+                                                                            whiteSpace: 'nowrap',
+                                                                            overflow: 'hidden',
+                                                                            textOverflow: 'ellipsis'
+                                                                        }}>
+                                                                            {item.itemName}
+                                                                        </span>
+                                                                        <span style={{ color: '#aaa', fontSize: '10px' }}>
+                                                                            {item.chance.toFixed(1)}% {item.minCount > 1 ? `(${item.minCount}-${item.maxCount})` : ''}
+                                                                        </span>
+                                                                    </div>
+                                                                    {renderTooltip({ entry: item.itemId })} 
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

@@ -30,6 +30,10 @@ export function GetChildCategories(arg1) {
   return window['go']['main']['App']['GetChildCategories'](arg1);
 }
 
+export function GetCreatureLoot(arg1) {
+  return window['go']['main']['App']['GetCreatureLoot'](arg1);
+}
+
 export function GetCreatureTypes() {
   return window['go']['main']['App']['GetCreatureTypes']();
 }

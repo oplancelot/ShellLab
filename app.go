@@ -313,6 +313,16 @@ func (a *App) GetFactions() []*database.Faction {
 	return factions
 }
 
+// GetCreatureLoot returns the loot for a creature
+func (a *App) GetCreatureLoot(entry int) []*database.LootItem {
+	loot, err := a.itemRepo.GetCreatureLoot(entry)
+	if err != nil {
+		fmt.Printf("Error getting creature loot: %v\n", err)
+		return []*database.LootItem{}
+	}
+	return loot
+}
+
 // === Legacy Compatibility API (for master branch compatibility) ===
 
 // LegacyBossLoot matches the structure from master branch
