@@ -6,6 +6,10 @@ export function AdvancedSearch(arg1) {
   return window['go']['main']['App']['AdvancedSearch'](arg1);
 }
 
+export function BrowseCreaturesByType(arg1) {
+  return window['go']['main']['App']['BrowseCreaturesByType'](arg1);
+}
+
 export function BrowseItemsByClass(arg1, arg2) {
   return window['go']['main']['App']['BrowseItemsByClass'](arg1, arg2);
 }
@@ -24,6 +28,10 @@ export function GetCategoryItems(arg1) {
 
 export function GetChildCategories(arg1) {
   return window['go']['main']['App']['GetChildCategories'](arg1);
+}
+
+export function GetCreatureTypes() {
+  return window['go']['main']['App']['GetCreatureTypes']();
 }
 
 export function GetInstances(arg1) {
@@ -56,6 +64,10 @@ export function GetTables(arg1, arg2) {
 
 export function GetTooltipData(arg1) {
   return window['go']['main']['App']['GetTooltipData'](arg1);
+}
+
+export function SearchCreatures(arg1) {
+  return window['go']['main']['App']['SearchCreatures'](arg1);
 }
 
 export function SearchItems(arg1) {

@@ -36,6 +36,62 @@ export namespace database {
 	        this.sortOrder = source["sortOrder"];
 	    }
 	}
+	export class Creature {
+	    entry: number;
+	    name: string;
+	    subname?: string;
+	    levelMin: number;
+	    levelMax: number;
+	    healthMin: number;
+	    healthMax: number;
+	    manaMin: number;
+	    manaMax: number;
+	    type: number;
+	    typeName: string;
+	    rank: number;
+	    rankName: string;
+	    faction: number;
+	    npcFlags: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Creature(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entry = source["entry"];
+	        this.name = source["name"];
+	        this.subname = source["subname"];
+	        this.levelMin = source["levelMin"];
+	        this.levelMax = source["levelMax"];
+	        this.healthMin = source["healthMin"];
+	        this.healthMax = source["healthMax"];
+	        this.manaMin = source["manaMin"];
+	        this.manaMax = source["manaMax"];
+	        this.type = source["type"];
+	        this.typeName = source["typeName"];
+	        this.rank = source["rank"];
+	        this.rankName = source["rankName"];
+	        this.faction = source["faction"];
+	        this.npcFlags = source["npcFlags"];
+	    }
+	}
+	export class CreatureType {
+	    type: number;
+	    name: string;
+	    count: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreatureType(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.type = source["type"];
+	        this.name = source["name"];
+	        this.count = source["count"];
+	    }
+	}
 	export class InventorySlot {
 	    class: number;
 	    subClass: number;

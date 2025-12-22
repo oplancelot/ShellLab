@@ -5,6 +5,8 @@ import {main} from '../models';
 
 export function AdvancedSearch(arg1:database.SearchFilter):Promise<database.SearchResult>;
 
+export function BrowseCreaturesByType(arg1:number):Promise<Array<database.Creature>>;
+
 export function BrowseItemsByClass(arg1:number,arg2:number):Promise<Array<database.Item>>;
 
 export function BrowseItemsByClassAndSlot(arg1:number,arg2:number,arg3:number):Promise<Array<database.Item>>;
@@ -14,6 +16,8 @@ export function GetCategories():Promise<Array<string>>;
 export function GetCategoryItems(arg1:number):Promise<Array<database.Item>>;
 
 export function GetChildCategories(arg1:number):Promise<Array<database.Category>>;
+
+export function GetCreatureTypes():Promise<Array<database.CreatureType>>;
 
 export function GetInstances(arg1:string):Promise<Array<string>>;
 
@@ -30,6 +34,8 @@ export function GetRootCategories():Promise<Array<database.Category>>;
 export function GetTables(arg1:string,arg2:string):Promise<Array<database.AtlasTable>>;
 
 export function GetTooltipData(arg1:number):Promise<database.TooltipData>;
+
+export function SearchCreatures(arg1:string):Promise<Array<database.Creature>>;
 
 export function SearchItems(arg1:string):Promise<Array<database.Item>>;
 
