@@ -83,28 +83,34 @@ const QuestDetailView = ({ entry, onBack, onNavigate, setHoveredItem, hoveredIte
                     
                     <h3>Objectives</h3>
                     <p style={{ lineHeight: '1.6', color: '#ccc' }}>{detail.objectives}</p>
+
+                    <div style={{ marginTop: '30px', borderTop: '1px solid #333', paddingTop: '20px' }}>
+                        <h3 style={{ color: '#FFD100' }}>Rewards</h3>
+                        {detail.rewMoney > 0 && <div style={{marginBottom:'10px'}}>Money: {Math.floor(detail.rewMoney/10000)}g {(detail.rewMoney%10000)/100}s</div>}
+                        {detail.rewXp > 0 && <div style={{marginBottom:'10px'}}>XP: {detail.rewXp}</div>}
+                        
+                        {detail.rewards && detail.rewards.length > 0 && (
+                            <div style={{ marginBottom: '20px' }}>
+                                <h4 style={{ color: '#aaa' }}>You will receive:</h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
+                                    {detail.rewards.map(i => renderRewardItem(i, false))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {detail.choiceRewards && detail.choiceRewards.length > 0 && (
+                            <div>
+                                <h4 style={{ color: '#aaa' }}>Choose one of:</h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
+                                    {detail.choiceRewards.map(i => renderRewardItem(i, true))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 
-                <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '8px' }}>
-                    <h3 style={{ marginTop: 0, color: '#FFD100' }}>Rewards</h3>
-                    {detail.rewMoney > 0 && <div style={{marginBottom:'10px'}}>Money: {Math.floor(detail.rewMoney/10000)}g {(detail.rewMoney%10000)/100}s</div>}
-                    {detail.rewXp > 0 && <div style={{marginBottom:'10px'}}>XP: {detail.rewXp}</div>}
-                    
-                    {detail.rewards && detail.rewards.length > 0 && (
-                        <div>
-                            <h4>You will receive:</h4>
-                            {detail.rewards.map(i => renderRewardItem(i, false))}
-                        </div>
-                    )}
-                    
-                    {detail.choiceRewards && detail.choiceRewards.length > 0 && (
-                        <div>
-                            <h4>Choose one of:</h4>
-                            {detail.choiceRewards.map(i => renderRewardItem(i, true))}
-                        </div>
-                    )}
-                    
-                    <h3 style={{ color: '#FFD100', marginTop: '20px' }}>Related</h3>
+                <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '8px', alignSelf: 'start' }}>
+                    <h3 style={{ color: '#FFD100', marginTop: 0 }}>Related</h3>
                     {detail.starters && detail.starters.length > 0 && (
                         <div>
                             <h4>Start:</h4>
