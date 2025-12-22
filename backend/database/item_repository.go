@@ -585,13 +585,19 @@ func parseItemResistances(item *Item) []string {
 }
 
 func (r *ItemRepository) getSpellDescription(spellID int) (string, []int) {
-	var desc string
+	var desc sql.NullString
 	var bp1, bp2, bp3 int
-	err := r.db.DB().QueryRow("SELECT description, base_points1, base_points2, base_points3 FROM spells WHERE id = ?", spellID).Scan(&desc, &bp1, &bp2, &bp3)
+	err := r.db.DB().QueryRow(`
+		SELECT description, effect_base_points1, effect_base_points2, effect_base_points3 
+		FROM spells WHERE entry = ?
+	`, spellID).Scan(&desc, &bp1, &bp2, &bp3)
 	if err != nil {
 		return "", nil
 	}
-	return desc, []int{bp1, bp2, bp3}
+	if !desc.Valid || desc.String == "" {
+		return "", nil
+	}
+	return desc.String, []int{bp1, bp2, bp3}
 }
 
 func getTriggerPrefix(trigger int) string {
