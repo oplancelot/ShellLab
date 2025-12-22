@@ -82,6 +82,14 @@ export function GetQuestCategories() {
   return window['go']['main']['App']['GetQuestCategories']();
 }
 
+export function GetQuestCategoriesByGroup(arg1) {
+  return window['go']['main']['App']['GetQuestCategoriesByGroup'](arg1);
+}
+
+export function GetQuestCategoryGroups() {
+  return window['go']['main']['App']['GetQuestCategoryGroups']();
+}
+
 export function GetQuestDetail(arg1) {
   return window['go']['main']['App']['GetQuestDetail'](arg1);
 }
@@ -90,8 +98,24 @@ export function GetQuestsByCategory(arg1) {
   return window['go']['main']['App']['GetQuestsByCategory'](arg1);
 }
 
+export function GetQuestsByEnhancedCategory(arg1) {
+  return window['go']['main']['App']['GetQuestsByEnhancedCategory'](arg1);
+}
+
 export function GetRootCategories() {
   return window['go']['main']['App']['GetRootCategories']();
+}
+
+export function GetSpellSkillCategories() {
+  return window['go']['main']['App']['GetSpellSkillCategories']();
+}
+
+export function GetSpellSkillsByCategory(arg1) {
+  return window['go']['main']['App']['GetSpellSkillsByCategory'](arg1);
+}
+
+export function GetSpellsBySkill(arg1) {
+  return window['go']['main']['App']['GetSpellsBySkill'](arg1);
 }
 
 export function GetTables(arg1, arg2) {

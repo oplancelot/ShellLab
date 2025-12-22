@@ -806,6 +806,38 @@ export namespace database {
 	        this.count = source["count"];
 	    }
 	}
+	export class QuestCategoryEnhanced {
+	    id: number;
+	    groupId: number;
+	    name: string;
+	    questCount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new QuestCategoryEnhanced(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.groupId = source["groupId"];
+	        this.name = source["name"];
+	        this.questCount = source["questCount"];
+	    }
+	}
+	export class QuestCategoryGroup {
+	    id: number;
+	    name: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new QuestCategoryGroup(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	    }
+	}
 	export class QuestSeriesItem {
 	    entry: number;
 	    title: string;
@@ -1020,6 +1052,38 @@ export namespace database {
 	        this.subname = source["subname"];
 	        this.description = source["description"];
 	        this.iconId = source["iconId"];
+	    }
+	}
+	export class SpellSkill {
+	    id: number;
+	    categoryId: number;
+	    name: string;
+	    spellCount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SpellSkill(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.categoryId = source["categoryId"];
+	        this.name = source["name"];
+	        this.spellCount = source["spellCount"];
+	    }
+	}
+	export class SpellSkillCategory {
+	    id: number;
+	    name: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SpellSkillCategory(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
 	    }
 	}
 	export class TooltipData {

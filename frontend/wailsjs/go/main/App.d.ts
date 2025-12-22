@@ -43,11 +43,23 @@ export function GetObjectsByType(arg1:number):Promise<Array<database.GameObject>
 
 export function GetQuestCategories():Promise<Array<database.QuestCategory>>;
 
+export function GetQuestCategoriesByGroup(arg1:number):Promise<Array<database.QuestCategoryEnhanced>>;
+
+export function GetQuestCategoryGroups():Promise<Array<database.QuestCategoryGroup>>;
+
 export function GetQuestDetail(arg1:number):Promise<database.QuestDetail>;
 
 export function GetQuestsByCategory(arg1:number):Promise<Array<database.Quest>>;
 
+export function GetQuestsByEnhancedCategory(arg1:number):Promise<Array<database.Quest>>;
+
 export function GetRootCategories():Promise<Array<database.Category>>;
+
+export function GetSpellSkillCategories():Promise<Array<database.SpellSkillCategory>>;
+
+export function GetSpellSkillsByCategory(arg1:number):Promise<Array<database.SpellSkill>>;
+
+export function GetSpellsBySkill(arg1:number):Promise<Array<database.Spell>>;
 
 export function GetTables(arg1:string,arg2:string):Promise<Array<database.AtlasTable>>;
 

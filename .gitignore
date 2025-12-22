@@ -21,7 +21,7 @@ addons/
 .idea/
 *.swp
 *.swo
-.agent/
+# .agent/
 # OS
 .DS_Store
 Thumbs.db
