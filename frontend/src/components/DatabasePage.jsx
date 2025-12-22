@@ -228,20 +228,28 @@ function DatabasePage() {
 
     return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            {/* Sub-Tabs */}
-            <div style={{ display: 'flex', gap: '2px', background: '#1a1a1a', padding: '5px', borderBottom: '1px solid #333' }}>
-                {['Items', 'Sets', 'NPCs'].map(tab => (
+            {/* Sub-Tabs - Turtlehead Style */}
+            <div style={{ 
+                display: 'flex', 
+                gap: '2px', 
+                background: '#181818', 
+                padding: '8px 10px', 
+                borderBottom: '1px solid #404040' 
+            }}>
+                {['Items', 'Sets', 'NPCs', 'Quests', 'Objects', 'Spells', 'Factions'].map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab.toLowerCase())}
                         style={{
-                            padding: '8px 20px',
-                            background: activeTab === tab.toLowerCase() ? '#404040' : '#2a2a2a',
-                            color: activeTab === tab.toLowerCase() ? '#fff' : '#aaa',
-                            border: 'none',
+                            padding: '8px 16px',
+                            background: activeTab === tab.toLowerCase() ? '#383838' : 'transparent',
+                            color: activeTab === tab.toLowerCase() ? '#fff' : '#FFD100',
+                            border: activeTab === tab.toLowerCase() ? '1px solid #484848' : '1px solid transparent',
                             cursor: 'pointer',
                             fontWeight: 'bold',
-                            borderRadius: '3px'
+                            borderRadius: '0',
+                            fontSize: '13px',
+                            textTransform: 'uppercase'
                         }}
                     >
                         {tab}
@@ -563,6 +571,70 @@ function DatabasePage() {
                             )}
                         </section>
                     </>
+                )}
+
+                {/* QUESTS TAB */}
+                {activeTab === 'quests' && (
+                    <div style={{ gridColumn: '1 / -1', padding: '20px', background: '#242424', color: '#ccc' }}>
+                        <h2 style={{ color: '#FFD100', borderBottom: '1px solid #505050', paddingBottom: '10px' }}>Quests</h2>
+                        <p style={{ lineHeight: '1.6' }}>
+                            Quest browsing coming soon. Import pending: <b style={{ color: '#fff' }}>5,867 quests</b> from tw_world.quest_template
+                        </p>
+                        <ul style={{ paddingLeft: '20px', marginTop: '15px' }}>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Filter by level range</div></li>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Filter by zone</div></li>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Filter by faction (Horde/Alliance)</div></li>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Search by name</div></li>
+                        </ul>
+                    </div>
+                )}
+
+                {/* OBJECTS TAB */}
+                {activeTab === 'objects' && (
+                    <div style={{ gridColumn: '1 / -1', padding: '20px', background: '#242424', color: '#ccc' }}>
+                        <h2 style={{ color: '#FFD100', borderBottom: '1px solid #505050', paddingBottom: '10px' }}>Objects</h2>
+                        <p style={{ lineHeight: '1.6' }}>
+                            Object browsing coming soon. Import pending: <b style={{ color: '#fff' }}>20,819 objects</b> from tw_world.gameobject_template
+                        </p>
+                        <ul style={{ paddingLeft: '20px', marginTop: '15px' }}>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Chests and containers</div></li>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Quest objects</div></li>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Mining nodes and herbs</div></li>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Doors and buttons</div></li>
+                        </ul>
+                    </div>
+                )}
+
+                {/* SPELLS TAB */}
+                {activeTab === 'spells' && (
+                    <div style={{ gridColumn: '1 / -1', padding: '20px', background: '#242424', color: '#ccc' }}>
+                        <h2 style={{ color: '#FFD100', borderBottom: '1px solid #505050', paddingBottom: '10px' }}>Spells</h2>
+                        <p style={{ lineHeight: '1.6' }}>
+                            Spell browsing available. Imported: <b style={{ color: '#1eff00' }}>24,022 spells</b> from tw_world.spell_template
+                        </p>
+                        <ul style={{ paddingLeft: '20px', marginTop: '15px' }}>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Class abilities</div></li>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Talents</div></li>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Enchantments</div></li>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Item effects</div></li>
+                        </ul>
+                    </div>
+                )}
+
+                {/* FACTIONS TAB */}
+                {activeTab === 'factions' && (
+                    <div style={{ gridColumn: '1 / -1', padding: '20px', background: '#242424', color: '#ccc' }}>
+                        <h2 style={{ color: '#FFD100', borderBottom: '1px solid #505050', paddingBottom: '10px' }}>Factions</h2>
+                        <p style={{ lineHeight: '1.6' }}>
+                            Faction browsing coming soon. Import pending: <b style={{ color: '#fff' }}>190 factions</b> from aowow.aowow_factions
+                        </p>
+                        <ul style={{ paddingLeft: '20px', marginTop: '15px' }}>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Alliance factions</div></li>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Horde factions</div></li>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Neutral factions</div></li>
+                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Reputation rewards</div></li>
+                        </ul>
+                    </div>
                 )}
 
             </div>
