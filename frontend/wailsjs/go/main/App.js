@@ -34,6 +34,10 @@ export function GetCreatureTypes() {
   return window['go']['main']['App']['GetCreatureTypes']();
 }
 
+export function GetFactions() {
+  return window['go']['main']['App']['GetFactions']();
+}
+
 export function GetInstances(arg1) {
   return window['go']['main']['App']['GetInstances'](arg1);
 }
@@ -96,6 +100,10 @@ export function SearchObjects(arg1) {
 
 export function SearchQuests(arg1) {
   return window['go']['main']['App']['SearchQuests'](arg1);
+}
+
+export function SearchSpells(arg1) {
+  return window['go']['main']['App']['SearchSpells'](arg1);
 }
 
 export function WaitForReady() {

@@ -87,6 +87,22 @@ const SearchObjects = (query) => {
     return Promise.resolve([])
 }
 
+// Spells APIs
+const SearchSpells = (query) => {
+    if (window?.go?.main?.App?.SearchSpells) {
+        return window.go.main.App.SearchSpells(query)
+    }
+    return Promise.resolve([])
+}
+
+// Factions APIs
+const GetFactions = () => {
+    if (window?.go?.main?.App?.GetFactions) {
+        return window.go.main.App.GetFactions()
+    }
+    return Promise.resolve([])
+}
+
 function DatabasePage() {
     const [activeTab, setActiveTab] = useState('items')
     
@@ -121,6 +137,30 @@ function DatabasePage() {
     const [selectedObjectType, setSelectedObjectType] = useState(null)
     const [objects, setObjects] = useState([])
     const [objectsLoading, setObjectsLoading] = useState(false)
+
+    // Spells Tab State
+    const [spells, setSpells] = useState([])
+    const [spellsLoading, setSpellsLoading] = useState(false)
+
+    // Factions Tab State
+    const [factions, setFactions] = useState([])
+    const [factionsLoading, setFactionsLoading] = useState(false)
+    
+    // Load factions when switching to Factions tab
+    useEffect(() => {
+        if (activeTab === 'factions' && factions.length === 0) {
+            setFactionsLoading(true)
+            GetFactions()
+                .then(res => {
+                    setFactions(res || [])
+                    setFactionsLoading(false)
+                })
+                .catch(err => {
+                    console.error("Failed to load factions:", err)
+                    setFactionsLoading(false)
+                })
+        }
+    }, [activeTab])
     
     // Use shared tooltip hook
     const {
@@ -899,36 +939,117 @@ function DatabasePage() {
 
                 {/* SPELLS TAB */}
                 {activeTab === 'spells' && (
-                    <div style={{ gridColumn: '1 / -1', padding: '20px', background: '#242424', color: '#ccc' }}>
-                        <h2 style={{ color: '#FFD100', borderBottom: '1px solid #505050', paddingBottom: '10px' }}>Spells</h2>
-                        <p style={{ lineHeight: '1.6' }}>
-                            Spell browsing available. Imported: <b style={{ color: '#1eff00' }}>24,022 spells</b> from tw_world.spell_template
-                        </p>
-                        <ul style={{ paddingLeft: '20px', marginTop: '15px' }}>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Class abilities</div></li>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Talents</div></li>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Enchantments</div></li>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Item effects</div></li>
-                        </ul>
+                    <div style={{ gridColumn: '1 / -1', padding: '20px' }}>
+                        <div style={{ padding: '0 0 20px 0', borderBottom: '1px solid #404040', marginBottom: '20px' }}>
+                            <input 
+                                type="text" 
+                                placeholder="Search Spells (e.g. 'Fireball', 'Sprint')..." 
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    background: '#242424',
+                                    border: '1px solid #404040',
+                                    color: '#fff',
+                                    fontSize: '16px'
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        setSpellsLoading(true)
+                                        SearchSpells(e.target.value).then(res => {
+                                            setSpells(res || [])
+                                            setSpellsLoading(false)
+                                        })
+                                    }
+                                }}
+                            />
+                        </div>
+
+                        {spellsLoading && <div className="loading">Searching spells...</div>}
+                        
+                        {!spellsLoading && spells.length === 0 && (
+                            <p className="placeholder">Enter a spell name to search.</p>
+                        )}
+
+                        <div className="loot-items">
+                            {spells.map(spell => (
+                                <div 
+                                    key={spell.entry}
+                                    className="loot-item"
+                                    style={{ borderLeft: '3px solid #772ce8' }}
+                                >
+                                    <div className="item-icon-placeholder" style={{ 
+                                        background: '#772ce8',
+                                        color: '#fff',
+                                        fontWeight: 'bold',
+                                        fontSize: '10px'
+                                    }}>
+                                        SPL
+                                    </div>
+                                    
+                                    <span className="item-id">[{spell.entry}]</span>
+                                    
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ color: '#772ce8', fontWeight: 'bold' }}>
+                                            {spell.name} {spell.subname ? `(${spell.subname})` : ''}
+                                        </span>
+                                        <span style={{ color: '#888', fontSize: '11px', marginTop: '2px' }}>
+                                            {spell.description}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 
                 {/* FACTIONS TAB */}
                 {activeTab === 'factions' && (
-                    <div style={{ gridColumn: '1 / -1', padding: '20px', background: '#242424', color: '#ccc' }}>
-                        <h2 style={{ color: '#FFD100', borderBottom: '1px solid #505050', paddingBottom: '10px' }}>Factions</h2>
-                        <p style={{ lineHeight: '1.6' }}>
-                            Faction browsing coming soon. Import pending: <b style={{ color: '#fff' }}>190 factions</b> from aowow.aowow_factions
-                        </p>
-                        <ul style={{ paddingLeft: '20px', marginTop: '15px' }}>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Alliance factions</div></li>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Horde factions</div></li>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Neutral factions</div></li>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Reputation rewards</div></li>
-                        </ul>
-                    </div>
-                )}
+                    <div style={{ gridColumn: '1 / -1', padding: '20px' }}>
+                        <h2 style={{ color: '#FFD100', borderBottom: '1px solid #505050', paddingBottom: '10px' }}>
+                            Reputation Factions
+                        </h2>
+                        
+                        {factionsLoading && <div className="loading">Loading factions...</div>}
 
+                        <div className="loot-items" style={{ marginTop: '20px' }}>
+                            {factions.map(faction => (
+                                <div 
+                                    key={faction.id}
+                                    className="loot-item"
+                                    style={{ 
+                                        borderLeft: faction.side === 1 ? '3px solid #0070DE' // Alliance
+                                            : faction.side === 2 ? '3px solid #C41F3B' // Horde
+                                            : '3px solid #FFD100' // Neutral
+                                    }}
+                                >
+                                   <div className="item-icon-placeholder" style={{ 
+                                        background: faction.side === 1 ? '#0070DE' 
+                                            : faction.side === 2 ? '#C41F3B' 
+                                            : '#FFD100',
+                                        color: '#000',
+                                        fontWeight: 'bold',
+                                        fontSize: '10px'
+                                    }}>
+                                        {faction.side === 1 ? 'A' : faction.side === 2 ? 'H' : 'N'}
+                                    </div>
+                                    
+                                    <span className="item-id">[{faction.id}]</span>
+                                    
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ color: '#fff', fontWeight: 'bold' }}>
+                                            {faction.name}
+                                        </span>
+                                        <span style={{ color: '#888', fontSize: '11px', marginTop: '2px' }}>
+                                            {faction.description}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+
+                )}
             </div>
         </div>
     )

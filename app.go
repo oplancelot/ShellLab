@@ -293,6 +293,26 @@ func (a *App) SearchObjects(query string) []*database.GameObject {
 	return objects
 }
 
+// SearchSpells searches for spells by name
+func (a *App) SearchSpells(query string) []*database.Spell {
+	spells, err := a.itemRepo.SearchSpells(query)
+	if err != nil {
+		fmt.Printf("Error searching spells: %v\n", err)
+		return []*database.Spell{}
+	}
+	return spells
+}
+
+// GetFactions returns all factions
+func (a *App) GetFactions() []*database.Faction {
+	factions, err := a.itemRepo.GetFactions()
+	if err != nil {
+		fmt.Printf("Error getting factions: %v\n", err)
+		return []*database.Faction{}
+	}
+	return factions
+}
+
 // === Legacy Compatibility API (for master branch compatibility) ===
 
 // LegacyBossLoot matches the structure from master branch

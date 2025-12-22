@@ -19,6 +19,8 @@ export function GetChildCategories(arg1:number):Promise<Array<database.Category>
 
 export function GetCreatureTypes():Promise<Array<database.CreatureType>>;
 
+export function GetFactions():Promise<Array<database.Faction>>;
+
 export function GetInstances(arg1:string):Promise<Array<string>>;
 
 export function GetItemClasses():Promise<Array<database.ItemClass>>;
@@ -50,5 +52,7 @@ export function SearchItems(arg1:string):Promise<Array<database.Item>>;
 export function SearchObjects(arg1:string):Promise<Array<database.GameObject>>;
 
 export function SearchQuests(arg1:string):Promise<Array<database.Quest>>;
+
+export function SearchSpells(arg1:string):Promise<Array<database.Spell>>;
 
 export function WaitForReady():Promise<boolean>;

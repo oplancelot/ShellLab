@@ -92,6 +92,24 @@ export namespace database {
 	        this.count = source["count"];
 	    }
 	}
+	export class Faction {
+	    id: number;
+	    name: string;
+	    description: string;
+	    side: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Faction(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.side = source["side"];
+	    }
+	}
 	export class GameObject {
 	    entry: number;
 	    name: string;
@@ -540,6 +558,26 @@ export namespace database {
 		}
 	}
 	
+	export class Spell {
+	    entry: number;
+	    name: string;
+	    subname: string;
+	    description: string;
+	    iconId: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Spell(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entry = source["entry"];
+	        this.name = source["name"];
+	        this.subname = source["subname"];
+	        this.description = source["description"];
+	        this.iconId = source["iconId"];
+	    }
+	}
 	export class TooltipData {
 	    entry: number;
 	    name: string;
