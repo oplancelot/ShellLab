@@ -14,7 +14,7 @@ type Spell struct {
 // SearchSpells searches for spells by name
 func (r *ItemRepository) SearchSpells(query string) ([]*Spell, error) {
 	rows, err := r.db.DB().Query(`
-		SELECT entry, name, subname, description, icon_id
+		SELECT entry, name, description
 		FROM spells
 		WHERE name LIKE ?
 		ORDER BY length(name), name
@@ -28,13 +28,11 @@ func (r *ItemRepository) SearchSpells(query string) ([]*Spell, error) {
 	var spells []*Spell
 	for rows.Next() {
 		s := &Spell{}
-		var subname, desc *string
-		if err := rows.Scan(&s.Entry, &s.Name, &subname, &desc, &s.IconID); err != nil {
+		var desc *string
+		// Simplified scan: removed subname and icon_id
+		if err := rows.Scan(&s.Entry, &s.Name, &desc); err != nil {
 			fmt.Printf("Scan error: %v\n", err)
 			continue
-		}
-		if subname != nil {
-			s.SubName = *subname
 		}
 		if desc != nil {
 			s.Description = *desc

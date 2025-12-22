@@ -65,7 +65,7 @@ func (r *ItemRepository) GetQuestCategoriesByGroup(groupID int) ([]*QuestCategor
 // GetQuestsByEnhancedCategory returns quests for a given category (ZoneOrSort value)
 func (r *ItemRepository) GetQuestsByEnhancedCategory(categoryID int) ([]*Quest, error) {
 	rows, err := r.db.DB().Query(`
-		SELECT entry, title, quest_level, min_level, type, zone_or_sort, reward_xp
+		SELECT entry, title, quest_level, min_level, type, zone_or_sort, rew_xp
 		FROM quests 
 		WHERE zone_or_sort = ?
 		ORDER BY quest_level, title

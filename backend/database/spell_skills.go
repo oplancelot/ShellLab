@@ -64,9 +64,10 @@ func (r *ItemRepository) GetSpellSkillsByCategory(categoryID int) ([]*SpellSkill
 }
 
 // GetSpellsBySkill returns all spells for a given skill
+// GetSpellsBySkill returns all spells for a given skill
 func (r *ItemRepository) GetSpellsBySkill(skillID int) ([]*Spell, error) {
 	rows, err := r.db.DB().Query(`
-		SELECT sp.entry, sp.name, sp.subname, sp.description, sp.icon_id
+		SELECT sp.entry, sp.name, sp.description
 		FROM spells sp
 		INNER JOIN spell_skill_spells ss ON ss.spell_id = sp.entry
 		WHERE ss.skill_id = ?
@@ -80,13 +81,11 @@ func (r *ItemRepository) GetSpellsBySkill(skillID int) ([]*Spell, error) {
 	var spells []*Spell
 	for rows.Next() {
 		s := &Spell{}
-		var subname, desc *string
-		if err := rows.Scan(&s.Entry, &s.Name, &subname, &desc, &s.IconID); err != nil {
+		var desc *string
+		// Simplified scan: removed subname and icon_id which don't exist
+		if err := rows.Scan(&s.Entry, &s.Name, &desc); err != nil {
 			fmt.Printf("Scan error: %v\n", err)
 			continue
-		}
-		if subname != nil {
-			s.SubName = *subname
 		}
 		if desc != nil {
 			s.Description = *desc
