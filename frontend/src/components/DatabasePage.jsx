@@ -43,6 +43,50 @@ const BrowseCreaturesByType = (creatureType) => {
     return Promise.resolve([])
 }
 
+// Quest APIs
+const GetQuestCategories = () => {
+    if (window?.go?.main?.App?.GetQuestCategories) {
+        return window.go.main.App.GetQuestCategories()
+    }
+    return Promise.resolve([])
+}
+
+const GetQuestsByCategory = (categoryId) => {
+    if (window?.go?.main?.App?.GetQuestsByCategory) {
+        return window.go.main.App.GetQuestsByCategory(categoryId)
+    }
+    return Promise.resolve([])
+}
+
+const SearchQuests = (query) => {
+    if (window?.go?.main?.App?.SearchQuests) {
+        return window.go.main.App.SearchQuests(query)
+    }
+    return Promise.resolve([])
+}
+
+// Object APIs
+const GetObjectTypes = () => {
+    if (window?.go?.main?.App?.GetObjectTypes) {
+        return window.go.main.App.GetObjectTypes()
+    }
+    return Promise.resolve([])
+}
+
+const GetObjectsByType = (typeId) => {
+    if (window?.go?.main?.App?.GetObjectsByType) {
+        return window.go.main.App.GetObjectsByType(typeId)
+    }
+    return Promise.resolve([])
+}
+
+const SearchObjects = (query) => {
+    if (window?.go?.main?.App?.SearchObjects) {
+        return window.go.main.App.SearchObjects(query)
+    }
+    return Promise.resolve([])
+}
+
 function DatabasePage() {
     const [activeTab, setActiveTab] = useState('items')
     
@@ -65,6 +109,18 @@ function DatabasePage() {
     const [selectedCreatureType, setSelectedCreatureType] = useState(null)
     const [creatures, setCreatures] = useState([])
     const [npcsLoading, setNpcsLoading] = useState(false)
+
+    // Quests Tab State
+    const [questCategories, setQuestCategories] = useState([])
+    const [selectedQuestCategory, setSelectedQuestCategory] = useState(null)
+    const [quests, setQuests] = useState([])
+    const [questsLoading, setQuestsLoading] = useState(false)
+    
+    // Objects Tab State
+    const [objectTypes, setObjectTypes] = useState([])
+    const [selectedObjectType, setSelectedObjectType] = useState(null)
+    const [objects, setObjects] = useState([])
+    const [objectsLoading, setObjectsLoading] = useState(false)
     
     // Use shared tooltip hook
     const {
@@ -171,6 +227,74 @@ function DatabasePage() {
                 })
         }
     }, [selectedCreatureType])
+
+    // Load quest categories when switching to Quests tab
+    useEffect(() => {
+        if (activeTab === 'quests' && questCategories.length === 0) {
+            setQuestsLoading(true)
+            GetQuestCategories()
+                .then(cats => {
+                    // Sort cats: Sorts (negative IDs) last, Zones first? Or just alphabetical?
+                    // Currently backend sorts by name.
+                    setQuestCategories(cats || [])
+                    setQuestsLoading(false)
+                })
+                .catch(err => {
+                    console.error("Failed to load quest categories:", err)
+                    setQuestsLoading(false)
+                })
+        }
+    }, [activeTab])
+
+    // Load quests when a category is selected
+    useEffect(() => {
+        if (selectedQuestCategory !== null) {
+            setQuestsLoading(true)
+            setQuests([])
+            GetQuestsByCategory(selectedQuestCategory.id)
+                .then(res => {
+                    setQuests(res || [])
+                    setQuestsLoading(false)
+                })
+                .catch(err => {
+                    console.error("Failed to load quests:", err)
+                    setQuestsLoading(false)
+                })
+        }
+    }, [selectedQuestCategory])
+
+    // Load object types when switching to Objects tab
+    useEffect(() => {
+        if (activeTab === 'objects' && objectTypes.length === 0) {
+            setObjectsLoading(true)
+            GetObjectTypes()
+                .then(types => {
+                    setObjectTypes(types || [])
+                    setObjectsLoading(false)
+                })
+                .catch(err => {
+                    console.error("Failed to load object types:", err)
+                    setObjectsLoading(false)
+                })
+        }
+    }, [activeTab])
+
+    // Load objects when a type is selected
+    useEffect(() => {
+        if (selectedObjectType !== null) {
+            setObjectsLoading(true)
+            setObjects([])
+            GetObjectsByType(selectedObjectType.id)
+                .then(res => {
+                    setObjects(res || [])
+                    setObjectsLoading(false)
+                })
+                .catch(err => {
+                    console.error("Failed to load objects:", err)
+                    setObjectsLoading(false)
+                })
+        }
+    }, [selectedObjectType])
 
     // Load set detail when a set is selected
     useEffect(() => {
@@ -575,34 +699,202 @@ function DatabasePage() {
 
                 {/* QUESTS TAB */}
                 {activeTab === 'quests' && (
-                    <div style={{ gridColumn: '1 / -1', padding: '20px', background: '#242424', color: '#ccc' }}>
-                        <h2 style={{ color: '#FFD100', borderBottom: '1px solid #505050', paddingBottom: '10px' }}>Quests</h2>
-                        <p style={{ lineHeight: '1.6' }}>
-                            Quest browsing coming soon. Import pending: <b style={{ color: '#fff' }}>5,867 quests</b> from tw_world.quest_template
-                        </p>
-                        <ul style={{ paddingLeft: '20px', marginTop: '15px' }}>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Filter by level range</div></li>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Filter by zone</div></li>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Filter by faction (Horde/Alliance)</div></li>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Search by name</div></li>
-                        </ul>
-                    </div>
+                    <>
+                        {/* Quest Categories List */}
+                        <aside className="sidebar" style={{ gridColumn: '1 / 2' }}>
+                            <div style={{ padding: '0 0 10px 0', borderBottom: '1px solid #404040', marginBottom: '10px' }}>
+                                <input 
+                                    type="text" 
+                                    placeholder="Search Quests..." 
+                                    style={{
+                                        width: '100%',
+                                        padding: '5px',
+                                        background: '#242424',
+                                        border: '1px solid #404040',
+                                        color: '#fff'
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            setQuestsLoading(true)
+                                            SearchQuests(e.target.value).then(res => {
+                                                setQuests(res || [])
+                                                setSelectedQuestCategory({ id: -9999, name: 'Search Results' })
+                                                setQuestsLoading(false)
+                                            })
+                                        }
+                                    }}
+                                />
+                            </div>
+                            <h2>Categories</h2>
+                            <div className="list">
+                                {questsLoading && questCategories.length === 0 && (
+                                    <div className="loading">Loading categories...</div>
+                                )}
+                                {questCategories.map(cat => (
+                                    <div
+                                        key={cat.id}
+                                        className={`item ${selectedQuestCategory?.id === cat.id ? 'active' : ''}`}
+                                        onClick={() => setSelectedQuestCategory(cat)}
+                                    >
+                                        {cat.name} ({cat.count})
+                                    </div>
+                                ))}
+                            </div>
+                        </aside>
+
+                        {/* Quest List */}
+                        <section className="loot" style={{ gridColumn: '2 / -1' }}>
+                            <h2>
+                                {selectedQuestCategory 
+                                    ? `${selectedQuestCategory.name} (${quests.length})` 
+                                    : 'Select a Category'}
+                            </h2>
+                            
+                            {questsLoading && selectedQuestCategory && (
+                                <div className="loading">Loading quests...</div>
+                            )}
+                            
+                            {quests.length > 0 && (
+                                <div className="loot-items">
+                                    {quests.map(quest => (
+                                        <div 
+                                            key={quest.entry}
+                                            className="loot-item"
+                                            style={{ borderLeft: '3px solid #FFD100' }}
+                                        >
+                                            <div className="item-icon-placeholder" style={{ 
+                                                background: '#FFD100',
+                                                color: '#000',
+                                                fontWeight: 'bold',
+                                                fontSize: '11px'
+                                            }}>
+                                                {quest.questLevel > 0 ? quest.questLevel : '-'}
+                                            </div>
+                                            
+                                            <span className="item-id">[{quest.entry}]</span>
+                                            
+                                            <span style={{ color: '#FFD100', fontWeight: 'bold' }}>
+                                                {quest.title}
+                                            </span>
+
+                                            {/* Faction/Race Flags (Simple checks) */}
+                                            {/* Note: RequiredRaces logic is complex bitmask, simplified here */}
+                                            <span style={{ marginLeft: '10px', fontSize: '11px', color: '#888' }}>
+                                                {quest.minLevel > 0 && `Requires Lvl ${quest.minLevel}`}
+                                            </span>
+
+                                            <span style={{ marginLeft: 'auto', color: '#fff', fontSize: '11px' }}>
+                                                {quest.type === 1 && <span style={{color: '#1eff00', marginRight: '5px'}}>[Group]</span>}
+                                                {quest.type === 41 && <span style={{color: '#ff8000', marginRight: '5px'}}>[PvP]</span>}
+                                                {quest.type === 62 && <span style={{color: '#a335ee', marginRight: '5px'}}>[Raid]</span>}
+                                                {quest.type === 81 && <span style={{color: '#a335ee', marginRight: '5px'}}>[Dungeon]</span>}
+                                                XP: {quest.rewardXp > 0 ? quest.rewardXp : '-'}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            
+                            {!selectedQuestCategory && (
+                                <p className="placeholder">Select a category or search to browse Quests</p>
+                            )}
+                        </section>
+                    </>
                 )}
 
                 {/* OBJECTS TAB */}
                 {activeTab === 'objects' && (
-                    <div style={{ gridColumn: '1 / -1', padding: '20px', background: '#242424', color: '#ccc' }}>
-                        <h2 style={{ color: '#FFD100', borderBottom: '1px solid #505050', paddingBottom: '10px' }}>Objects</h2>
-                        <p style={{ lineHeight: '1.6' }}>
-                            Object browsing coming soon. Import pending: <b style={{ color: '#fff' }}>20,819 objects</b> from tw_world.gameobject_template
-                        </p>
-                        <ul style={{ paddingLeft: '20px', marginTop: '15px' }}>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Chests and containers</div></li>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Quest objects</div></li>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Mining nodes and herbs</div></li>
-                            <li style={{ color: '#c3030b' }}><div style={{ color: '#fff' }}>Doors and buttons</div></li>
-                        </ul>
-                    </div>
+                    <>
+                        {/* Object Types List */}
+                        <aside className="sidebar" style={{ gridColumn: '1 / 2' }}>
+                            <div style={{ padding: '0 0 10px 0', borderBottom: '1px solid #404040', marginBottom: '10px' }}>
+                                <input 
+                                    type="text" 
+                                    placeholder="Search Objects..." 
+                                    style={{
+                                        width: '100%',
+                                        padding: '5px',
+                                        background: '#242424',
+                                        border: '1px solid #404040',
+                                        color: '#fff'
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            setObjectsLoading(true)
+                                            SearchObjects(e.target.value).then(res => {
+                                                setObjects(res || [])
+                                                setSelectedObjectType({ id: -9999, name: 'Search Results' })
+                                                setObjectsLoading(false)
+                                            })
+                                        }
+                                    }}
+                                />
+                            </div>
+                            <h2>Object Types</h2>
+                            <div className="list">
+                                {objectsLoading && objectTypes.length === 0 && (
+                                    <div className="loading">Loading types...</div>
+                                )}
+                                {objectTypes.map(type => (
+                                    <div
+                                        key={type.id}
+                                        className={`item ${selectedObjectType?.id === type.id ? 'active' : ''}`}
+                                        onClick={() => setSelectedObjectType(type)}
+                                    >
+                                        {type.name} ({type.count})
+                                    </div>
+                                ))}
+                            </div>
+                        </aside>
+
+                        {/* Objects List */}
+                        <section className="loot" style={{ gridColumn: '2 / -1' }}>
+                            <h2>
+                                {selectedObjectType 
+                                    ? `${selectedObjectType.name} (${objects.length})` 
+                                    : 'Select a Type'}
+                            </h2>
+                            
+                            {objectsLoading && selectedObjectType && (
+                                <div className="loading">Loading objects...</div>
+                            )}
+                            
+                            {objects.length > 0 && (
+                                <div className="loot-items">
+                                    {objects.map(obj => (
+                                        <div 
+                                            key={obj.entry}
+                                            className="loot-item"
+                                            style={{ borderLeft: '3px solid #00B4FF' }}
+                                        >
+                                            <div className="item-icon-placeholder" style={{ 
+                                                background: '#00B4FF',
+                                                color: '#fff',
+                                                fontWeight: 'bold',
+                                                fontSize: '10px'
+                                            }}>
+                                                OBJ
+                                            </div>
+                                            
+                                            <span className="item-id">[{obj.entry}]</span>
+                                            
+                                            <span style={{ color: '#00B4FF', fontWeight: 'bold' }}>
+                                                {obj.name}
+                                            </span>
+                                            
+                                            <span style={{ marginLeft: 'auto', color: '#888', fontSize: '11px' }}>
+                                                Type: {obj.typeName || obj.type} | Size: {obj.size.toFixed(1)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            
+                            {!selectedObjectType && (
+                                <p className="placeholder">Select an object type or search to browse Objects</p>
+                            )}
+                        </section>
+                    </>
                 )}
 
                 {/* SPELLS TAB */}
