@@ -6,7 +6,6 @@ type Quest struct {
 	Title           string `json:"title"`
 	QuestLevel      int    `json:"questLevel"`
 	MinLevel        int    `json:"minLevel"`
-	MaxLevel        int    `json:"maxLevel"`
 	Type            int    `json:"type"`
 	ZoneOrSort      int    `json:"zoneOrSort"`
 	CategoryName    string `json:"categoryName"`
@@ -86,9 +85,9 @@ func (r *ItemRepository) GetQuestCategories() ([]*QuestCategory, error) {
 // GetQuestsByCategory returns quests filtered by category (zone or sort)
 func (r *ItemRepository) GetQuestsByCategory(categoryID int) ([]*Quest, error) {
 	rows, err := r.db.DB().Query(`
-		SELECT entry, title, quest_level, min_level, max_level, 
-			quest_type, zone_or_sort, required_races, required_classes,
-			src_item_id, reward_xp
+		SELECT entry, IFNULL(title,''), IFNULL(quest_level,0), IFNULL(min_level,0), 
+			IFNULL(type,0), IFNULL(zone_or_sort,0),
+			IFNULL(rew_xp,0)
 		FROM quests
 		WHERE zone_or_sort = ?
 		ORDER BY quest_level, title
@@ -102,9 +101,9 @@ func (r *ItemRepository) GetQuestsByCategory(categoryID int) ([]*Quest, error) {
 	for rows.Next() {
 		q := &Quest{}
 		err := rows.Scan(
-			&q.Entry, &q.Title, &q.QuestLevel, &q.MinLevel, &q.MaxLevel,
-			&q.Type, &q.ZoneOrSort, &q.RequiredRaces, &q.RequiredClasses,
-			&q.SrcItem, &q.RewardXP,
+			&q.Entry, &q.Title, &q.QuestLevel, &q.MinLevel,
+			&q.Type, &q.ZoneOrSort,
+			&q.RewardXP,
 		)
 		if err != nil {
 			continue
@@ -117,9 +116,9 @@ func (r *ItemRepository) GetQuestsByCategory(categoryID int) ([]*Quest, error) {
 // SearchQuests searches for quests by title
 func (r *ItemRepository) SearchQuests(query string) ([]*Quest, error) {
 	rows, err := r.db.DB().Query(`
-		SELECT q.entry, q.title, q.quest_level, q.min_level, q.max_level, 
-			q.quest_type, q.zone_or_sort, q.required_races, q.required_classes,
-			q.src_item_id, q.reward_xp, c.name
+		SELECT q.entry, IFNULL(q.title,''), IFNULL(q.quest_level,0), IFNULL(q.min_level,0), 
+			IFNULL(q.type,0), IFNULL(q.zone_or_sort,0),
+			IFNULL(q.rew_xp,0), c.name
 		FROM quests q
 		LEFT JOIN quest_categories c ON q.zone_or_sort = c.id
 		WHERE q.title LIKE ?
@@ -136,9 +135,9 @@ func (r *ItemRepository) SearchQuests(query string) ([]*Quest, error) {
 		q := &Quest{}
 		var catName *string
 		err := rows.Scan(
-			&q.Entry, &q.Title, &q.QuestLevel, &q.MinLevel, &q.MaxLevel,
-			&q.Type, &q.ZoneOrSort, &q.RequiredRaces, &q.RequiredClasses,
-			&q.SrcItem, &q.RewardXP, &catName,
+			&q.Entry, &q.Title, &q.QuestLevel, &q.MinLevel,
+			&q.Type, &q.ZoneOrSort,
+			&q.RewardXP, &catName,
 		)
 		if err != nil {
 			continue

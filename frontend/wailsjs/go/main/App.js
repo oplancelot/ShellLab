@@ -54,6 +54,10 @@ export function GetItemClasses() {
   return window['go']['main']['App']['GetItemClasses']();
 }
 
+export function GetItemDetail(arg1) {
+  return window['go']['main']['App']['GetItemDetail'](arg1);
+}
+
 export function GetItemSetDetail(arg1) {
   return window['go']['main']['App']['GetItemSetDetail'](arg1);
 }
@@ -76,6 +80,10 @@ export function GetObjectsByType(arg1) {
 
 export function GetQuestCategories() {
   return window['go']['main']['App']['GetQuestCategories']();
+}
+
+export function GetQuestDetail(arg1) {
+  return window['go']['main']['App']['GetQuestDetail'](arg1);
 }
 
 export function GetQuestsByCategory(arg1) {

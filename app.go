@@ -244,23 +244,23 @@ func (a *App) GetQuestCategories() []*database.QuestCategory {
 }
 
 // GetQuestsByCategory returns quests filtered by category
-func (a *App) GetQuestsByCategory(categoryID int) []*database.Quest {
+func (a *App) GetQuestsByCategory(categoryID int) ([]*database.Quest, error) {
 	quests, err := a.itemRepo.GetQuestsByCategory(categoryID)
 	if err != nil {
 		fmt.Printf("Error browsing quests: %v\n", err)
-		return []*database.Quest{}
+		return nil, err
 	}
-	return quests
+	return quests, nil
 }
 
 // SearchQuests searches for quests by title
-func (a *App) SearchQuests(query string) []*database.Quest {
+func (a *App) SearchQuests(query string) ([]*database.Quest, error) {
 	quests, err := a.itemRepo.SearchQuests(query)
 	if err != nil {
 		fmt.Printf("Error searching quests: %v\n", err)
-		return []*database.Quest{}
+		return nil, err
 	}
-	return quests
+	return quests, nil
 }
 
 // GetObjectTypes returns all object types
@@ -332,13 +332,33 @@ type LegacyBossLoot struct {
 }
 
 // GetCreatureDetail returns full details for a creature
-func (a *App) GetCreatureDetail(entry int) *database.CreatureDetail {
+func (a *App) GetCreatureDetail(entry int) (*database.CreatureDetail, error) {
 	c, err := a.itemRepo.GetCreatureDetail(entry)
 	if err != nil {
-		fmt.Printf("Error getting creature detail: %v\n", err)
-		return nil
+		fmt.Printf("Error getting creature detail [%d]: %v\n", entry, err)
+		return nil, err
 	}
-	return c
+	return c, nil
+}
+
+// GetQuestDetail returns full details for a quest
+func (a *App) GetQuestDetail(entry int) (*database.QuestDetail, error) {
+	q, err := a.itemRepo.GetQuestDetail(entry)
+	if err != nil {
+		fmt.Printf("Error getting quest detail [%d]: %v\n", entry, err)
+		return nil, err
+	}
+	return q, nil
+}
+
+// GetItemDetail returns full details for an item
+func (a *App) GetItemDetail(entry int) (*database.ItemDetail, error) {
+	i, err := a.itemRepo.GetItemDetail(entry)
+	if err != nil {
+		fmt.Printf("Error getting item detail [%d]: %v\n", entry, err)
+		return nil, err
+	}
+	return i, nil
 }
 
 // LegacyLootItem matches the structure from master branch

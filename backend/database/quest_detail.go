@@ -60,15 +60,15 @@ func (r *ItemRepository) GetQuestDetail(entry int) (*QuestDetail, error) {
 	var repV1, repV2, repV3, repV4, repV5 int
 
 	err := r.db.DB().QueryRow(`
-		SELECT title, details, objectives, offer_reward_text, end_text,
-			min_level, quest_level, type, zone_or_sort,
-			rew_xp, rew_money,
-			rew_item1, rew_item2, rew_item3, rew_item4,
-			rew_item_count1, rew_item_count2, rew_item_count3, rew_item_count4,
-			rew_choice_item1, rew_choice_item2, rew_choice_item3, rew_choice_item4, rew_choice_item5, rew_choice_item6,
-			rew_choice_item_count1, rew_choice_item_count2, rew_choice_item_count3, rew_choice_item_count4, rew_choice_item_count5, rew_choice_item_count6,
-			rew_rep_faction1, rew_rep_faction2, rew_rep_faction3, rew_rep_faction4, rew_rep_faction5,
-			rew_rep_value1, rew_rep_value2, rew_rep_value3, rew_rep_value4, rew_rep_value5
+		SELECT IFNULL(title,''), IFNULL(details,''), IFNULL(objectives,''), IFNULL(offer_reward_text,''), IFNULL(end_text,''),
+			IFNULL(min_level,0), IFNULL(quest_level,0), IFNULL(type,0), IFNULL(zone_or_sort,0),
+			IFNULL(rew_xp,0), IFNULL(rew_money,0),
+			IFNULL(rew_item1,0), IFNULL(rew_item2,0), IFNULL(rew_item3,0), IFNULL(rew_item4,0),
+			IFNULL(rew_item_count1,0), IFNULL(rew_item_count2,0), IFNULL(rew_item_count3,0), IFNULL(rew_item_count4,0),
+			IFNULL(rew_choice_item1,0), IFNULL(rew_choice_item2,0), IFNULL(rew_choice_item3,0), IFNULL(rew_choice_item4,0), IFNULL(rew_choice_item5,0), IFNULL(rew_choice_item6,0),
+			IFNULL(rew_choice_item_count1,0), IFNULL(rew_choice_item_count2,0), IFNULL(rew_choice_item_count3,0), IFNULL(rew_choice_item_count4,0), IFNULL(rew_choice_item_count5,0), IFNULL(rew_choice_item_count6,0),
+			IFNULL(rew_rep_faction1,0), IFNULL(rew_rep_faction2,0), IFNULL(rew_rep_faction3,0), IFNULL(rew_rep_faction4,0), IFNULL(rew_rep_faction5,0),
+			IFNULL(rew_rep_value1,0), IFNULL(rew_rep_value2,0), IFNULL(rew_rep_value3,0), IFNULL(rew_rep_value4,0), IFNULL(rew_rep_value5,0)
 		FROM quests WHERE entry = ?
 	`, entry).Scan(
 		&q.Title, &q.Details, &q.Objectives, &q.OfferRewardText, &q.EndText,

@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react'
 import { GetItemClasses, BrowseItemsByClass } from '../../wailsjs/go/main/App'
 import { useItemTooltip } from '../hooks/useItemTooltip'
-import ItemTooltip, { getQualityColor } from './ItemTooltip'
+import ItemTooltip from './ItemTooltip'
+import NPCDetailView from './database/NPCDetailView'
+import QuestDetailView from './database/QuestDetailView'
+import ItemDetailView from './database/ItemDetailView'
+import { getQualityColor } from '../utils/wow'
 
 // Direct call to BrowseItemsByClassAndSlot since binding may not be generated yet
 const BrowseItemsByClassAndSlot = (classId, subClass, inventoryType) => {
@@ -110,32 +114,7 @@ const GetCreatureLoot = (entry) => {
     return Promise.resolve([])
 }
 
-const GetQuestDetail = (entry) => {
-    if (window?.go?.main?.App?.GetQuestDetail) {
-        return window.go.main.App.GetQuestDetail(entry)
-    }
-    return Promise.resolve(null)
-}
 
-const GetCreatureDetail = (entry) => {
-    if (window?.go?.main?.App?.GetCreatureDetail) {
-        return window.go.main.App.GetCreatureDetail(entry)
-    }
-    return Promise.resolve(null)
-}
-
-const getQualityColor = (quality) => {
-    const colors = {
-        0: '#9d9d9d', // Poor
-        1: '#ffffff', // Common
-        2: '#1eff00', // Uncommon
-        3: '#0070dd', // Rare
-        4: '#a335ee', // Epic
-        5: '#ff8000', // Legendary
-        6: '#e6cc80'  // Artifact
-    }
-    return colors[quality] || '#ffffff'
-}
 
 function DatabasePage() {
     const [activeTab, setActiveTab] = useState('items')
@@ -215,38 +194,17 @@ function DatabasePage() {
 
     // Detail View Logic
     const navigateTo = (type, entry) => {
+        console.log(`[DatabasePage] Navigating to ${type} with entry: ${entry}`);
         setDetailStack(prev => [...prev, { type, entry }])
     }
     const goBack = () => {
+        console.log(`[DatabasePage] Going back. Previous stack size: ${detailStack.length}`);
         setDetailStack(prev => prev.slice(0, -1))
     }
 
     const currentDetail = detailStack.length > 0 ? detailStack[detailStack.length - 1] : null
     
-    if (currentDetail) {
-         const commonProps = {
-            onBack: goBack,
-            onNavigate: navigateTo,
-            setHoveredItem,
-            tooltipCache,
-            loadTooltipData
-        }
 
-        let view = null
-        if (currentDetail.type === 'npc') {
-            view = <NPCDetailView entry={currentDetail.entry} {...commonProps} />
-        } else if (currentDetail.type === 'quest') {
-            view = <QuestDetailView entry={currentDetail.entry} {...commonProps} />
-        }
-
-        if (view) {
-             return (
-                <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    {view}
-                </div>
-            )
-        }
-    }
 
     // Load Item Classes on mount
     useEffect(() => {
@@ -488,6 +446,38 @@ function DatabasePage() {
                 onMouseLeave={() => setHoveredItem(null)}
             />
         )
+    }
+
+    if (currentDetail) {
+         console.log(`[DatabasePage] Rendering detail view for:`, currentDetail);
+         const commonProps = {
+            onBack: goBack,
+            onNavigate: navigateTo,
+            hoveredItem,
+            setHoveredItem,
+            tooltipCache,
+            loadTooltipData
+        }
+
+        let view = null
+        if (currentDetail.type === 'npc') {
+            console.log(`[DatabasePage] Selecting NPCDetailView`);
+            view = <NPCDetailView entry={currentDetail.entry} {...commonProps} />
+        } else if (currentDetail.type === 'quest') {
+            console.log(`[DatabasePage] Selecting QuestDetailView`);
+            view = <QuestDetailView entry={currentDetail.entry} {...commonProps} />
+        } else if (currentDetail.type === 'item') {
+            console.log(`[DatabasePage] Selecting ItemDetailView`);
+            view = <ItemDetailView entry={currentDetail.entry} {...commonProps} />
+        }
+
+        if (view) {
+             return (
+                <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    {view}
+                </div>
+            )
+        }
     }
 
     return (
@@ -1235,204 +1225,3 @@ function DatabasePage() {
 }
 
 export default DatabasePage
-const NPCDetailView = ({ entry, onBack, onNavigate, setHoveredItem, tooltipCache, loadTooltipData }) => {
-    const [detail, setDetail] = useState(null)
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        setLoading(true)
-        GetCreatureDetail(entry).then(res => {
-            setDetail(res)
-            setLoading(false)
-        })
-    }, [entry])
-
-    const renderLootItem = (item) => {
-        const hasTooltip = hoveredItem === item.itemId
-        if (hasTooltip && !tooltipCache[item.itemId]) {
-            loadTooltipData(item.itemId)
-        }
-
-        return (
-            <div 
-                key={item.itemId}
-                className="loot-tile" 
-                style={{ position: 'relative', display: 'flex', alignItems: 'center', background: '#242424', padding: '5px', borderRadius: '4px', cursor: 'pointer' }}
-                onMouseEnter={() => setHoveredItem(item.itemId)}
-                onMouseLeave={() => setHoveredItem(null)}
-                // onClick={() => onNavigate('item', item.itemId)} // Item detail not fully ready but could be added
-            >
-                <div style={{ width: '32px', height: '32px', border: `1px solid ${getQualityColor(item.quality)}`, marginRight: '8px' }}>
-                    {item.icon ? <img src={`/items/icons/${item.icon}.jpg`} style={{width:'100%'}} /> : '?'}
-                </div>
-                <div style={{ flex: 1, overflow: 'hidden' }}>
-                    <div style={{ color: getQualityColor(item.quality), fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.itemName}</div>
-                    <div style={{ color: '#aaa', fontSize: '11px' }}>{item.chance.toFixed(1)}% {item.minCount > 1 && `(${item.minCount}-${item.maxCount})`}</div>
-                </div>
-                {hasTooltip && tooltipCache[item.itemId] && (
-                    <div style={{ position: 'absolute', left: '100%', top: 0, zIndex: 1000, marginLeft: '10px' }}>
-                        <ItemTooltip item={{entry: item.itemId, quality: item.quality, name: item.itemName}} tooltip={tooltipCache[item.itemId]} />
-                    </div>
-                )}
-            </div>
-        )
-    }
-
-    if (loading) return <div className="loading">Loading...</div>
-    if (!detail) return <div className="error">NPC not found</div>
-
-    return (
-        <div className="detail-view" style={{ flex: 1, overflowY: 'auto', padding: '20px', background: '#121212', color: '#e0e0e0' }}>
-            <button onClick={onBack} style={{ background: '#333', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}>&larr; Back to List</button>
-            
-            <header style={{ marginBottom: '30px', borderBottom: '1px solid #333', paddingBottom: '20px' }}>
-                <h1 style={{ color: getQualityColor(detail.rank >= 1 ? 3 : 1), margin: '0 0 10px 0' }}>{detail.name}</h1>
-                <div style={{ color: '#888' }}>{detail.subname && `<${detail.subname}>`} Level {detail.levelMin}-{detail.levelMax} {detail.typeName} ({detail.rankName})</div>
-                <div style={{ marginTop: '10px' }}>
-                    <span style={{ marginRight: '20px' }}>Health: {detail.healthMax}</span>
-                    <span>Mana: {detail.manaMax}</span>
-                </div>
-            </header>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-                <div>
-                    <h3 style={{ borderBottom: '1px solid #FFD100', paddingBottom: '5px', color: '#FFD100' }}>Loot Table</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '8px', marginTop: '10px' }}>
-                        {detail.loot.length > 0 ? detail.loot.sort((a,b)=>b.chance-a.chance).map(renderLootItem) : <div style={{color:'#666'}}>No loot.</div>}
-                    </div>
-                </div>
-                <div>
-                    <h3 style={{ borderBottom: '1px solid #FFD100', paddingBottom: '5px', color: '#FFD100' }}>Related Quests</h3>
-                    
-                    <h4 style={{ color: '#aaa', marginTop: '15px' }}>Starts ({detail.startsQuests ? detail.startsQuests.length : 0})</h4>
-                    <ul style={{ listStyle: 'none', padding: 0 }}>
-                        {detail.startsQuests && detail.startsQuests.map(q => (
-                            <li key={q.entry} style={{ padding: '4px 0' }}>
-                                <a className="quest-link" onClick={() => onNavigate('quest', q.entry)} style={{ cursor: 'pointer', color: '#FFD100', textDecoration: 'none' }}>
-                                    Warning: Using 'hoveredItem' which is not defined in this scope. Passed as prop? No, renderLootItem uses it.
-                                    {q.title}
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
-
-                    <h4 style={{ color: '#aaa', marginTop: '15px' }}>Ends ({detail.endsQuests ? detail.endsQuests.length : 0})</h4>
-                    <ul style={{ listStyle: 'none', padding: 0 }}>
-                        {detail.endsQuests && detail.endsQuests.map(q => (
-                            <li key={q.entry} style={{ padding: '4px 0' }}>
-                                <a onClick={() => onNavigate('quest', q.entry)} style={{ cursor: 'pointer', color: '#FFD100' }}>
-                                    {q.title}
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
-        </div>
-    )
-}
-
-const QuestDetailView = ({ entry, onBack, onNavigate, setHoveredItem, tooltipCache, loadTooltipData }) => {
-    const [detail, setDetail] = useState(null)
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        setLoading(true)
-        GetQuestDetail(entry).then(res => {
-            setDetail(res)
-            setLoading(false)
-        })
-    }, [entry])
-
-    const renderRewardItem = (item, isChoice) => {
-        const hasTooltip = hoveredItem === item.entry
-        if (hasTooltip && !tooltipCache[item.entry]) {
-            loadTooltipData(item.entry)
-        }
-        return (
-            <div 
-                key={item.entry}
-                style={{ position: 'relative', display: 'flex', alignItems: 'center', background: '#242424', padding: '5px', borderRadius: '4px', margin: '5px 0' }}
-                onMouseEnter={() => setHoveredItem(item.entry)}
-                onMouseLeave={() => setHoveredItem(null)}
-            >
-                 <div style={{ width: '32px', height: '32px', border: `1px solid ${getQualityColor(item.quality)}`, marginRight: '8px' }}>
-                    {item.icon ? <img src={`/items/icons/${item.icon}.jpg`} style={{width:'100%'}} /> : '?'}
-                </div>
-                <div>
-                   <div style={{ color: getQualityColor(item.quality) }}>{item.name}</div>
-                   {item.count > 1 && <div style={{ color: '#aaa', fontSize: '11px' }}>x{item.count}</div>}
-                </div>
-                {hasTooltip && tooltipCache[item.entry] && (
-                    <div style={{ position: 'absolute', left: '100%', top: 0, zIndex: 1000, marginLeft: '10px' }}>
-                        <ItemTooltip item={{entry: item.entry, quality: item.quality, name: item.name}} tooltip={tooltipCache[item.entry]} />
-                    </div>
-                )}
-            </div>
-        )
-    }
-
-    if (loading) return <div className="loading">Loading...</div>
-    if (!detail) return <div className="error">Quest not found</div>
-    
-    return (
-         <div className="detail-view" style={{ flex: 1, overflowY: 'auto', padding: '20px', background: '#121212', color: '#e0e0e0' }}>
-            <button onClick={onBack} style={{ background: '#333', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}>&larr; Back to List</button>
-            
-            <h1 style={{ color: '#FFD100', marginBottom: '10px' }}>{detail.title}</h1>
-            <div style={{ color: '#888', marginBottom: '20px' }}>Level {detail.questLevel} (Min {detail.minLevel}) - {detail.type === 41 ? 'PVP' : detail.type === 81 ? 'Dungeon' : 'Normal'}</div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '40px' }}>
-                <div>
-                    <h3>Description</h3>
-                    <p style={{ lineHeight: '1.6', color: '#ccc' }}>{detail.details}</p>
-                    
-                    <h3>Objectives</h3>
-                    <p style={{ lineHeight: '1.6', color: '#ccc' }}>{detail.objectives}</p>
-                </div>
-                
-                <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '8px' }}>
-                    <h3 style={{ marginTop: 0, color: '#FFD100' }}>Rewards</h3>
-                    {detail.rewMoney > 0 && <div style={{marginBottom:'10px'}}>Money: {Math.floor(detail.rewMoney/10000)}g {(detail.rewMoney%10000)/100}s</div>}
-                    {detail.rewXp > 0 && <div style={{marginBottom:'10px'}}>XP: {detail.rewXp}</div>}
-                    
-                    {detail.rewards && detail.rewards.length > 0 && (
-                        <div>
-                            <h4>You will receive:</h4>
-                            {detail.rewards.map(i => renderRewardItem(i, false))}
-                        </div>
-                    )}
-                    
-                    {detail.choiceRewards && detail.choiceRewards.length > 0 && (
-                        <div>
-                            <h4>Choose one of:</h4>
-                            {detail.choiceRewards.map(i => renderRewardItem(i, true))}
-                        </div>
-                    )}
-                    
-                    <h3 style={{ color: '#FFD100', marginTop: '20px' }}>Related</h3>
-                    {detail.starters && detail.starters.length > 0 && (
-                        <div>
-                            <h4>Start:</h4>
-                            {detail.starters.map(s => (
-                                <div key={s.entry} onClick={() => s.type==='npc' && onNavigate('npc', s.entry)} style={{cursor: s.type==='npc'?'pointer':'default', color: s.type==='npc'?'#4a9eff':'#aaa'}}>
-                                    {s.name} ({s.type})
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                     {detail.enders && detail.enders.length > 0 && (
-                        <div>
-                            <h4>End:</h4>
-                           {detail.enders.map(s => (
-                                <div key={s.entry} onClick={() => s.type==='npc' && onNavigate('npc', s.entry)} style={{cursor: s.type==='npc'?'pointer':'default', color: s.type==='npc'?'#4a9eff':'#aaa'}}>
-                                    {s.name} ({s.type})
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div>
-         </div>
-    )
-}

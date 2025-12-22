@@ -29,6 +29,8 @@ export function GetInstances(arg1:string):Promise<Array<string>>;
 
 export function GetItemClasses():Promise<Array<database.ItemClass>>;
 
+export function GetItemDetail(arg1:number):Promise<database.ItemDetail>;
+
 export function GetItemSetDetail(arg1:number):Promise<database.ItemSetDetail>;
 
 export function GetItemSets():Promise<Array<database.ItemSetBrowse>>;
@@ -40,6 +42,8 @@ export function GetObjectTypes():Promise<Array<database.ObjectType>>;
 export function GetObjectsByType(arg1:number):Promise<Array<database.GameObject>>;
 
 export function GetQuestCategories():Promise<Array<database.QuestCategory>>;
+
+export function GetQuestDetail(arg1:number):Promise<database.QuestDetail>;
 
 export function GetQuestsByCategory(arg1:number):Promise<Array<database.Quest>>;
 
