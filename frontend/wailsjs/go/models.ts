@@ -76,6 +76,110 @@ export namespace database {
 	        this.npcFlags = source["npcFlags"];
 	    }
 	}
+	export class QuestRelation {
+	    entry: number;
+	    name: string;
+	    type: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new QuestRelation(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entry = source["entry"];
+	        this.name = source["name"];
+	        this.type = source["type"];
+	    }
+	}
+	export class LootItem {
+	    itemId: number;
+	    itemName: string;
+	    icon: string;
+	    quality: number;
+	    chance: number;
+	    minCount: number;
+	    maxCount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new LootItem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.itemId = source["itemId"];
+	        this.itemName = source["itemName"];
+	        this.icon = source["icon"];
+	        this.quality = source["quality"];
+	        this.chance = source["chance"];
+	        this.minCount = source["minCount"];
+	        this.maxCount = source["maxCount"];
+	    }
+	}
+	export class CreatureDetail {
+	    entry: number;
+	    name: string;
+	    subname?: string;
+	    levelMin: number;
+	    levelMax: number;
+	    healthMin: number;
+	    healthMax: number;
+	    manaMin: number;
+	    manaMax: number;
+	    type: number;
+	    typeName: string;
+	    rank: number;
+	    rankName: string;
+	    faction: number;
+	    npcFlags: number;
+	    loot: LootItem[];
+	    startsQuests: QuestRelation[];
+	    endsQuests: QuestRelation[];
+	
+	    static createFrom(source: any = {}) {
+	        return new CreatureDetail(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entry = source["entry"];
+	        this.name = source["name"];
+	        this.subname = source["subname"];
+	        this.levelMin = source["levelMin"];
+	        this.levelMax = source["levelMax"];
+	        this.healthMin = source["healthMin"];
+	        this.healthMax = source["healthMax"];
+	        this.manaMin = source["manaMin"];
+	        this.manaMax = source["manaMax"];
+	        this.type = source["type"];
+	        this.typeName = source["typeName"];
+	        this.rank = source["rank"];
+	        this.rankName = source["rankName"];
+	        this.faction = source["faction"];
+	        this.npcFlags = source["npcFlags"];
+	        this.loot = this.convertValues(source["loot"], LootItem);
+	        this.startsQuests = this.convertValues(source["startsQuests"], QuestRelation);
+	        this.endsQuests = this.convertValues(source["endsQuests"], QuestRelation);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class CreatureType {
 	    type: number;
 	    name: string;
@@ -427,30 +531,7 @@ export namespace database {
 	    }
 	}
 	
-	export class LootItem {
-	    itemId: number;
-	    itemName: string;
-	    icon: string;
-	    quality: number;
-	    chance: number;
-	    minCount: number;
-	    maxCount: number;
 	
-	    static createFrom(source: any = {}) {
-	        return new LootItem(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.itemId = source["itemId"];
-	        this.itemName = source["itemName"];
-	        this.icon = source["icon"];
-	        this.quality = source["quality"];
-	        this.chance = source["chance"];
-	        this.minCount = source["minCount"];
-	        this.maxCount = source["maxCount"];
-	    }
-	}
 	export class ObjectType {
 	    id: number;
 	    name: string;
@@ -517,6 +598,7 @@ export namespace database {
 	        this.count = source["count"];
 	    }
 	}
+	
 	export class SearchFilter {
 	    query: string;
 	    quality?: number[];

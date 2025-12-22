@@ -331,6 +331,16 @@ type LegacyBossLoot struct {
 	Items    []LegacyLootItem `json:"items"`
 }
 
+// GetCreatureDetail returns full details for a creature
+func (a *App) GetCreatureDetail(entry int) *database.CreatureDetail {
+	c, err := a.itemRepo.GetCreatureDetail(entry)
+	if err != nil {
+		fmt.Printf("Error getting creature detail: %v\n", err)
+		return nil
+	}
+	return c
+}
+
 // LegacyLootItem matches the structure from master branch
 type LegacyLootItem struct {
 	ItemID     int    `json:"itemId"`
