@@ -203,6 +203,36 @@ func (a *App) GetItemSetDetail(itemSetID int) *database.ItemSetDetail {
 	return detail
 }
 
+// GetCreatureTypes returns all creature types with counts
+func (a *App) GetCreatureTypes() []*database.CreatureType {
+	types, err := a.itemRepo.GetCreatureTypes()
+	if err != nil {
+		fmt.Printf("Error getting creature types: %v\n", err)
+		return []*database.CreatureType{}
+	}
+	return types
+}
+
+// BrowseCreaturesByType returns creatures filtered by type
+func (a *App) BrowseCreaturesByType(creatureType int) []*database.Creature {
+	creatures, _, err := a.itemRepo.GetCreaturesByType(creatureType, 200, 0)
+	if err != nil {
+		fmt.Printf("Error browsing creatures: %v\n", err)
+		return []*database.Creature{}
+	}
+	return creatures
+}
+
+// SearchCreatures searches for creatures by name
+func (a *App) SearchCreatures(query string) []*database.Creature {
+	creatures, err := a.itemRepo.SearchCreatures(query, 50)
+	if err != nil {
+		fmt.Printf("Error searching creatures: %v\n", err)
+		return []*database.Creature{}
+	}
+	return creatures
+}
+
 // === Legacy Compatibility API (for master branch compatibility) ===
 
 // LegacyBossLoot matches the structure from master branch
