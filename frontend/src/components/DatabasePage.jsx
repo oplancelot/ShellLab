@@ -1,10 +1,28 @@
 import { useState, useEffect } from 'react'
 import { GetItemClasses, BrowseItemsByClass } from '../../wailsjs/go/main/App'
+import { useItemTooltip } from '../hooks/useItemTooltip'
+import ItemTooltip, { getQualityColor } from './ItemTooltip'
 
-// Direct call to GetTooltipData since Wails doesn't auto-generate binding for it
-const GetTooltipData = (itemId) => {
-    if (window?.go?.main?.App?.GetTooltipData) {
-        return window.go.main.App.GetTooltipData(itemId)
+// Direct call to BrowseItemsByClassAndSlot since binding may not be generated yet
+const BrowseItemsByClassAndSlot = (classId, subClass, inventoryType) => {
+    if (window?.go?.main?.App?.BrowseItemsByClassAndSlot) {
+        return window.go.main.App.BrowseItemsByClassAndSlot(classId, subClass, inventoryType)
+    }
+    return Promise.resolve([])
+}
+
+// Direct call to GetItemSets
+const GetItemSets = () => {
+    if (window?.go?.main?.App?.GetItemSets) {
+        return window.go.main.App.GetItemSets()
+    }
+    return Promise.resolve([])
+}
+
+// Direct call to GetItemSetDetail
+const GetItemSetDetail = (itemSetId) => {
+    if (window?.go?.main?.App?.GetItemSetDetail) {
+        return window.go.main.App.GetItemSetDetail(itemSetId)
     }
     return Promise.resolve(null)
 }
@@ -12,14 +30,30 @@ const GetTooltipData = (itemId) => {
 function DatabasePage() {
     const [activeTab, setActiveTab] = useState('items')
     
-    // Items Tab State
+    // Items Tab State - Three-level classification
     const [itemClasses, setItemClasses] = useState([])
     const [selectedClass, setSelectedClass] = useState(null)
     const [selectedSubClass, setSelectedSubClass] = useState(null)
+    const [selectedSlot, setSelectedSlot] = useState(null)  // Third level: inventory type
     const [items, setItems] = useState([])
     const [loading, setLoading] = useState(false)
-    const [tooltipCache, setTooltipCache] = useState({})
-    const [tooltipBelow, setTooltipBelow] = useState({})
+    
+    // Sets Tab State
+    const [itemSets, setItemSets] = useState([])
+    const [selectedSet, setSelectedSet] = useState(null)
+    const [setDetail, setSetDetail] = useState(null)
+    const [setsLoading, setSetsLoading] = useState(false)
+    
+    // Use shared tooltip hook
+    const {
+        hoveredItem,
+        setHoveredItem,
+        tooltipCache,
+        loadTooltipData,
+        handleMouseMove,
+        handleItemEnter,
+        getTooltipStyle,
+    } = useItemTooltip()
 
     // Load Item Classes on mount
     useEffect(() => {
@@ -35,22 +69,77 @@ function DatabasePage() {
             })
     }, [])
 
-    // Browse items when class/subclass selected
+    // Browse items when class/subclass/slot selected
     useEffect(() => {
         if (selectedClass !== null && selectedSubClass !== null) {
             setLoading(true)
             setItems([])
-            BrowseItemsByClass(selectedClass.class, selectedSubClass.subClass)
-                .then(res => {
-                    setItems(res || [])
-                    setLoading(false)
+            
+            // If slot is selected, use three-level filter
+            if (selectedSlot !== null) {
+                BrowseItemsByClassAndSlot(selectedClass.class, selectedSubClass.subClass, selectedSlot.inventoryType)
+                    .then(res => {
+                        setItems(res || [])
+                        setLoading(false)
+                    })
+                    .catch(err => {
+                        console.error("Failed to browse items by slot:", err)
+                        setLoading(false)
+                    })
+            } else {
+                // Otherwise use two-level filter
+                BrowseItemsByClass(selectedClass.class, selectedSubClass.subClass)
+                    .then(res => {
+                        setItems(res || [])
+                        setLoading(false)
+                    })
+                    .catch(err => {
+                        console.error("Failed to browse items:", err)
+                        setLoading(false)
+                    })
+            }
+        }
+    }, [selectedSubClass, selectedSlot])
+
+    // Load item sets when switching to Sets tab
+    useEffect(() => {
+        if (activeTab === 'sets' && itemSets.length === 0) {
+            setSetsLoading(true)
+            GetItemSets()
+                .then(sets => {
+                    setItemSets(sets || [])
+                    setSetsLoading(false)
                 })
                 .catch(err => {
-                    console.error("Failed to browse items:", err)
-                    setLoading(false)
+                    console.error("Failed to load item sets:", err)
+                    setSetsLoading(false)
                 })
         }
-    }, [selectedSubClass])
+    }, [activeTab])
+
+    // Load set detail when a set is selected
+    useEffect(() => {
+        if (selectedSet) {
+            setSetsLoading(true)
+            GetItemSetDetail(selectedSet.itemsetId)
+                .then(detail => {
+                    setSetDetail(detail)
+                    setSetsLoading(false)
+                    // Preload tooltips for set items
+                    if (detail?.items) {
+                        detail.items.forEach(item => {
+                            if (item.entry && !tooltipCache[item.entry]) {
+                                loadTooltipData(item.entry)
+                            }
+                        })
+                    }
+                })
+                .catch(err => {
+                    console.error("Failed to load set detail:", err)
+                    setSetsLoading(false)
+                })
+        }
+    }, [selectedSet])
 
     // Preload tooltips when items change
     useEffect(() => {
@@ -63,146 +152,22 @@ function DatabasePage() {
         }
     }, [items])
 
-    const getQualityColor = (quality) => {
-        const colors = {
-            0: '#9d9d9d', 1: '#ffffff', 2: '#1eff00', 
-            3: '#0070dd', 4: '#a335ee', 5: '#ff8000', 6: '#e6cc80'
-        }
-        return colors[quality] || '#ffffff'
-    }
-
     const getQualityClass = (quality) => `q${quality || 0}`
 
-    // Load tooltip data
-    const loadTooltipData = async (itemId) => {
-        if (tooltipCache[itemId]) return tooltipCache[itemId]
-        
-        try {
-            const data = await GetTooltipData(itemId)
-            if (data) {
-                setTooltipCache(prev => ({ ...prev, [itemId]: data }))
-                return data
-            }
-        } catch (err) {
-            console.error('Failed to load tooltip:', err)
-        }
-        return null
-    }
-
-    // Check tooltip position
-    const checkTooltipPosition = (event, idx) => {
-        const element = event.currentTarget
-        const container = element.closest('.loot-items')
-        if (!element || !container) return
-        
-        const elementRect = element.getBoundingClientRect()
-        const containerRect = container.getBoundingClientRect()
-        
-        const spaceAbove = elementRect.top - containerRect.top
-        const needsBelow = spaceAbove < 320
-        
-        if (needsBelow !== tooltipBelow[idx]) {
-            setTooltipBelow(prev => ({ ...prev, [idx]: needsBelow }))
-        }
-    }
-
-    // Render tooltip content
+    // Render tooltip content using shared component
     const renderTooltip = (item) => {
+        if (hoveredItem !== item.entry) return null
+        
         const tooltip = tooltipCache[item.entry]
         
-        if (!tooltip) {
-            return (
-                <div className="item-tooltip">
-                    <div className="tooltip-name" style={{color: getQualityColor(item.quality)}}>
-                        {item.name || 'Unknown Item'}
-                    </div>
-                    <div className="tooltip-loading">Loading...</div>
-                </div>
-            )
-        }
-        
         return (
-            <div className="item-tooltip">
-                <div className="tooltip-name" style={{color: getQualityColor(tooltip.quality)}}>
-                    {tooltip.name}
-                </div>
-                
-                {tooltip.itemLevel > 0 && (
-                    <div className="tooltip-itemlevel">Item Level {tooltip.itemLevel}</div>
-                )}
-                
-                {tooltip.binding && (
-                    <div className="tooltip-binding">{tooltip.binding}</div>
-                )}
-                
-                <div className="tooltip-slot-type">
-                    {tooltip.slotName && <span className="tooltip-slot">{tooltip.slotName}</span>}
-                    {tooltip.typeName && <span className="tooltip-type">{tooltip.typeName}</span>}
-                </div>
-                
-                {tooltip.classes && (
-                    <div className="tooltip-classes">{tooltip.classes}</div>
-                )}
-                
-                {tooltip.races && (
-                    <div className="tooltip-races">{tooltip.races}</div>
-                )}
-                
-                {tooltip.damageText && (
-                    <div className="tooltip-damage">
-                        <span>{tooltip.damageText}</span>
-                        <span className="tooltip-speed">{tooltip.speedText}</span>
-                    </div>
-                )}
-                
-                {tooltip.dps && (
-                    <div className="tooltip-dps">{tooltip.dps}</div>
-                )}
-                
-                {tooltip.armor > 0 && (
-                    <div className="tooltip-armor">{tooltip.armor} Armor</div>
-                )}
-                
-                {tooltip.stats && tooltip.stats.length > 0 && (
-                    <div className="tooltip-stats">
-                        {tooltip.stats.map((stat, i) => (
-                            <div key={i} className="tooltip-stat">{stat}</div>
-                        ))}
-                    </div>
-                )}
-                
-                {tooltip.resistances && tooltip.resistances.length > 0 && (
-                    <div className="tooltip-resistances">
-                        {tooltip.resistances.map((res, i) => (
-                            <div key={i} className="tooltip-resistance">{res}</div>
-                        ))}
-                    </div>
-                )}
-                
-                {tooltip.spellEffects && tooltip.spellEffects.length > 0 && (
-                    <div className="tooltip-effects">
-                        {tooltip.spellEffects.map((effect, i) => (
-                            <div key={i} className="tooltip-effect">{effect}</div>
-                        ))}
-                    </div>
-                )}
-                
-                {tooltip.durability && (
-                    <div className="tooltip-durability">{tooltip.durability}</div>
-                )}
-                
-                {tooltip.requiredLevel > 1 && (
-                    <div className="tooltip-reqlevel">Requires Level {tooltip.requiredLevel}</div>
-                )}
-                
-                {tooltip.description && (
-                    <div className="tooltip-description">"{tooltip. description}"</div>
-                )}
-                
-                {tooltip.sellPrice && (
-                    <div className="tooltip-sellprice">Sell Price: {tooltip.sellPrice}</div>
-                )}
-            </div>
+            <ItemTooltip
+                item={item}
+                tooltip={tooltip}
+                style={getTooltipStyle()}
+                onMouseEnter={() => setHoveredItem(item.entry)}
+                onMouseLeave={() => setHoveredItem(null)}
+            />
         )
     }
 
@@ -229,8 +194,8 @@ function DatabasePage() {
                 ))}
             </div>
 
-            {/* Content Area */}
-            <div className="content" style={{ flex: 1, display: 'grid', gridTemplateColumns: '200px 200px 1fr', gap: 0, overflow: 'hidden' }}>
+            {/* Content Area - 4 columns for three-level classification */}
+            <div className="content" style={{ flex: 1, display: 'grid', gridTemplateColumns: '180px 180px 150px 1fr', gap: 0, overflow: 'hidden' }}>
                 
                 {/* ITEMS TAB */}
                 {activeTab === 'items' && (
@@ -246,6 +211,7 @@ function DatabasePage() {
                                         onClick={() => {
                                             setSelectedClass(cls)
                                             setSelectedSubClass(null)
+                                            setSelectedSlot(null)
                                             setItems([])
                                         }}
                                     >
@@ -263,7 +229,10 @@ function DatabasePage() {
                                     <div
                                         key={sc.subClass}
                                         className={`item ${selectedSubClass?.subClass === sc.subClass ? 'active' : ''}`}
-                                        onClick={() => setSelectedSubClass(sc)}
+                                        onClick={() => {
+                                            setSelectedSubClass(sc)
+                                            setSelectedSlot(null)
+                                        }}
                                     >
                                         {sc.name}
                                     </div>
@@ -271,22 +240,46 @@ function DatabasePage() {
                             </div>
                         </section>
 
-                        {/* 3. Items List */}
+                        {/* 3. Inventory Slots (Third Level) */}
+                        <section className="instances">
+                            <h2>{selectedSubClass ? 'Slot' : 'Select Type'}</h2>
+                            <div className="list">
+                                {selectedSubClass?.inventorySlots?.map(slot => (
+                                    <div
+                                        key={slot.inventoryType}
+                                        className={`item ${selectedSlot?.inventoryType === slot.inventoryType ? 'active' : ''}`}
+                                        onClick={() => setSelectedSlot(slot)}
+                                    >
+                                        {slot.name}
+                                    </div>
+                                ))}
+                                {selectedSubClass && selectedSubClass.inventorySlots?.length > 1 && (
+                                    <div
+                                        className={`item ${selectedSlot === null ? 'active' : ''}`}
+                                        onClick={() => setSelectedSlot(null)}
+                                        style={{ fontStyle: 'italic', color: '#888' }}
+                                    >
+                                        All Slots
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+
+                        {/* 4. Items List */}
                         <section className="loot">
-                            <h2>{selectedSubClass ? `${selectedSubClass.name} (${items.length})` : 'Select SubClass'}</h2>
+                            <h2>{selectedSubClass ? `${selectedSlot ? selectedSlot.name : selectedSubClass.name} (${items.length})` : 'Select SubClass'}</h2>
                             {loading && <div className="loading">Loading items...</div>}
                             
                             {items.length > 0 && (
-                                <div className="loot-items">
+                            <div className="loot-items">
                                     {items.map((item, idx) => (
                                         <div 
                                             key={item.entry} 
-                                            className={`loot-item ${tooltipBelow[idx] ? 'tooltip-below' : ''}`}
+                                            className="loot-item"
                                             data-quality={item.quality || 0}
-                                            onMouseEnter={(e) => {
-                                                checkTooltipPosition(e, idx)
-                                                loadTooltipData(item.entry)
-                                            }}
+                                            onMouseEnter={() => handleItemEnter(item.entry)}
+                                            onMouseMove={(e) => handleMouseMove(e, item.entry)}
+                                            onMouseLeave={() => setHoveredItem(null)}
                                         >
                                             {item.iconPath ? (
                                                 <img 
@@ -325,10 +318,94 @@ function DatabasePage() {
 
                 {/* SETS TAB */}
                 {activeTab === 'sets' && (
-                    <div style={{ gridColumn: '1 / -1', padding: '20px', color: '#aaa' }}>
-                        <h3>Item Sets</h3>
-                        <p>Browsing by Item Sets will be implemented soon. Please use "AtlasLoot" tab to find sets for now.</p>
-                    </div>
+                    <>
+                        {/* Sets List */}
+                        <aside className="sidebar" style={{ gridColumn: '1 / 2' }}>
+                            <h2>Item Sets ({itemSets.length})</h2>
+                            <div className="list">
+                                {setsLoading && itemSets.length === 0 && (
+                                    <div className="loading">Loading sets...</div>
+                                )}
+                                {itemSets.map(set => (
+                                    <div
+                                        key={set.itemsetId}
+                                        className={`item ${selectedSet?.itemsetId === set.itemsetId ? 'active' : ''}`}
+                                        onClick={() => setSelectedSet(set)}
+                                    >
+                                        {set.name} ({set.itemCount})
+                                    </div>
+                                ))}
+                            </div>
+                        </aside>
+
+                        {/* Set Details */}
+                        <section className="loot" style={{ gridColumn: '2 / -1' }}>
+                            <h2>{selectedSet ? selectedSet.name : 'Select a Set'}</h2>
+                            
+                            {setsLoading && selectedSet && (
+                                <div className="loading">Loading set details...</div>
+                            )}
+                            
+                            {setDetail && !setsLoading && (
+                                <div className="loot-items">
+                                    {setDetail.items?.map((item, idx) => (
+                                        <div 
+                                            key={item.entry || idx}
+                                            className="loot-item"
+                                            data-quality={item.quality || 0}
+                                            onMouseEnter={() => handleItemEnter(item.entry)}
+                                            onMouseMove={(e) => handleMouseMove(e, item.entry)}
+                                            onMouseLeave={() => setHoveredItem(null)}
+                                        >
+                                            {item.iconPath ? (
+                                                <img 
+                                                    className="item-icon"
+                                                    src={`/items/icons/${item.iconPath}.jpg`}
+                                                    alt={item.name}
+                                                    onError={(e) => {
+                                                        if (!e.target.src.includes('zamimg.com')) {
+                                                            e.target.src = `https://wow.zamimg.com/images/wow/icons/medium/${item.iconPath}.jpg`
+                                                        } else {
+                                                            e.target.style.display = 'none'
+                                                        }
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="item-icon-placeholder">?</div>
+                                            )}
+                                            
+                                            <span className="item-id">[{item.entry}]</span>
+                                            
+                                            <span 
+                                                className={`item-name ${getQualityClass(item.quality)}`}
+                                                style={{color: getQualityColor(item.quality)}}
+                                            >
+                                                {item.name}
+                                            </span>
+                                            
+                                            {renderTooltip(item)}
+                                        </div>
+                                    ))}
+                                    
+                                    {/* Set Bonuses */}
+                                    {setDetail.bonuses && setDetail.bonuses.length > 0 && (
+                                        <div style={{ marginTop: '20px', padding: '10px', background: '#1a1a1a', borderRadius: '4px' }}>
+                                            <h3 style={{ color: '#ffd100', marginBottom: '10px' }}>Set Bonuses</h3>
+                                            {setDetail.bonuses.map((bonus, idx) => (
+                                                <div key={idx} style={{ color: '#1eff00', marginBottom: '5px' }}>
+                                                    ({bonus.threshold}) Spell ID: {bonus.spellId}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            
+                            {!selectedSet && (
+                                <p className="placeholder">Select an item set to view its items</p>
+                            )}
+                        </section>
+                    </>
                 )}
 
                 {/* NPCS TAB */}
