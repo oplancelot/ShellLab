@@ -36,6 +36,24 @@ export namespace database {
 	        this.sortOrder = source["sortOrder"];
 	    }
 	}
+	export class InventorySlot {
+	    class: number;
+	    subClass: number;
+	    inventoryType: number;
+	    name: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new InventorySlot(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.class = source["class"];
+	        this.subClass = source["subClass"];
+	        this.inventoryType = source["inventoryType"];
+	        this.name = source["name"];
+	    }
+	}
 	export class Item {
 	    entry: number;
 	    name: string;
@@ -158,6 +176,7 @@ export namespace database {
 	    class: number;
 	    subClass: number;
 	    name: string;
+	    inventorySlots?: InventorySlot[];
 	
 	    static createFrom(source: any = {}) {
 	        return new ItemSubClass(source);
@@ -168,7 +187,26 @@ export namespace database {
 	        this.class = source["class"];
 	        this.subClass = source["subClass"];
 	        this.name = source["name"];
+	        this.inventorySlots = this.convertValues(source["inventorySlots"], InventorySlot);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class ItemClass {
 	    class: number;
@@ -184,6 +222,78 @@ export namespace database {
 	        this.class = source["class"];
 	        this.name = source["name"];
 	        this.subClasses = this.convertValues(source["subClasses"], ItemSubClass);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ItemSetBrowse {
+	    itemsetId: number;
+	    name: string;
+	    itemIds: number[];
+	    itemCount: number;
+	    skillId: number;
+	    skillLevel: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ItemSetBrowse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.itemsetId = source["itemsetId"];
+	        this.name = source["name"];
+	        this.itemIds = source["itemIds"];
+	        this.itemCount = source["itemCount"];
+	        this.skillId = source["skillId"];
+	        this.skillLevel = source["skillLevel"];
+	    }
+	}
+	export class SetBonus {
+	    threshold: number;
+	    spellId: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SetBonus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.threshold = source["threshold"];
+	        this.spellId = source["spellId"];
+	    }
+	}
+	export class ItemSetDetail {
+	    itemsetId: number;
+	    name: string;
+	    items: Item[];
+	    bonuses: SetBonus[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ItemSetDetail(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.itemsetId = source["itemsetId"];
+	        this.name = source["name"];
+	        this.items = this.convertValues(source["items"], Item);
+	        this.bonuses = this.convertValues(source["bonuses"], SetBonus);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -285,6 +395,7 @@ export namespace database {
 		    return a;
 		}
 	}
+	
 	export class TooltipData {
 	    entry: number;
 	    name: string;

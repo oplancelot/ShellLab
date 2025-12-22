@@ -10,6 +10,10 @@ export function BrowseItemsByClass(arg1, arg2) {
   return window['go']['main']['App']['BrowseItemsByClass'](arg1, arg2);
 }
 
+export function BrowseItemsByClassAndSlot(arg1, arg2, arg3) {
+  return window['go']['main']['App']['BrowseItemsByClassAndSlot'](arg1, arg2, arg3);
+}
+
 export function GetCategories() {
   return window['go']['main']['App']['GetCategories']();
 }
@@ -28,6 +32,14 @@ export function GetInstances(arg1) {
 
 export function GetItemClasses() {
   return window['go']['main']['App']['GetItemClasses']();
+}
+
+export function GetItemSetDetail(arg1) {
+  return window['go']['main']['App']['GetItemSetDetail'](arg1);
+}
+
+export function GetItemSets() {
+  return window['go']['main']['App']['GetItemSets']();
 }
 
 export function GetLoot(arg1, arg2, arg3) {

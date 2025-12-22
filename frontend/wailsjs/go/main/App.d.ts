@@ -7,6 +7,8 @@ export function AdvancedSearch(arg1:database.SearchFilter):Promise<database.Sear
 
 export function BrowseItemsByClass(arg1:number,arg2:number):Promise<Array<database.Item>>;
 
+export function BrowseItemsByClassAndSlot(arg1:number,arg2:number,arg3:number):Promise<Array<database.Item>>;
+
 export function GetCategories():Promise<Array<string>>;
 
 export function GetCategoryItems(arg1:number):Promise<Array<database.Item>>;
@@ -16,6 +18,10 @@ export function GetChildCategories(arg1:number):Promise<Array<database.Category>
 export function GetInstances(arg1:string):Promise<Array<string>>;
 
 export function GetItemClasses():Promise<Array<database.ItemClass>>;
+
+export function GetItemSetDetail(arg1:number):Promise<database.ItemSetDetail>;
+
+export function GetItemSets():Promise<Array<database.ItemSetBrowse>>;
 
 export function GetLoot(arg1:string,arg2:string,arg3:string):Promise<main.LegacyBossLoot>;
 
