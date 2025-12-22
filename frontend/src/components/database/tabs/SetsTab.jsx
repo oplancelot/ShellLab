@@ -67,12 +67,14 @@ function SetsTab({ tooltipHook }) {
         <>
             {/* Sets List */}
             <aside className="sidebar" style={{ gridColumn: '1 / 2' }}>
-                <FilterInput 
-                    placeholder="Filter sets..." 
-                    onFilterChange={setSetFilter}
-                    style={{ width: '100%', marginBottom: '8px' }}
-                />
-                <h2>Item Sets ({filteredItemSets.length})</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
+                    <h2 style={{ margin: 0, fontSize: '15px' }}>Item Sets ({filteredItemSets.length})</h2>
+                    <FilterInput 
+                        placeholder="Filter sets..." 
+                        onFilterChange={setSetFilter}
+                        style={{ width: '100%' }}
+                    />
+                </div>
                 <div className="list">
                     {loading && itemSets.length === 0 && (
                         <div className="loading">Loading sets...</div>
@@ -94,13 +96,13 @@ function SetsTab({ tooltipHook }) {
 
             {/* Set Details */}
             <section className="loot" style={{ gridColumn: '2 / -1' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                    <h2 style={{ margin: 0 }}>{selectedSet ? `${selectedSet.name} (${filteredSetItems.length})` : 'Select a Set'}</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
+                    <h2 style={{ margin: 0, fontSize: '15px' }}>{selectedSet ? `${selectedSet.name} (${filteredSetItems.length})` : 'Select a Set'}</h2>
                     {selectedSet && setDetail && (
                         <FilterInput 
                             placeholder="Filter items..." 
                             onFilterChange={setItemFilter}
-                            style={{ maxWidth: '300px' }}
+                            style={{ width: '100%' }}
                         />
                     )}
                 </div>

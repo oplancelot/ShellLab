@@ -28,14 +28,14 @@ function FactionsTab() {
 
     return (
         <div style={{ gridColumn: '1 / -1', padding: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '10px', borderBottom: '1px solid #505050', paddingBottom: '10px' }}>
-                <h2 style={{ color: '#FFD100', margin: 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end', borderBottom: '1px solid #505050', paddingBottom: '10px' }}>
+                <h2 style={{ margin: 0, fontSize: '15px', color: '#FFD100' }}>
                     Reputation Factions ({filteredFactions.length})
                 </h2>
                 <FilterInput 
                     placeholder="Filter factions..." 
                     onFilterChange={setFactionFilter}
-                    style={{ maxWidth: '300px' }}
+                    style={{ width: '100%', maxWidth: '300px' }}
                 />
             </div>
             
