@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { GetCategories, GetInstances, GetTables } from '../../wailsjs/go/main/App'
+import { useItemTooltip } from '../hooks/useItemTooltip'
+import ItemTooltip, { getQualityColor } from './ItemTooltip'
 
 // Direct call to GetLoot - using window binding
 const GetLoot = (category, instance, boss) => {
@@ -7,14 +9,6 @@ const GetLoot = (category, instance, boss) => {
         return window.go.main.App.GetLoot(category, instance, boss)
     }
     return Promise.resolve({ bossName: boss, items: [] })
-}
-
-// Direct call to GetTooltipData
-const GetTooltipData = (itemId) => {
-    if (window?.go?.main?.App?.GetTooltipData) {
-        return window.go.main.App.GetTooltipData(itemId)
-    }
-    return Promise.resolve(null)
 }
 
 function AtlasLootPage() {
@@ -25,85 +19,24 @@ function AtlasLootPage() {
     
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
-    const [tooltipCache, setTooltipCache] = useState({})
-    const [hoveredItem, setHoveredItem] = useState(null)
-    const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 })
 
     const [selectedCategory, setSelectedCategory] = useState('')
     const [selectedModule, setSelectedModule] = useState('')
     const [selectedTable, setSelectedTable] = useState('')
 
+    // Use shared tooltip hook
+    const {
+        hoveredItem,
+        setHoveredItem,
+        tooltipCache,
+        loadTooltipData,
+        handleMouseMove,
+        handleItemEnter,
+        getTooltipStyle,
+    } = useItemTooltip()
+
     // Get quality class name
     const getQualityClass = (quality) => `q${quality || 0}`
-    
-    // Get quality color for inline style
-    const getQualityColor = (quality) => {
-        const colors = {
-            0: '#9d9d9d', 1: '#ffffff', 2: '#1eff00',
-            3: '#0070dd', 4: '#a335ee', 5: '#ff8000', 6: '#e6cc80'
-        }
-        return colors[quality] || '#ffffff'
-    }
-
-    // Handle mouse move - update tooltip position following mouse
-    const handleMouseMove = (e, item) => {
-        const lootContainer = e.currentTarget.closest('.loot')
-        const containerRect = lootContainer ? lootContainer.getBoundingClientRect() : { left: 0, right: window.innerWidth, top: 0, bottom: window.innerHeight }
-        const itemRect = e.currentTarget.getBoundingClientRect()
-        
-        // Tooltip dimensions
-        const tooltipWidth = 320
-        const tooltipHeight = 400
-        
-        // Position tooltip to the right and below the cursor
-        let left = e.clientX + 15
-        let top = e.clientY + 15
-        
-        // Don't let tooltip cover the item row - keep it below the item
-        if (top < itemRect.bottom + 5) {
-            top = itemRect.bottom + 5
-        }
-        
-        // Keep within container bounds - horizontal
-        if (left + tooltipWidth > containerRect.right - 10) {
-            left = e.clientX - tooltipWidth - 15
-        }
-        if (left < containerRect.left + 10) {
-            left = containerRect.left + 10
-        }
-        
-        // Keep within container bounds - vertical
-        if (top + tooltipHeight > containerRect.bottom - 10) {
-            top = containerRect.bottom - tooltipHeight - 10
-        }
-        if (top < containerRect.top + 10) {
-            top = containerRect.top + 10
-        }
-        
-        setTooltipPos({ top, left })
-        setHoveredItem(item.itemId)
-    }
-
-    // Handle item enter - load tooltip data
-    const handleItemEnter = (item) => {
-        loadTooltipData(item.itemId)
-    }
-
-    // Load tooltip data for an item
-    const loadTooltipData = async (itemId) => {
-        if (tooltipCache[itemId]) return tooltipCache[itemId]
-        
-        try {
-            const data = await GetTooltipData(itemId)
-            if (data) {
-                setTooltipCache(prev => ({ ...prev, [itemId]: data }))
-                return data
-            }
-        } catch (err) {
-            console.error('Failed to load tooltip:', err)
-        }
-        return null
-    }
 
     // Preload tooltips for visible items
     const preloadTooltips = (items) => {
@@ -195,134 +128,20 @@ function AtlasLootPage() {
             })
     }
 
-    // Render tooltip content
+    // Render tooltip content using shared component
     const renderTooltip = (item) => {
         if (hoveredItem !== item.itemId) return null
         
         const tooltip = tooltipCache[item.itemId]
         
-        const tooltipStyle = {
-            position: 'fixed',
-            left: tooltipPos.left,
-            top: tooltipPos.top,
-            zIndex: 10000,
-        }
-        
-        if (!tooltip) {
-            return (
-                <div className="item-tooltip" style={tooltipStyle}>
-                    <div className="tooltip-name" style={{color: getQualityColor(item.quality)}}>
-                        {item.itemName || 'Unknown Item'}
-                    </div>
-                    <div className="tooltip-loading">Loading...</div>
-                </div>
-            )
-        }
-        
         return (
-            <div 
-                className="item-tooltip"
-                style={tooltipStyle}
+            <ItemTooltip
+                item={item}
+                tooltip={tooltip}
+                style={getTooltipStyle()}
                 onMouseEnter={() => setHoveredItem(item.itemId)}
                 onMouseLeave={() => setHoveredItem(null)}
-            >
-                <div className="tooltip-name" style={{color: getQualityColor(tooltip.quality)}}>
-                    {tooltip.name}
-                </div>
-                
-                {tooltip.setName && (
-                    <div className="tooltip-setname">{tooltip.setName}</div>
-                )}
-                
-                {tooltip.itemLevel > 0 && (
-                    <div className="tooltip-itemlevel">Item Level {tooltip.itemLevel}</div>
-                )}
-                
-                {tooltip.binding && (
-                    <div className="tooltip-binding">{tooltip.binding}</div>
-                )}
-                
-                <div className="tooltip-slot-type">
-                    {tooltip.slotName && <span className="tooltip-slot">{tooltip.slotName}</span>}
-                    {tooltip.typeName && <span className="tooltip-type">{tooltip.typeName}</span>}
-                </div>
-                
-                {tooltip.classes && (
-                    <div className="tooltip-classes">{tooltip.classes}</div>
-                )}
-                
-                {tooltip.races && (
-                    <div className="tooltip-races">{tooltip.races}</div>
-                )}
-                
-                {tooltip.damageText && (
-                    <div className="tooltip-damage">
-                        <span>{tooltip.damageText}</span>
-                        <span className="tooltip-speed">{tooltip.speedText}</span>
-                    </div>
-                )}
-                
-                {tooltip.dps && (
-                    <div className="tooltip-dps">{tooltip.dps}</div>
-                )}
-                
-                {tooltip.armor > 0 && (
-                    <div className="tooltip-armor">{tooltip.armor} Armor</div>
-                )}
-                
-                {tooltip.stats && tooltip.stats.length > 0 && (
-                    <div className="tooltip-stats">
-                        {tooltip.stats.map((stat, i) => (
-                            <div key={i} className="tooltip-stat">{stat}</div>
-                        ))}
-                    </div>
-                )}
-                
-                {tooltip.resistances && tooltip.resistances.length > 0 && (
-                    <div className="tooltip-resistances">
-                        {tooltip.resistances.map((res, i) => (
-                            <div key={i} className="tooltip-resistance">{res}</div>
-                        ))}
-                    </div>
-                )}
-                
-                {tooltip.spellEffects && tooltip.spellEffects.length > 0 && (
-                    <div className="tooltip-effects">
-                        {tooltip.spellEffects.map((effect, i) => (
-                            <div key={i} className="tooltip-effect">{effect}</div>
-                        ))}
-                    </div>
-                )}
-                
-                {tooltip.setInfo && (
-                    <div className="tooltip-set-info">
-                        <div className="tooltip-set-name">{tooltip.setInfo.name}</div>
-                        {tooltip.setInfo.items && tooltip.setInfo.items.map((setItem, i) => (
-                            <div key={i} className="tooltip-set-item">{setItem}</div>
-                        ))}
-                        <div className="tooltip-set-spacer"></div>
-                        {tooltip.setInfo.bonuses && tooltip.setInfo.bonuses.map((bonus, i) => (
-                            <div key={i} className="tooltip-set-bonus">{bonus}</div>
-                        ))}
-                    </div>
-                )}
-                
-                {tooltip.durability && (
-                    <div className="tooltip-durability">{tooltip.durability}</div>
-                )}
-                
-                {tooltip.requiredLevel > 1 && (
-                    <div className="tooltip-reqlevel">Requires Level {tooltip.requiredLevel}</div>
-                )}
-                
-                {tooltip.description && (
-                    <div className="tooltip-description">"{tooltip.description}"</div>
-                )}
-                
-                {tooltip.sellPrice && (
-                    <div className="tooltip-sellprice">Sell Price: {tooltip.sellPrice}</div>
-                )}
-            </div>
+            />
         )
     }
 
@@ -421,8 +240,8 @@ function AtlasLootPage() {
                                     key={idx} 
                                     className="loot-item"
                                     data-quality={item.quality || 0}
-                                    onMouseEnter={() => handleItemEnter(item)}
-                                    onMouseMove={(e) => handleMouseMove(e, item)}
+                                    onMouseEnter={() => handleItemEnter(item.itemId)}
+                                    onMouseMove={(e) => handleMouseMove(e, item.itemId)}
                                     onMouseLeave={() => setHoveredItem(null)}
                                 >
                                     {item.iconName ? (
