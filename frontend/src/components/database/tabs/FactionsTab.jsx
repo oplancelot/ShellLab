@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { FilterInput } from '../../FilterInput'
+import { SectionHeader } from '../SectionHeader'
 import { GetFactions, filterItems } from '../../../utils/databaseApi'
 
 function FactionsTab() {
@@ -27,21 +27,18 @@ function FactionsTab() {
     const filteredFactions = useMemo(() => filterItems(factions, factionFilter), [factions, factionFilter])
 
     return (
-        <div style={{ gridColumn: '1 / -1', padding: '20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end', borderBottom: '1px solid #505050', paddingBottom: '10px' }}>
-                <h2 style={{ margin: 0, fontSize: '15px', color: '#FFD100' }}>
-                    Reputation Factions ({filteredFactions.length})
-                </h2>
-                <FilterInput 
-                    placeholder="Filter factions..." 
-                    onFilterChange={setFactionFilter}
-                    style={{ width: '100%', maxWidth: '300px' }}
-                />
-            </div>
+        <section className="loot" style={{ gridColumn: '1 / -1' }}>
+            <SectionHeader 
+                title={`Reputation Factions (${filteredFactions.length})`}
+                placeholder="Filter factions..."
+                onFilterChange={setFactionFilter}
+                titleColor="#FFD100"
+                style={{ borderBottom: '1px solid #505050' }} // Optional: keep border if desired, but SectionHeader handles structure
+            />
             
             {loading && <div className="loading">Loading factions...</div>}
 
-            <div className="loot-items" style={{ marginTop: '20px' }}>
+            <div className="loot-items">
                 {filteredFactions.map(faction => (
                     <div 
                         key={faction.id}
@@ -80,7 +77,7 @@ function FactionsTab() {
                     </div>
                 ))}
             </div>
-        </div>
+        </section>
     )
 }
 
