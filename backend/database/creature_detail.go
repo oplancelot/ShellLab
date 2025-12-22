@@ -53,7 +53,7 @@ func (r *ItemRepository) GetCreatureDetail(entry int) (*CreatureDetail, error) {
 
 	// 3. Get Quests Started
 	rowsS, err := r.db.DB().Query(`
-        SELECT q.entry, q.title FROM npc_quest_start n
+        SELECT q.entry, IFNULL(q.title, '') FROM npc_quest_start n
         JOIN quests q ON n.quest = q.entry
         WHERE n.entry = ?
     `, entry)
@@ -68,7 +68,7 @@ func (r *ItemRepository) GetCreatureDetail(entry int) (*CreatureDetail, error) {
 
 	// 4. Get Quests Ended
 	rowsE, err := r.db.DB().Query(`
-        SELECT q.entry, q.title FROM npc_quest_end n
+        SELECT q.entry, IFNULL(q.title, '') FROM npc_quest_end n
         JOIN quests q ON n.quest = q.entry
         WHERE n.entry = ?
     `, entry)
