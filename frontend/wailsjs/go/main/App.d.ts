@@ -29,6 +29,14 @@ export function GetItemSets():Promise<Array<database.ItemSetBrowse>>;
 
 export function GetLoot(arg1:string,arg2:string,arg3:string):Promise<main.LegacyBossLoot>;
 
+export function GetObjectTypes():Promise<Array<database.ObjectType>>;
+
+export function GetObjectsByType(arg1:number):Promise<Array<database.GameObject>>;
+
+export function GetQuestCategories():Promise<Array<database.QuestCategory>>;
+
+export function GetQuestsByCategory(arg1:number):Promise<Array<database.Quest>>;
+
 export function GetRootCategories():Promise<Array<database.Category>>;
 
 export function GetTables(arg1:string,arg2:string):Promise<Array<database.AtlasTable>>;
@@ -38,5 +46,9 @@ export function GetTooltipData(arg1:number):Promise<database.TooltipData>;
 export function SearchCreatures(arg1:string):Promise<Array<database.Creature>>;
 
 export function SearchItems(arg1:string):Promise<Array<database.Item>>;
+
+export function SearchObjects(arg1:string):Promise<Array<database.GameObject>>;
+
+export function SearchQuests(arg1:string):Promise<Array<database.Quest>>;
 
 export function WaitForReady():Promise<boolean>;

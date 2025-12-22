@@ -54,6 +54,22 @@ export function GetLoot(arg1, arg2, arg3) {
   return window['go']['main']['App']['GetLoot'](arg1, arg2, arg3);
 }
 
+export function GetObjectTypes() {
+  return window['go']['main']['App']['GetObjectTypes']();
+}
+
+export function GetObjectsByType(arg1) {
+  return window['go']['main']['App']['GetObjectsByType'](arg1);
+}
+
+export function GetQuestCategories() {
+  return window['go']['main']['App']['GetQuestCategories']();
+}
+
+export function GetQuestsByCategory(arg1) {
+  return window['go']['main']['App']['GetQuestsByCategory'](arg1);
+}
+
 export function GetRootCategories() {
   return window['go']['main']['App']['GetRootCategories']();
 }
@@ -72,6 +88,14 @@ export function SearchCreatures(arg1) {
 
 export function SearchItems(arg1) {
   return window['go']['main']['App']['SearchItems'](arg1);
+}
+
+export function SearchObjects(arg1) {
+  return window['go']['main']['App']['SearchObjects'](arg1);
+}
+
+export function SearchQuests(arg1) {
+  return window['go']['main']['App']['SearchQuests'](arg1);
 }
 
 export function WaitForReady() {

@@ -92,6 +92,28 @@ export namespace database {
 	        this.count = source["count"];
 	    }
 	}
+	export class GameObject {
+	    entry: number;
+	    name: string;
+	    type: number;
+	    typeName: string;
+	    displayId: number;
+	    size: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new GameObject(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entry = source["entry"];
+	        this.name = source["name"];
+	        this.type = source["type"];
+	        this.typeName = source["typeName"];
+	        this.displayId = source["displayId"];
+	        this.size = source["size"];
+	    }
+	}
 	export class InventorySlot {
 	    class: number;
 	    subClass: number;
@@ -387,6 +409,72 @@ export namespace database {
 	    }
 	}
 	
+	export class ObjectType {
+	    id: number;
+	    name: string;
+	    count: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ObjectType(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.count = source["count"];
+	    }
+	}
+	export class Quest {
+	    entry: number;
+	    title: string;
+	    questLevel: number;
+	    minLevel: number;
+	    maxLevel: number;
+	    type: number;
+	    zoneOrSort: number;
+	    categoryName: string;
+	    requiredRaces: number;
+	    requiredClasses: number;
+	    srcItemId: number;
+	    rewardXp: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Quest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entry = source["entry"];
+	        this.title = source["title"];
+	        this.questLevel = source["questLevel"];
+	        this.minLevel = source["minLevel"];
+	        this.maxLevel = source["maxLevel"];
+	        this.type = source["type"];
+	        this.zoneOrSort = source["zoneOrSort"];
+	        this.categoryName = source["categoryName"];
+	        this.requiredRaces = source["requiredRaces"];
+	        this.requiredClasses = source["requiredClasses"];
+	        this.srcItemId = source["srcItemId"];
+	        this.rewardXp = source["rewardXp"];
+	    }
+	}
+	export class QuestCategory {
+	    id: number;
+	    name: string;
+	    count: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new QuestCategory(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.count = source["count"];
+	    }
+	}
 	export class SearchFilter {
 	    query: string;
 	    quality?: number[];

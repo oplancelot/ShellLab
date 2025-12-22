@@ -233,6 +233,66 @@ func (a *App) SearchCreatures(query string) []*database.Creature {
 	return creatures
 }
 
+// GetQuestCategories returns all quest categories (zones and sorts)
+func (a *App) GetQuestCategories() []*database.QuestCategory {
+	cats, err := a.itemRepo.GetQuestCategories()
+	if err != nil {
+		fmt.Printf("Error getting quest categories: %v\n", err)
+		return []*database.QuestCategory{}
+	}
+	return cats
+}
+
+// GetQuestsByCategory returns quests filtered by category
+func (a *App) GetQuestsByCategory(categoryID int) []*database.Quest {
+	quests, err := a.itemRepo.GetQuestsByCategory(categoryID)
+	if err != nil {
+		fmt.Printf("Error browsing quests: %v\n", err)
+		return []*database.Quest{}
+	}
+	return quests
+}
+
+// SearchQuests searches for quests by title
+func (a *App) SearchQuests(query string) []*database.Quest {
+	quests, err := a.itemRepo.SearchQuests(query)
+	if err != nil {
+		fmt.Printf("Error searching quests: %v\n", err)
+		return []*database.Quest{}
+	}
+	return quests
+}
+
+// GetObjectTypes returns all object types
+func (a *App) GetObjectTypes() []*database.ObjectType {
+	types, err := a.itemRepo.GetObjectTypes()
+	if err != nil {
+		fmt.Printf("Error getting object types: %v\n", err)
+		return []*database.ObjectType{}
+	}
+	return types
+}
+
+// GetObjectsByType returns objects filtered by type
+func (a *App) GetObjectsByType(typeID int) []*database.GameObject {
+	objects, err := a.itemRepo.GetObjectsByType(typeID)
+	if err != nil {
+		fmt.Printf("Error browsing objects: %v\n", err)
+		return []*database.GameObject{}
+	}
+	return objects
+}
+
+// SearchObjects searches for objects by name
+func (a *App) SearchObjects(query string) []*database.GameObject {
+	objects, err := a.itemRepo.SearchObjects(query)
+	if err != nil {
+		fmt.Printf("Error searching objects: %v\n", err)
+		return []*database.GameObject{}
+	}
+	return objects
+}
+
 // === Legacy Compatibility API (for master branch compatibility) ===
 
 // LegacyBossLoot matches the structure from master branch
