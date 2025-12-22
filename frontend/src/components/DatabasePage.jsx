@@ -86,18 +86,21 @@ function DatabasePage() {
                         <NPCDetailView 
                             entry={currentDetail.entry} 
                             onNavigate={navigateTo}
+                            onBack={goBack}
                         />
                     )}
                     {currentDetail.type === 'quest' && (
                         <QuestDetailView 
                             entry={currentDetail.entry} 
                             onNavigate={navigateTo}
+                            onBack={goBack}
                         />
                     )}
                     {currentDetail.type === 'item' && (
                         <ItemDetailView 
                             entry={currentDetail.entry} 
                             onNavigate={navigateTo}
+                            onBack={goBack}
                         />
                     )}
                 </div>
