@@ -111,7 +111,7 @@ a:hover {
 /* ===== Main Content Grid ===== */
 .content {
   display: grid;
-  grid-template-columns: 200px 280px 1fr;
+  grid-template-columns: minmax(150px, 1fr) minmax(180px, 1.5fr) minmax(300px, 3fr);
   gap: 0;
   flex: 1;
   overflow: hidden;
@@ -127,6 +127,7 @@ a:hover {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  padding-bottom: 30px;
 }
 
 .sidebar {
@@ -164,7 +165,7 @@ a:hover {
 .list {
   flex: 1;
   overflow-y: auto;
-  padding: 5px;
+  padding: 5px 5px 40px 5px;
 }
 
 .list button,
@@ -201,7 +202,7 @@ a:hover {
 .loot-items {
   display: flex;
   flex-direction: column;
-  padding: 10px;
+  padding: 10px 10px 20px 10px;
   gap: 4px;
 }
 
@@ -405,27 +406,27 @@ a:hover {
   margin: 2px 0;
 }
 
-/* Stats (green positive numbers) */
+/* Stats (white text like WoW) */
 .tooltip-stats {
   margin: 6px 0;
 }
 
 .tooltip-stat {
-  color: var(--q2);
+  color: #ffffff;
   font-size: 12px;
 }
 
-/* Resistances (green) */
+/* Resistances (white) */
 .tooltip-resistances {
   margin: 4px 0;
 }
 
 .tooltip-resistance {
-  color: var(--q2);
+  color: #ffffff;
   font-size: 12px;
 }
 
-/* Spell Effects (green) */
+/* Spell Effects (green - these are bonuses) */
 .tooltip-effects {
   margin: 6px 0;
 }
