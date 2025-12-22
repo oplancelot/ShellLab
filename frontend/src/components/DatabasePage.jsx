@@ -27,6 +27,22 @@ const GetItemSetDetail = (itemSetId) => {
     return Promise.resolve(null)
 }
 
+// Direct call to GetCreatureTypes
+const GetCreatureTypes = () => {
+    if (window?.go?.main?.App?.GetCreatureTypes) {
+        return window.go.main.App.GetCreatureTypes()
+    }
+    return Promise.resolve([])
+}
+
+// Direct call to BrowseCreaturesByType
+const BrowseCreaturesByType = (creatureType) => {
+    if (window?.go?.main?.App?.BrowseCreaturesByType) {
+        return window.go.main.App.BrowseCreaturesByType(creatureType)
+    }
+    return Promise.resolve([])
+}
+
 function DatabasePage() {
     const [activeTab, setActiveTab] = useState('items')
     
@@ -43,6 +59,12 @@ function DatabasePage() {
     const [selectedSet, setSelectedSet] = useState(null)
     const [setDetail, setSetDetail] = useState(null)
     const [setsLoading, setSetsLoading] = useState(false)
+    
+    // NPCs Tab State
+    const [creatureTypes, setCreatureTypes] = useState([])
+    const [selectedCreatureType, setSelectedCreatureType] = useState(null)
+    const [creatures, setCreatures] = useState([])
+    const [npcsLoading, setNpcsLoading] = useState(false)
     
     // Use shared tooltip hook
     const {
@@ -116,6 +138,39 @@ function DatabasePage() {
                 })
         }
     }, [activeTab])
+
+    // Load creature types when switching to NPCs tab
+    useEffect(() => {
+        if (activeTab === 'npcs' && creatureTypes.length === 0) {
+            setNpcsLoading(true)
+            GetCreatureTypes()
+                .then(types => {
+                    setCreatureTypes(types || [])
+                    setNpcsLoading(false)
+                })
+                .catch(err => {
+                    console.error("Failed to load creature types:", err)
+                    setNpcsLoading(false)
+                })
+        }
+    }, [activeTab])
+
+    // Load creatures when a type is selected
+    useEffect(() => {
+        if (selectedCreatureType !== null) {
+            setNpcsLoading(true)
+            setCreatures([])
+            BrowseCreaturesByType(selectedCreatureType.type)
+                .then(res => {
+                    setCreatures(res || [])
+                    setNpcsLoading(false)
+                })
+                .catch(err => {
+                    console.error("Failed to load creatures:", err)
+                    setNpcsLoading(false)
+                })
+        }
+    }, [selectedCreatureType])
 
     // Load set detail when a set is selected
     useEffect(() => {
@@ -410,10 +465,104 @@ function DatabasePage() {
 
                 {/* NPCS TAB */}
                 {activeTab === 'npcs' && (
-                    <div style={{ gridColumn: '1 / -1', padding: '20px', color: '#aaa' }}>
-                        <h3>NPCs</h3>
-                        <p>NPC Database not yet imported.</p>
-                    </div>
+                    <>
+                        {/* Creature Types List */}
+                        <aside className="sidebar" style={{ gridColumn: '1 / 2' }}>
+                            <h2>Creature Types</h2>
+                            <div className="list">
+                                {npcsLoading && creatureTypes.length === 0 && (
+                                    <div className="loading">Loading types...</div>
+                                )}
+                                {creatureTypes.map(type => (
+                                    <div
+                                        key={type.type}
+                                        className={`item ${selectedCreatureType?.type === type.type ? 'active' : ''}`}
+                                        onClick={() => setSelectedCreatureType(type)}
+                                    >
+                                        {type.name} ({type.count})
+                                    </div>
+                                ))}
+                            </div>
+                        </aside>
+
+                        {/* Creatures List */}
+                        <section className="loot" style={{ gridColumn: '2 / -1' }}>
+                            <h2>
+                                {selectedCreatureType 
+                                    ? `${selectedCreatureType.name} (${creatures.length})` 
+                                    : 'Select a Type'}
+                            </h2>
+                            
+                            {npcsLoading && selectedCreatureType && (
+                                <div className="loading">Loading creatures...</div>
+                            )}
+                            
+                            {creatures.length > 0 && (
+                                <div className="loot-items">
+                                    {creatures.map(creature => (
+                                        <div 
+                                            key={creature.entry}
+                                            className="loot-item"
+                                            style={{ 
+                                                borderLeft: creature.rank >= 3 ? '3px solid #a335ee' 
+                                                    : creature.rank >= 1 ? '3px solid #ff8000' 
+                                                    : '3px solid #1eff00'
+                                            }}
+                                        >
+                                            <div className="item-icon-placeholder" style={{ 
+                                                background: creature.rank >= 3 ? '#a335ee' 
+                                                    : creature.rank >= 1 ? '#ff8000' 
+                                                    : '#555',
+                                                color: '#fff',
+                                                fontWeight: 'bold',
+                                                fontSize: '10px'
+                                            }}>
+                                                {creature.levelMin === creature.levelMax 
+                                                    ? creature.levelMin 
+                                                    : `${creature.levelMin}-${creature.levelMax}`}
+                                            </div>
+                                            
+                                            <span className="item-id">[{creature.entry}]</span>
+                                            
+                                            <span style={{ 
+                                                color: creature.rank >= 3 ? '#a335ee' 
+                                                    : creature.rank >= 1 ? '#ff8000' 
+                                                    : '#fff',
+                                                fontWeight: creature.rank >= 1 ? 'bold' : 'normal'
+                                            }}>
+                                                {creature.name}
+                                                {creature.subname && (
+                                                    <span style={{ color: '#888', fontWeight: 'normal', marginLeft: '5px' }}>
+                                                        &lt;{creature.subname}&gt;
+                                                    </span>
+                                                )}
+                                            </span>
+                                            
+                                            <span style={{ 
+                                                marginLeft: 'auto', 
+                                                color: '#888',
+                                                fontSize: '11px'
+                                            }}>
+                                                {creature.rankName !== 'Normal' && (
+                                                    <span style={{ 
+                                                        color: creature.rank >= 3 ? '#a335ee' : '#ff8000',
+                                                        marginRight: '8px'
+                                                    }}>
+                                                        [{creature.rankName}]
+                                                    </span>
+                                                )}
+                                                HP: {creature.healthMax.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            
+                            {!selectedCreatureType && (
+                                <p className="placeholder">Select a creature type to browse NPCs</p>
+                            )}
+                        </section>
+                    </>
                 )}
 
             </div>
