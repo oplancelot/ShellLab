@@ -151,6 +151,16 @@ func (a *App) BrowseItemsByClass(class, subClass int) []*database.Item {
 	return a.enrichItemsWithIcons(items)
 }
 
+// BrowseItemsByClassAndSlot returns items for a specific class/subclass/inventoryType
+func (a *App) BrowseItemsByClassAndSlot(class, subClass, inventoryType int) []*database.Item {
+	items, _, err := a.itemRepo.GetItemsByClassAndSlot(class, subClass, inventoryType, 200, 0)
+	if err != nil {
+		fmt.Printf("Error browsing items by slot: %v\n", err)
+		return []*database.Item{}
+	}
+	return a.enrichItemsWithIcons(items)
+}
+
 // AdvancedSearch performs a detailed search
 func (a *App) AdvancedSearch(filter database.SearchFilter) *database.SearchResult {
 	result, err := a.itemRepo.AdvancedSearch(filter)
@@ -169,6 +179,28 @@ func (a *App) GetTooltipData(itemID int) *database.TooltipData {
 		return nil
 	}
 	return data
+}
+
+// GetItemSets returns all item sets for browsing
+func (a *App) GetItemSets() []*database.ItemSetBrowse {
+	sets, err := a.itemRepo.GetItemSets()
+	if err != nil {
+		fmt.Printf("Error getting item sets: %v\n", err)
+		return []*database.ItemSetBrowse{}
+	}
+	return sets
+}
+
+// GetItemSetDetail returns detailed information about a specific item set
+func (a *App) GetItemSetDetail(itemSetID int) *database.ItemSetDetail {
+	detail, err := a.itemRepo.GetItemSetDetail(itemSetID)
+	if err != nil {
+		fmt.Printf("Error getting item set detail: %v\n", err)
+		return nil
+	}
+	// Enrich items with icons
+	detail.Items = a.enrichItemsWithIcons(detail.Items)
+	return detail
 }
 
 // === Legacy Compatibility API (for master branch compatibility) ===
