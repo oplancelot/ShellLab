@@ -760,6 +760,11 @@ export namespace database {
 	    requiredClasses: number;
 	    srcItemId: number;
 	    rewardXp: number;
+	    rewardMoney: number;
+	    prevQuestId: number;
+	    nextQuestId: number;
+	    exclusiveGroup: number;
+	    nextQuestInChain: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Quest(source);
@@ -778,6 +783,11 @@ export namespace database {
 	        this.requiredClasses = source["requiredClasses"];
 	        this.srcItemId = source["srcItemId"];
 	        this.rewardXp = source["rewardXp"];
+	        this.rewardMoney = source["rewardMoney"];
+	        this.prevQuestId = source["prevQuestId"];
+	        this.nextQuestId = source["nextQuestId"];
+	        this.exclusiveGroup = source["exclusiveGroup"];
+	        this.nextQuestInChain = source["nextQuestInChain"];
 	    }
 	}
 	export class QuestCategory {
@@ -794,6 +804,20 @@ export namespace database {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.count = source["count"];
+	    }
+	}
+	export class QuestSeriesItem {
+	    entry: number;
+	    title: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new QuestSeriesItem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entry = source["entry"];
+	        this.title = source["title"];
 	    }
 	}
 	export class QuestReputation {
@@ -843,13 +867,20 @@ export namespace database {
 	    questLevel: number;
 	    type: number;
 	    zoneOrSort: number;
+	    requiredRaces: number;
+	    requiredClasses: number;
+	    srcItemId: number;
 	    rewMoney: number;
+	    rewMoneyMaxLevel: number;
 	    rewXp: number;
 	    rewards: QuestItem[];
 	    choiceRewards: QuestItem[];
 	    reputation: QuestReputation[];
 	    starters: QuestRelation[];
 	    enders: QuestRelation[];
+	    series: QuestSeriesItem[];
+	    prevQuests: QuestSeriesItem[];
+	    exclusiveQuests: QuestSeriesItem[];
 	
 	    static createFrom(source: any = {}) {
 	        return new QuestDetail(source);
@@ -867,13 +898,20 @@ export namespace database {
 	        this.questLevel = source["questLevel"];
 	        this.type = source["type"];
 	        this.zoneOrSort = source["zoneOrSort"];
+	        this.requiredRaces = source["requiredRaces"];
+	        this.requiredClasses = source["requiredClasses"];
+	        this.srcItemId = source["srcItemId"];
 	        this.rewMoney = source["rewMoney"];
+	        this.rewMoneyMaxLevel = source["rewMoneyMaxLevel"];
 	        this.rewXp = source["rewXp"];
 	        this.rewards = this.convertValues(source["rewards"], QuestItem);
 	        this.choiceRewards = this.convertValues(source["choiceRewards"], QuestItem);
 	        this.reputation = this.convertValues(source["reputation"], QuestReputation);
 	        this.starters = this.convertValues(source["starters"], QuestRelation);
 	        this.enders = this.convertValues(source["enders"], QuestRelation);
+	        this.series = this.convertValues(source["series"], QuestSeriesItem);
+	        this.prevQuests = this.convertValues(source["prevQuests"], QuestSeriesItem);
+	        this.exclusiveQuests = this.convertValues(source["exclusiveQuests"], QuestSeriesItem);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -894,6 +932,7 @@ export namespace database {
 		    return a;
 		}
 	}
+	
 	
 	
 	

@@ -1,18 +1,25 @@
 package database
 
+import "fmt"
+
 // Quest represents a WoW quest
 type Quest struct {
-	Entry           int    `json:"entry"`
-	Title           string `json:"title"`
-	QuestLevel      int    `json:"questLevel"`
-	MinLevel        int    `json:"minLevel"`
-	Type            int    `json:"type"`
-	ZoneOrSort      int    `json:"zoneOrSort"`
-	CategoryName    string `json:"categoryName"`
-	RequiredRaces   int    `json:"requiredRaces"`
-	RequiredClasses int    `json:"requiredClasses"`
-	SrcItem         int    `json:"srcItemId"`
-	RewardXP        int    `json:"rewardXp"`
+	Entry            int    `json:"entry"`
+	Title            string `json:"title"`
+	QuestLevel       int    `json:"questLevel"`
+	MinLevel         int    `json:"minLevel"`
+	Type             int    `json:"type"`
+	ZoneOrSort       int    `json:"zoneOrSort"`
+	CategoryName     string `json:"categoryName"`
+	RequiredRaces    int    `json:"requiredRaces"`
+	RequiredClasses  int    `json:"requiredClasses"`
+	SrcItem          int    `json:"srcItemId"`
+	RewardXP         int    `json:"rewardXp"`
+	RewardMoney      int    `json:"rewardMoney"`
+	PrevQuestID      int    `json:"prevQuestId"`
+	NextQuestID      int    `json:"nextQuestId"`
+	ExclusiveGroup   int    `json:"exclusiveGroup"`
+	NextQuestInChain int    `json:"nextQuestInChain"`
 }
 
 // QuestCategory represents a zone or category for quests
@@ -87,7 +94,9 @@ func (r *ItemRepository) GetQuestsByCategory(categoryID int) ([]*Quest, error) {
 	rows, err := r.db.DB().Query(`
 		SELECT entry, IFNULL(title,''), IFNULL(quest_level,0), IFNULL(min_level,0), 
 			IFNULL(type,0), IFNULL(zone_or_sort,0),
-			IFNULL(rew_xp,0)
+			IFNULL(rew_xp,0), IFNULL(rew_money,0),
+			IFNULL(required_races,0), IFNULL(required_classes,0), IFNULL(src_item_id,0),
+			IFNULL(prev_quest_id,0), IFNULL(next_quest_id,0), IFNULL(exclusive_group,0), IFNULL(next_quest_in_chain,0)
 		FROM quests
 		WHERE zone_or_sort = ?
 		ORDER BY quest_level, title
@@ -103,9 +112,12 @@ func (r *ItemRepository) GetQuestsByCategory(categoryID int) ([]*Quest, error) {
 		err := rows.Scan(
 			&q.Entry, &q.Title, &q.QuestLevel, &q.MinLevel,
 			&q.Type, &q.ZoneOrSort,
-			&q.RewardXP,
+			&q.RewardXP, &q.RewardMoney,
+			&q.RequiredRaces, &q.RequiredClasses, &q.SrcItem,
+			&q.PrevQuestID, &q.NextQuestID, &q.ExclusiveGroup, &q.NextQuestInChain,
 		)
 		if err != nil {
+			fmt.Printf("Error scanning quest list: %v\n", err)
 			continue
 		}
 		quests = append(quests, q)
@@ -118,7 +130,10 @@ func (r *ItemRepository) SearchQuests(query string) ([]*Quest, error) {
 	rows, err := r.db.DB().Query(`
 		SELECT q.entry, IFNULL(q.title,''), IFNULL(q.quest_level,0), IFNULL(q.min_level,0), 
 			IFNULL(q.type,0), IFNULL(q.zone_or_sort,0),
-			IFNULL(q.rew_xp,0), c.name
+			IFNULL(q.rew_xp,0), IFNULL(q.rew_money,0),
+			IFNULL(q.required_races,0), IFNULL(q.required_classes,0), IFNULL(q.src_item_id,0),
+			IFNULL(q.prev_quest_id,0), IFNULL(q.next_quest_id,0), IFNULL(q.exclusive_group,0), IFNULL(q.next_quest_in_chain,0),
+			c.name
 		FROM quests q
 		LEFT JOIN quest_categories c ON q.zone_or_sort = c.id
 		WHERE q.title LIKE ?
@@ -137,9 +152,13 @@ func (r *ItemRepository) SearchQuests(query string) ([]*Quest, error) {
 		err := rows.Scan(
 			&q.Entry, &q.Title, &q.QuestLevel, &q.MinLevel,
 			&q.Type, &q.ZoneOrSort,
-			&q.RewardXP, &catName,
+			&q.RewardXP, &q.RewardMoney,
+			&q.RequiredRaces, &q.RequiredClasses, &q.SrcItem,
+			&q.PrevQuestID, &q.NextQuestID, &q.ExclusiveGroup, &q.NextQuestInChain,
+			&catName,
 		)
 		if err != nil {
+			fmt.Printf("Error scanning quest search: %v\n", err)
 			continue
 		}
 		if catName != nil {

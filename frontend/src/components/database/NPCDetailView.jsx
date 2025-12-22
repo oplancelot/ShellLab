@@ -77,7 +77,7 @@ const NPCDetailView = ({ entry, onBack, onNavigate, setHoveredItem, hoveredItem,
                         {detail.startsQuests && detail.startsQuests.map(q => (
                             <li key={q.entry} style={{ padding: '4px 0' }}>
                                 <a className="quest-link" onClick={() => onNavigate('quest', q.entry)} style={{ cursor: 'pointer', color: '#FFD100', textDecoration: 'none' }}>
-                                    {q.name}
+                                    {q.name} [{q.entry}]
                                 </a>
                             </li>
                         ))}
@@ -88,7 +88,7 @@ const NPCDetailView = ({ entry, onBack, onNavigate, setHoveredItem, hoveredItem,
                         {detail.endsQuests && detail.endsQuests.map(q => (
                             <li key={q.entry} style={{ padding: '4px 0' }}>
                                 <a className="quest-link" onClick={() => onNavigate('quest', q.entry)} style={{ cursor: 'pointer', color: '#FFD100', textDecoration: 'none' }}>
-                                    {q.name}
+                                    {q.name} [{q.entry}]
                                 </a>
                             </li>
                         ))}

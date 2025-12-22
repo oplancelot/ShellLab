@@ -37,6 +37,7 @@ data/items/*.csv
 *.tmp
 *.bak
 twow/
+tmp/
 ShellLab.code-workspace
 data/shellloot.db.backup
 data/shelllab.db-shm
@@ -44,3 +45,4 @@ data/shelllab.db-wal
 
 # Python scripts (may contain database credentials)
 scripts/*.py
+tmp/

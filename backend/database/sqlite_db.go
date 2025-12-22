@@ -145,7 +145,40 @@ func (s *SQLiteDB) InitSchema() error {
 		items_json TEXT -- JSON array of item IDs
 	);
 
-	-- Future: quests, spells, npcs, objects tables
+	-- Quests table
+	CREATE TABLE IF NOT EXISTS quests (
+		entry INTEGER PRIMARY KEY, 
+		title TEXT, 
+		min_level INTEGER, 
+		quest_level INTEGER, 
+		type INTEGER, 
+		zone_or_sort INTEGER,
+		details TEXT, 
+		objectives TEXT, 
+		offer_reward_text TEXT, 
+		end_text TEXT,
+		rew_xp INTEGER, 
+		rew_money INTEGER, 
+		rew_money_max_level INTEGER, 
+		rew_spell INTEGER,
+		rew_item1 INTEGER, rew_item2 INTEGER, rew_item3 INTEGER, rew_item4 INTEGER,
+		rew_item_count1 INTEGER, rew_item_count2 INTEGER, rew_item_count3 INTEGER, rew_item_count4 INTEGER,
+		rew_choice_item1 INTEGER, rew_choice_item2 INTEGER, rew_choice_item3 INTEGER, rew_choice_item4 INTEGER, rew_choice_item5 INTEGER, rew_choice_item6 INTEGER,
+		rew_choice_item_count1 INTEGER, rew_choice_item_count2 INTEGER, rew_choice_item_count3 INTEGER, rew_choice_item_count4 INTEGER, rew_choice_item_count5 INTEGER, rew_choice_item_count6 INTEGER,
+		rew_rep_faction1 INTEGER, rew_rep_faction2 INTEGER, rew_rep_faction3 INTEGER, rew_rep_faction4 INTEGER, rew_rep_faction5 INTEGER,
+		rew_rep_value1 INTEGER, rew_rep_value2 INTEGER, rew_rep_value3 INTEGER, rew_rep_value4 INTEGER, rew_rep_value5 INTEGER,
+		prev_quest_id INTEGER, next_quest_id INTEGER, exclusive_group INTEGER, next_quest_in_chain INTEGER,
+		required_races INTEGER, required_classes INTEGER, src_item_id INTEGER
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_quests_title ON quests(title);
+	CREATE INDEX IF NOT EXISTS idx_quests_zone ON quests(zone_or_sort);
+
+	-- Quest Relations
+	CREATE TABLE IF NOT EXISTS npc_quest_start (entry INTEGER, quest INTEGER, PRIMARY KEY(entry, quest));
+	CREATE TABLE IF NOT EXISTS npc_quest_end (entry INTEGER, quest INTEGER, PRIMARY KEY(entry, quest));
+	CREATE TABLE IF NOT EXISTS go_quest_start (entry INTEGER, quest INTEGER, PRIMARY KEY(entry, quest));
+	CREATE TABLE IF NOT EXISTS go_quest_end (entry INTEGER, quest INTEGER, PRIMARY KEY(entry, quest));
 	`
 
 	_, err := s.db.Exec(schema)
