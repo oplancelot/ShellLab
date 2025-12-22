@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { FilterInput } from '../../FilterInput'
+import { SectionHeader } from '../SectionHeader'
 import { GetQuestCategoryGroups, GetQuestCategoriesByGroup, GetQuestsByEnhancedCategory, filterItems } from '../../../utils/databaseApi'
 
 function QuestsTab({ onNavigate }) {
@@ -74,14 +74,11 @@ function QuestsTab({ onNavigate }) {
         <>
             {/* 1. Groups */}
             <aside className="sidebar">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>Quest Types ({filteredGroups.length})</h2>
-                    <FilterInput 
-                        placeholder="Filter groups..." 
-                        onFilterChange={setGroupFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={`Quest Types (${filteredGroups.length})`}
+                    placeholder="Filter groups..."
+                    onFilterChange={setGroupFilter}
+                />
                 <div className="list">
                     {filteredGroups.map(group => (
                         <button
@@ -101,14 +98,11 @@ function QuestsTab({ onNavigate }) {
 
             {/* 2. Categories */}
             <section className="instances">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>{selectedGroup ? `${selectedGroup.name} (${filteredCategories.length})` : 'Select Type'}</h2>
-                    <FilterInput 
-                        placeholder="Filter zones/categories..." 
-                        onFilterChange={setCategoryFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={selectedGroup ? `${selectedGroup.name} (${filteredCategories.length})` : 'Select Type'}
+                    placeholder="Filter zones/categories..."
+                    onFilterChange={setCategoryFilter}
+                />
                 <div className="list">
                     {filteredCategories.map(cat => (
                         <div
@@ -127,16 +121,12 @@ function QuestsTab({ onNavigate }) {
 
             {/* 3. Quests List */}
             <section className="loot" style={{ gridColumn: '3 / -1' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px', color: '#FFD100' }}>
-                        {selectedCategory ? `${selectedCategory.name} (${filteredQuests.length})` : 'Select Category'}
-                    </h2>
-                    <FilterInput 
-                        placeholder="Filter quests..." 
-                        onFilterChange={setQuestFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={selectedCategory ? `${selectedCategory.name} (${filteredQuests.length})` : 'Select Category'}
+                    placeholder="Filter quests..."
+                    onFilterChange={setQuestFilter}
+                    titleColor="#FFD100"
+                />
 
                 {loading && selectedCategory && <div className="loading">Loading quests...</div>}
                 

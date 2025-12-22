@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { FilterInput } from '../../FilterInput'
+import { SectionHeader } from '../SectionHeader'
 import { GetObjectTypes, GetObjectsByType, filterItems } from '../../../utils/databaseApi'
 
 function ObjectsTab() {
@@ -51,14 +51,11 @@ function ObjectsTab() {
         <>
             {/* Object Types List */}
             <aside className="sidebar" style={{ gridColumn: '1 / 2' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>Object Types ({filteredTypes.length})</h2>
-                    <FilterInput 
-                        placeholder="Filter types..." 
-                        onFilterChange={setTypeFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={`Object Types (${filteredTypes.length})`}
+                    placeholder="Filter types..."
+                    onFilterChange={setTypeFilter}
+                />
                 <div className="list">
                     {loading && objectTypes.length === 0 && (
                         <div className="loading">Loading types...</div>
@@ -80,18 +77,11 @@ function ObjectsTab() {
 
             {/* Objects List */}
             <section className="loot" style={{ gridColumn: '2 / -1' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>
-                        {selectedObjectType 
-                            ? `${selectedObjectType.name} (${filteredObjects.length})` 
-                            : 'Select a Type'}
-                    </h2>
-                    <FilterInput 
-                        placeholder="Filter objects..." 
-                        onFilterChange={setObjectFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={selectedObjectType ? `${selectedObjectType.name} (${filteredObjects.length})` : 'Select a Type'}
+                    placeholder="Filter objects..."
+                    onFilterChange={setObjectFilter}
+                />
                 
                 {loading && selectedObjectType && (
                     <div className="loading">Loading objects...</div>

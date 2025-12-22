@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { FilterInput } from '../../FilterInput'
+import { SectionHeader } from '../SectionHeader'
 import { GetSpellSkillCategories, GetSpellSkillsByCategory, GetSpellsBySkill, filterItems } from '../../../utils/databaseApi'
 
 function SpellsTab() {
@@ -74,14 +74,11 @@ function SpellsTab() {
         <>
             {/* 1. Categories */}
             <aside className="sidebar">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>Categories ({filteredCategories.length})</h2>
-                    <FilterInput 
-                        placeholder="Filter categories..." 
-                        onFilterChange={setCategoryFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={`Categories (${filteredCategories.length})`}
+                    placeholder="Filter categories..."
+                    onFilterChange={setCategoryFilter}
+                />
                 <div className="list">
                     {filteredCategories.map(cat => (
                         <button
@@ -101,14 +98,11 @@ function SpellsTab() {
 
             {/* 2. Skills */}
             <section className="instances">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>{selectedCategory ? `${selectedCategory.name} (${filteredSkills.length})` : 'Select Category'}</h2>
-                    <FilterInput 
-                        placeholder="Filter skills..." 
-                        onFilterChange={setSkillFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={selectedCategory ? `${selectedCategory.name} (${filteredSkills.length})` : 'Select Category'}
+                    placeholder="Filter skills..."
+                    onFilterChange={setSkillFilter}
+                />
                 <div className="list">
                     {filteredSkills.map(skill => (
                         <div
@@ -127,16 +121,12 @@ function SpellsTab() {
 
             {/* 3. Spells List */}
             <section className="loot" style={{ gridColumn: '3 / -1' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px', color: '#772ce8' }}>
-                        {selectedSkill ? `${selectedSkill.name} (${filteredSpells.length})` : 'Select Skill'}
-                    </h2>
-                    <FilterInput 
-                        placeholder="Filter spells..." 
-                        onFilterChange={setSpellFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={selectedSkill ? `${selectedSkill.name} (${filteredSpells.length})` : 'Select Skill'}
+                    placeholder="Filter spells..."
+                    onFilterChange={setSpellFilter}
+                    titleColor="#772ce8"
+                />
 
                 {loading && selectedSkill && <div className="loading">Loading spells...</div>}
                 

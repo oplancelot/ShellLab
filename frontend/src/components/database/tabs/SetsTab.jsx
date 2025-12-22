@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { FilterInput } from '../../FilterInput'
+import { SectionHeader } from '../SectionHeader'
 import { GetItemSets, GetItemSetDetail, filterItems } from '../../../utils/databaseApi'
 import { getQualityColor } from '../../../utils/wow'
 
@@ -67,14 +67,11 @@ function SetsTab({ tooltipHook }) {
         <>
             {/* Sets List */}
             <aside className="sidebar" style={{ gridColumn: '1 / 2' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>Item Sets ({filteredItemSets.length})</h2>
-                    <FilterInput 
-                        placeholder="Filter sets..." 
-                        onFilterChange={setSetFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={`Item Sets (${filteredItemSets.length})`}
+                    placeholder="Filter sets..."
+                    onFilterChange={setSetFilter}
+                />
                 <div className="list">
                     {loading && itemSets.length === 0 && (
                         <div className="loading">Loading sets...</div>
@@ -96,14 +93,11 @@ function SetsTab({ tooltipHook }) {
 
             {/* Set Details */}
             <section className="loot" style={{ gridColumn: '2 / -1' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>{selectedSet ? `${selectedSet.name} (${filteredSetItems.length})` : 'Select a Set'}</h2>
-                    <FilterInput 
-                        placeholder="Filter items..." 
-                        onFilterChange={setItemFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={selectedSet ? `${selectedSet.name} (${filteredSetItems.length})` : 'Select a Set'}
+                    placeholder="Filter items..."
+                    onFilterChange={setItemFilter}
+                />
                 
                 {loading && selectedSet && (
                     <div className="loading">Loading set details...</div>

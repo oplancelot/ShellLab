@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { FilterInput } from '../../FilterInput'
+import { SectionHeader } from '../SectionHeader'
 import { GetCreatureTypes, BrowseCreaturesByType, GetCreatureLoot, filterItems } from '../../../utils/databaseApi'
 import { getQualityColor } from '../../../utils/wow'
 
@@ -54,14 +54,11 @@ function NPCsTab({ onNavigate, tooltipHook }) {
         <>
             {/* Creature Types List */}
             <aside className="sidebar" style={{ gridColumn: '1 / 2' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>Creature Types ({filteredTypes.length})</h2>
-                    <FilterInput 
-                        placeholder="Filter types..." 
-                        onFilterChange={setTypeFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={`Creature Types (${filteredTypes.length})`}
+                    placeholder="Filter types..."
+                    onFilterChange={setTypeFilter}
+                />
                 <div className="list">
                     {loading && creatureTypes.length === 0 && (
                         <div className="loading">Loading types...</div>
@@ -83,18 +80,11 @@ function NPCsTab({ onNavigate, tooltipHook }) {
 
             {/* Creatures List */}
             <section className="loot" style={{ gridColumn: '2 / -1' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>
-                        {selectedCreatureType 
-                            ? `${selectedCreatureType.name} (${filteredCreatures.length})` 
-                            : 'Select a Type'}
-                    </h2>
-                    <FilterInput 
-                        placeholder="Filter NPCs..." 
-                        onFilterChange={setCreatureFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={selectedCreatureType ? `${selectedCreatureType.name} (${filteredCreatures.length})` : 'Select a Type'}
+                    placeholder="Filter NPCs..."
+                    onFilterChange={setCreatureFilter}
+                />
                 
                 {loading && selectedCreatureType && (
                     <div className="loading">Loading creatures...</div>

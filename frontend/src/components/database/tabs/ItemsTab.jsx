@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { GetItemClasses, BrowseItemsByClass } from '../../../../wailsjs/go/main/App'
-import { FilterInput } from '../../FilterInput'
+import { SectionHeader } from '../SectionHeader'
 import { BrowseItemsByClassAndSlot, filterItems } from '../../../utils/databaseApi'
 import { getQualityColor } from '../../../utils/wow'
 
@@ -96,14 +96,11 @@ function ItemsTab({ tooltipHook }) {
         <>
             {/* 1. Classes */}
             <aside className="sidebar">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>Item Class ({filteredClasses.length})</h2>
-                    <FilterInput 
-                        placeholder="Filter classes..." 
-                        onFilterChange={setClassFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={`Item Class (${filteredClasses.length})`}
+                    placeholder="Filter classes..."
+                    onFilterChange={setClassFilter}
+                />
                 <div className="list">
                     {filteredClasses.map(cls => (
                         <button
@@ -127,14 +124,11 @@ function ItemsTab({ tooltipHook }) {
 
             {/* 2. SubClasses */}
             <section className="instances">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>{selectedClass ? `${selectedClass.name} (${filteredSubClasses.length})` : 'Select Class'}</h2>
-                    <FilterInput 
-                        placeholder="Filter types..." 
-                        onFilterChange={setSubClassFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={selectedClass ? `${selectedClass.name} (${filteredSubClasses.length})` : 'Select Class'}
+                    placeholder="Filter types..."
+                    onFilterChange={setSubClassFilter}
+                />
                 <div className="list">
                     {filteredSubClasses.map(sc => (
                         <div
@@ -155,14 +149,11 @@ function ItemsTab({ tooltipHook }) {
 
             {/* 3. Inventory Slots (Third Level) */}
             <section className="instances">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>{selectedSubClass ? `Slot (${filteredSlots.length})` : 'Select Type'}</h2>
-                    <FilterInput 
-                        placeholder="Filter slots..." 
-                        onFilterChange={setSlotFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={selectedSubClass ? `Slot (${filteredSlots.length})` : 'Select Type'}
+                    placeholder="Filter slots..."
+                    onFilterChange={setSlotFilter}
+                />
                 <div className="list">
                     {filteredSlots.map(slot => (
                         <div
@@ -193,14 +184,11 @@ function ItemsTab({ tooltipHook }) {
 
             {/* 4. Items List */}
             <section className="loot">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
-                    <h2 style={{ margin: 0, fontSize: '15px' }}>{selectedSubClass ? `${selectedSlot ? selectedSlot.name : selectedSubClass.name} (${filteredItems.length})` : 'Select SubClass'}</h2>
-                    <FilterInput 
-                        placeholder="Filter items..." 
-                        onFilterChange={setItemFilter}
-                        style={{ width: '100%' }}
-                    />
-                </div>
+                <SectionHeader 
+                    title={selectedSubClass ? `${selectedSlot ? selectedSlot.name : selectedSubClass.name} (${filteredItems.length})` : 'Select SubClass'}
+                    placeholder="Filter items..."
+                    onFilterChange={setItemFilter}
+                />
                 {loading && <div className="loading">Loading items...</div>}
                 
                 {items.length > 0 && (

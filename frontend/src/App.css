@@ -127,10 +127,10 @@ a:hover {
 .loot {
   background: var(--bg-main);
   border: 1px solid var(--border-dark);
-  overflow-y: auto;
+  overflow: hidden; /* Changed from overflow-y: auto to handle inner scrolling */
   display: flex;
   flex-direction: column;
-  padding-bottom: 30px;
+  padding-bottom: 0; /* Remove bottom padding from container */
 }
 
 .sidebar {
@@ -213,8 +213,10 @@ a:hover {
 .loot-items {
   display: flex;
   flex-direction: column;
-  padding: 10px 10px 20px 10px;
+  padding: 5px;
   gap: 4px;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .loot-item {
