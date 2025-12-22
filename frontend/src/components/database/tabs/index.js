@@ -1,0 +1,8 @@
+// Export all database tab components
+export { default as ItemsTab } from './ItemsTab'
+export { default as SetsTab } from './SetsTab'
+export { default as NPCsTab } from './NPCsTab'
+export { default as QuestsTab } from './QuestsTab'
+export { default as ObjectsTab } from './ObjectsTab'
+export { default as SpellsTab } from './SpellsTab'
+export { default as FactionsTab } from './FactionsTab'
