@@ -89,13 +89,11 @@ function NPCsTab({ onNavigate, tooltipHook }) {
                             ? `${selectedCreatureType.name} (${filteredCreatures.length})` 
                             : 'Select a Type'}
                     </h2>
-                    {selectedCreatureType && (
-                        <FilterInput 
-                            placeholder="Filter NPCs..." 
-                            onFilterChange={setCreatureFilter}
-                            style={{ width: '100%' }}
-                        />
-                    )}
+                    <FilterInput 
+                        placeholder="Filter NPCs..." 
+                        onFilterChange={setCreatureFilter}
+                        style={{ width: '100%' }}
+                    />
                 </div>
                 
                 {loading && selectedCreatureType && (

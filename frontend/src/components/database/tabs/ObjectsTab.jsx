@@ -86,13 +86,11 @@ function ObjectsTab() {
                             ? `${selectedObjectType.name} (${filteredObjects.length})` 
                             : 'Select a Type'}
                     </h2>
-                    {selectedObjectType && (
-                        <FilterInput 
-                            placeholder="Filter objects..." 
-                            onFilterChange={setObjectFilter}
-                            style={{ width: '100%' }}
-                        />
-                    )}
+                    <FilterInput 
+                        placeholder="Filter objects..." 
+                        onFilterChange={setObjectFilter}
+                        style={{ width: '100%' }}
+                    />
                 </div>
                 
                 {loading && selectedObjectType && (

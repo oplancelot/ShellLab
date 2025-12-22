@@ -98,13 +98,11 @@ function SetsTab({ tooltipHook }) {
             <section className="loot" style={{ gridColumn: '2 / -1' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px', minHeight: '60px', justifyContent: 'flex-end' }}>
                     <h2 style={{ margin: 0, fontSize: '15px' }}>{selectedSet ? `${selectedSet.name} (${filteredSetItems.length})` : 'Select a Set'}</h2>
-                    {selectedSet && setDetail && (
-                        <FilterInput 
-                            placeholder="Filter items..." 
-                            onFilterChange={setItemFilter}
-                            style={{ width: '100%' }}
-                        />
-                    )}
+                    <FilterInput 
+                        placeholder="Filter items..." 
+                        onFilterChange={setItemFilter}
+                        style={{ width: '100%' }}
+                    />
                 </div>
                 
                 {loading && selectedSet && (

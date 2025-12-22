@@ -131,13 +131,11 @@ function SpellsTab() {
                     <h2 style={{ margin: 0, fontSize: '15px', color: '#772ce8' }}>
                         {selectedSkill ? `${selectedSkill.name} (${filteredSpells.length})` : 'Select Skill'}
                     </h2>
-                    {spells.length > 0 && (
-                        <FilterInput 
-                            placeholder="Filter spells..." 
-                            onFilterChange={setSpellFilter}
-                            style={{ width: '100%' }}
-                        />
-                    )}
+                    <FilterInput 
+                        placeholder="Filter spells..." 
+                        onFilterChange={setSpellFilter}
+                        style={{ width: '100%' }}
+                    />
                 </div>
 
                 {loading && selectedSkill && <div className="loading">Loading spells...</div>}

@@ -131,13 +131,11 @@ function QuestsTab({ onNavigate }) {
                     <h2 style={{ margin: 0, fontSize: '15px', color: '#FFD100' }}>
                         {selectedCategory ? `${selectedCategory.name} (${filteredQuests.length})` : 'Select Category'}
                     </h2>
-                    {quests.length > 0 && (
-                        <FilterInput 
-                            placeholder="Filter quests..." 
-                            onFilterChange={setQuestFilter}
-                            style={{ width: '100%' }}
-                        />
-                    )}
+                    <FilterInput 
+                        placeholder="Filter quests..." 
+                        onFilterChange={setQuestFilter}
+                        style={{ width: '100%' }}
+                    />
                 </div>
 
                 {loading && selectedCategory && <div className="loading">Loading quests...</div>}
