@@ -142,12 +142,8 @@ func (a *App) GetItemClasses() []*database.ItemClass {
 
 // BrowseItemsByClass returns items for a specific class/subclass
 func (a *App) BrowseItemsByClass(class, subClass int, nameFilter string) []*database.Item {
-	limit := 10000 // High limit for full search
-	if nameFilter == "" {
-		limit = 500 // Default limit when no filter
-	}
-
-	items, _, err := a.itemRepo.GetItemsByClass(class, subClass, nameFilter, limit, 0)
+	// No limit - return all matching items
+	items, _, err := a.itemRepo.GetItemsByClass(class, subClass, nameFilter, 999999, 0)
 	if err != nil {
 		fmt.Printf("Error browsing items: %v\n", err)
 		return []*database.Item{}
@@ -157,14 +153,8 @@ func (a *App) BrowseItemsByClass(class, subClass int, nameFilter string) []*data
 
 // BrowseItemsByClassAndSlot returns items for a specific class/subclass/inventoryType
 func (a *App) BrowseItemsByClassAndSlot(class, subClass, inventoryType int, nameFilter string) []*database.Item {
-	// If filtering by name, search all items without limit
-	// Otherwise use a reasonable limit to avoid loading too many items
-	limit := 10000 // High limit for full search
-	if nameFilter == "" {
-		limit = 500 // Default limit when no filter
-	}
-
-	items, _, err := a.itemRepo.GetItemsByClassAndSlot(class, subClass, inventoryType, nameFilter, limit, 0)
+	// No limit - return all matching items
+	items, _, err := a.itemRepo.GetItemsByClassAndSlot(class, subClass, inventoryType, nameFilter, 999999, 0)
 	if err != nil {
 		fmt.Printf("Error browsing items by slot: %v\n", err)
 		return []*database.Item{}
@@ -226,12 +216,8 @@ func (a *App) GetCreatureTypes() []*database.CreatureType {
 
 // BrowseCreaturesByType returns creatures filtered by type
 func (a *App) BrowseCreaturesByType(creatureType int, nameFilter string) []*database.Creature {
-	limit := 10000
-	if nameFilter == "" {
-		limit = 500
-	}
-
-	creatures, _, err := a.itemRepo.GetCreaturesByType(creatureType, nameFilter, limit, 0)
+	// No limit - return all matching creatures
+	creatures, _, err := a.itemRepo.GetCreaturesByType(creatureType, nameFilter, 999999, 0)
 	if err != nil {
 		fmt.Printf("Error browsing creatures: %v\n", err)
 		return []*database.Creature{}

@@ -53,7 +53,7 @@ function SpellsTab() {
         if (selectedSkill) {
             setLoading(true)
             setSpells([])
-            GetSpellsBySkill(selectedSkill.id)
+            GetSpellsBySkill(selectedSkill.id, '')
                 .then(res => {
                     setSpells(res || [])
                     setLoading(false)

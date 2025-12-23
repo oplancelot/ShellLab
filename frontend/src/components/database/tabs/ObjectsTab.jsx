@@ -31,7 +31,7 @@ function ObjectsTab() {
         if (selectedObjectType !== null) {
             setLoading(true)
             setObjects([])
-            GetObjectsByType(selectedObjectType.id)
+            GetObjectsByType(selectedObjectType.id, '')
                 .then(res => {
                     setObjects(res || [])
                     setLoading(false)

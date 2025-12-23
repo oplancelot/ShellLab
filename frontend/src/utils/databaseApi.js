@@ -31,9 +31,9 @@ export const GetCreatureTypes = () => {
     return Promise.resolve([])
 }
 
-export const BrowseCreaturesByType = (creatureType) => {
+export const BrowseCreaturesByType = (creatureType, nameFilter = '') => {
     if (window?.go?.main?.App?.BrowseCreaturesByType) {
-        return window.go.main.App.BrowseCreaturesByType(creatureType)
+        return window.go.main.App.BrowseCreaturesByType(creatureType, nameFilter)
     }
     return Promise.resolve([])
 }
@@ -75,9 +75,9 @@ export const GetObjectTypes = () => {
     return Promise.resolve([])
 }
 
-export const GetObjectsByType = (typeId) => {
+export const GetObjectsByType = (typeId, nameFilter = '') => {
     if (window?.go?.main?.App?.GetObjectsByType) {
-        return window.go.main.App.GetObjectsByType(typeId)
+        return window.go.main.App.GetObjectsByType(typeId, nameFilter)
     }
     return Promise.resolve([])
 }
@@ -120,9 +120,9 @@ export const GetSpellSkillsByCategory = (categoryId) => {
     return Promise.resolve([])
 }
 
-export const GetSpellsBySkill = (skillId) => {
+export const GetSpellsBySkill = (skillId, nameFilter = '') => {
     if (window?.go?.main?.App?.GetSpellsBySkill) {
-        return window.go.main.App.GetSpellsBySkill(skillId)
+        return window.go.main.App.GetSpellsBySkill(skillId, nameFilter)
     }
     return Promise.resolve([])
 }
@@ -142,9 +142,9 @@ export const GetQuestCategoriesByGroup = (groupId) => {
     return Promise.resolve([])
 }
 
-export const GetQuestsByEnhancedCategory = (categoryId) => {
+export const GetQuestsByEnhancedCategory = (categoryId, nameFilter = '') => {
     if (window?.go?.main?.App?.GetQuestsByEnhancedCategory) {
-        return window.go.main.App.GetQuestsByEnhancedCategory(categoryId)
+        return window.go.main.App.GetQuestsByEnhancedCategory(categoryId, nameFilter)
     }
     return Promise.resolve([])
 }

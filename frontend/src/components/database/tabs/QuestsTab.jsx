@@ -53,7 +53,7 @@ function QuestsTab({ onNavigate }) {
         if (selectedCategory) {
             setLoading(true)
             setQuests([])
-            GetQuestsByEnhancedCategory(selectedCategory.id)
+            GetQuestsByEnhancedCategory(selectedCategory.id, '')
                 .then(res => {
                     setQuests(res || [])
                     setLoading(false)

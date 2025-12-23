@@ -34,7 +34,7 @@ function NPCsTab({ onNavigate, tooltipHook }) {
         if (selectedCreatureType !== null) {
             setLoading(true)
             setCreatures([])
-            BrowseCreaturesByType(selectedCreatureType.type)
+            BrowseCreaturesByType(selectedCreatureType.type, '')
                 .then(res => {
                     setCreatures(res || [])
                     setLoading(false)

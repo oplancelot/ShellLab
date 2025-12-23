@@ -45,7 +45,7 @@ function ItemsTab({ tooltipHook }) {
             
             // If slot is selected, use three-level filter
             if (selectedSlot !== null) {
-                BrowseItemsByClassAndSlot(selectedClass.class, selectedSubClass.subClass, selectedSlot.inventoryType, itemFilter)
+                BrowseItemsByClassAndSlot(selectedClass.class, selectedSubClass.subClass, selectedSlot.inventoryType, '')
                     .then(res => {
                         setItems(res || [])
                         setLoading(false)
@@ -67,7 +67,7 @@ function ItemsTab({ tooltipHook }) {
                     })
             }
         }
-    }, [selectedSubClass, selectedSlot, itemFilter])
+    }, [selectedSubClass, selectedSlot])
 
     // Preload tooltips when items change
     useEffect(() => {
@@ -90,8 +90,8 @@ function ItemsTab({ tooltipHook }) {
         if (!selectedSubClass?.inventorySlots) return []
         return filterItems(selectedSubClass.inventorySlots, slotFilter)
     }, [selectedSubClass, slotFilter])
-    // No more frontend filtering for items - backend does it
-    const filteredItems = items
+    // Frontend filtering for items
+    const filteredItems = useMemo(() => filterItems(items, itemFilter), [items, itemFilter])
 
     return (
         <>
