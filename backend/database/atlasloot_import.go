@@ -72,21 +72,21 @@ func (r *ItemRepository) ImportAtlasLootFromJSON(jsonPath string) error {
 	// Since we replace, let's keep it simple.
 
 	// Prepare statements
-	stmtCat, err := tx.Prepare("INSERT INTO atlasloot_categories (key, name, type, sort_order) VALUES (?, ?, ?, ?)")
+	stmtCat, err := tx.Prepare("INSERT INTO atlasloot_categories (name, display_name, sort_order) VALUES (?, ?, ?)")
 	if err != nil {
-		return err
+		return fmt.Errorf("prepare cat: %w", err)
 	}
 	defer stmtCat.Close()
 
 	stmtMod, err := tx.Prepare("INSERT INTO atlasloot_modules (category_id, name, display_name, sort_order) VALUES (?, ?, ?, ?)")
 	if err != nil {
-		return err
+		return fmt.Errorf("prepare mod: %w", err)
 	}
 	defer stmtMod.Close()
 
 	stmtTbl, err := tx.Prepare("INSERT INTO atlasloot_tables (module_id, table_key, display_name, sort_order) VALUES (?, ?, ?, ?)")
 	if err != nil {
-		return err
+		return fmt.Errorf("prepare tbl: %w", err)
 	}
 	defer stmtTbl.Close()
 
@@ -95,15 +95,15 @@ func (r *ItemRepository) ImportAtlasLootFromJSON(jsonPath string) error {
 	// Let's check `atlasloot_schema.go` or `sqlite_db.go`.
 	// New schema in `InitAtlasLootSchema` uses `atlasloot_items`.
 
-	stmtItem, err := tx.Prepare("INSERT INTO atlasloot_items (table_id, item_id, drop_rate, sort_order) VALUES (?, ?, ?, ?)")
+	stmtItem, err := tx.Prepare("INSERT INTO atlasloot_items (table_id, item_id, drop_chance, sort_order) VALUES (?, ?, ?, ?)")
 	if err != nil {
-		return err
+		return fmt.Errorf("prepare item: %w", err)
 	}
 	defer stmtItem.Close()
 
 	for _, cat := range categories {
-		// Category
-		res, err := stmtCat.Exec(cat.Key, cat.Name, "root", cat.Sort)
+		// Category: Use Key for unique name, Name for display_name
+		res, err := stmtCat.Exec(cat.Key, cat.Name, cat.Sort)
 		if err != nil {
 			return fmt.Errorf("error inserting category %s: %w", cat.Name, err)
 		}
