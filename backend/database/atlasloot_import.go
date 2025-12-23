@@ -6,28 +6,28 @@ import (
 	"os"
 )
 
-type AtlasLootItem struct {
+type AtlasLootImportItem struct {
 	ID       int    `json:"id"`
 	DropRate string `json:"drop_rate"`
 }
 
-type AtlasLootTable struct {
-	Key   string          `json:"key"`
-	Name  string          `json:"name"`
-	Items []AtlasLootItem `json:"items"`
+type AtlasLootImportTable struct {
+	Key   string                `json:"key"`
+	Name  string                `json:"name"`
+	Items []AtlasLootImportItem `json:"items"`
 }
 
-type AtlasLootModule struct {
-	Key    string           `json:"key"`
-	Name   string           `json:"name"`
-	Tables []AtlasLootTable `json:"tables"`
+type AtlasLootImportModule struct {
+	Key    string                 `json:"key"`
+	Name   string                 `json:"name"`
+	Tables []AtlasLootImportTable `json:"tables"`
 }
 
-type AtlasLootCategory struct {
-	Key     string            `json:"key"`
-	Name    string            `json:"name"`
-	Sort    int               `json:"sort"`
-	Modules []AtlasLootModule `json:"modules"`
+type AtlasLootImportCategory struct {
+	Key     string                  `json:"key"`
+	Name    string                  `json:"name"`
+	Sort    int                     `json:"sort"`
+	Modules []AtlasLootImportModule `json:"modules"`
 }
 
 // CheckAndImportAtlasLoot checks if AtlasLoot data exists and imports it
@@ -56,7 +56,7 @@ func (r *ItemRepository) ImportAtlasLootFromJSON(jsonPath string) error {
 	}
 	defer file.Close()
 
-	var categories []AtlasLootCategory
+	var categories []AtlasLootImportCategory
 	if err := json.NewDecoder(file).Decode(&categories); err != nil {
 		return fmt.Errorf("failed to decode AtlasLoot JSON: %w", err)
 	}
