@@ -336,11 +336,7 @@ func (s *SQLiteDB) InitSchema() error {
 		PRIMARY KEY(skill_id, spell_id)
 	);
 	
-	-- AtlasLoot Categories (for legacy API compatibility if needed)
-	CREATE TABLE IF NOT EXISTS atlasloot_categories (
-		id INTEGER PRIMARY KEY,
-		name TEXT
-	);
+
 	`
 
 	_, err := s.db.Exec(schema)
