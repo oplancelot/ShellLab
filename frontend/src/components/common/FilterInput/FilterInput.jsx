@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import './FilterInput.css'
 
 /**
  * A reusable filter input component with client-side filtering logic
@@ -24,43 +25,23 @@ export function FilterInput({ placeholder = 'Filter...', onFilterChange, style =
     }
 
     return (
-        <div style={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            background: '#1a1a1a',
-            borderRadius: '4px',
-            border: '1px solid #444',
-            overflow: 'hidden',
-            ...style
-        }}>
-            <span style={{ padding: '0 8px', color: '#666' }}>🔍</span>
+        <div className="filter-input-container" style={style}>
+            <div className="filter-icon-wrapper">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+            </div>
             <input 
                 type="text"
+                className="filter-input-field"
                 value={value}
                 onChange={handleChange}
                 placeholder={placeholder}
-                style={{
-                    flex: 1,
-                    padding: '6px 8px',
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#fff',
-                    fontSize: '13px',
-                    outline: 'none',
-                    minWidth: '100px'
-                }}
             />
             {value && (
                 <button
+                    className="filter-clear-btn"
                     onClick={handleClear}
-                    style={{
-                        padding: '4px 8px',
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#888',
-                        cursor: 'pointer',
-                        fontSize: '14px'
-                    }}
                     title="Clear filter"
                 >
                     ✕
@@ -103,6 +84,11 @@ export function useFilter(items, filterText) {
                 return true
             }
             
+            // Match by subname (for NPCs)
+            if (item.subname && item.subname.toLowerCase().includes(searchLower)) {
+                return true
+            }
+
             return false
         })
     }, [items, filterText])

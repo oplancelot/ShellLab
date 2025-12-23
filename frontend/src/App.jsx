@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import AtlasLootPage from './components/AtlasLootPage'
-import DatabasePage from './components/DatabasePage'
+import DatabasePage from '../pages/DatabasePage/DatabasePage'
 import SearchPage from './components/SearchPage'
 
 function App() {

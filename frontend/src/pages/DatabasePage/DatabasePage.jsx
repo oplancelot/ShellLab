@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
-import { useItemTooltip } from '../hooks/useItemTooltip'
+import { useItemTooltip } from '../../hooks/useItemTooltip'
 import './DatabasePage.css'
-import ItemTooltip from './ItemTooltip'
-import { NPCDetailView, QuestDetailView, ItemDetailView } from './database/detailview'
-import { getQualityColor } from '../utils/wow'
-import { GRID_LAYOUT } from './common/layout'
+import ItemTooltip from '../../components/ItemTooltip'
+import { NPCDetailView, QuestDetailView, ItemDetailView } from '../../components/database/detailview'
+import { getQualityColor } from '../../utils/wow'
+import { GRID_LAYOUT } from '../../components/common/layout'
 
 // Import tab components
-import { ItemsTab, SetsTab, NPCsTab, QuestsTab, ObjectsTab, SpellsTab, FactionsTab } from './database/tabs'
+import { ItemsTab, SetsTab, NPCsTab, QuestsTab, ObjectsTab, SpellsTab, FactionsTab } from '../../components/database/tabs'
 
 function DatabasePage() {
     const [activeTab, setActiveTab] = useState('items')

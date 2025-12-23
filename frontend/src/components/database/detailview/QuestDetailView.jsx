@@ -3,19 +3,21 @@ import { GetQuestDetail } from '../../../services/api'
 import { getQualityColor } from '../../../utils/wow'
 
 
+import './DetailView.css'
+
+import LootTile from '../../common/LootTile/LootTile'
+
 const QuestDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
     const [detail, setDetail] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
 
     useEffect(() => {
-        console.log(`[QuestDetailView] Mounting for entry: ${entry}`);
         setLoading(true)
         setError(null)
         
         GetQuestDetail(entry)
             .then(res => {
-                console.log(`[QuestDetailView] Received data:`, res);
                 if (!res) {
                     setError("Quest data is empty or invalid.");
                 } else {
@@ -24,7 +26,6 @@ const QuestDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
                 setLoading(false)
             })
             .catch(err => {
-                console.error(`[QuestDetailView] Error:`, err);
                 setError(err.toString());
                 setLoading(false)
             })
@@ -32,46 +33,39 @@ const QuestDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
 
     const renderRewardItem = (item, isChoice) => {
         return (
-            <div 
+            <LootTile
                 key={item.entry}
-                style={{ position: 'relative', display: 'flex', alignItems: 'center', background: '#242424', padding: '5px', borderRadius: '4px', margin: '5px 0', cursor: 'pointer' }}
+                item={item}
                 onClick={() => onNavigate('item', item.entry)}
-                {...tooltipHook.getItemHandlers(item.entry)}
-            >
-                 <div style={{ width: '32px', height: '32px', border: `1px solid ${getQualityColor(item.quality)}`, marginRight: '8px' }}>
-                    {item.icon ? <img src={`/items/icons/${item.icon}.jpg`} style={{width:'100%'}} /> : '?'}
-                </div>
-                <div>
-                   <div style={{ color: getQualityColor(item.quality) }}>{item.name}</div>
-                   {item.count > 1 && <div style={{ color: '#aaa', fontSize: '11px' }}>x{item.count}</div>}
-                </div>
-            </div>
+                tooltipHandlers={tooltipHook.getItemHandlers(item.entry)}
+            />
         )
     }
 
-    if (loading) return <div className="loading">Loading quest details (ID: {entry})...</div>
+    if (loading) return <div className="loading-view">Loading quest details...</div>
     if (error) return (
-        <div className="error-container" style={{ padding: '20px', color: '#ff4444' }}>
+        <div className="error-view">
             <h3>Error Loading Quest</h3>
             <p>{error}</p>
             <button onClick={onBack} style={{ background: '#333', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>&larr; Back</button>
         </div>
     )
-    if (!detail) return <div className="error">Quest not found (ID: {entry})</div>
+    if (!detail) return <div className="error-view">Quest not found</div>
     
     return (
-         <div className="detail-view" style={{ flex: 1, overflowY: 'auto', padding: '20px', background: '#121212', color: '#e0e0e0' }}>
-
+         <div className="detail-view">
             
-            <h1 style={{ color: '#FFD100', marginBottom: '10px' }}>{detail.title} [{detail.entry}]</h1>
-            <div style={{ color: '#888', marginBottom: '20px' }}>Level {detail.questLevel} (Min {detail.minLevel}) - {detail.type === 41 ? 'PVP' : detail.type === 81 ? 'Dungeon' : 'Normal'}</div>
+            <header className="detail-page-header">
+                <h1 className="detail-title" style={{ color: '#FFD100' }}>{detail.title} [{detail.entry}]</h1>
+                <div className="detail-subtitle">Level {detail.questLevel} (Min {detail.minLevel}) - {detail.type === 41 ? 'PVP' : detail.type === 81 ? 'Dungeon' : 'Normal'}</div>
+            </header>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '40px' }}>
                 <div>
-                    <h3>Description</h3>
+                    <h3 className="section-header">Description</h3>
                     <p style={{ lineHeight: '1.6', color: '#ccc' }}>{detail.details}</p>
                     
-                    <h3>Objectives</h3>
+                    <h3 className="section-header">Objectives</h3>
                     <p style={{ lineHeight: '1.6', color: '#ccc' }}>{detail.objectives}</p>
 
                     <div style={{ marginTop: '30px', borderTop: '1px solid #333', paddingTop: '20px' }}>
@@ -82,7 +76,7 @@ const QuestDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
                         {detail.rewards && detail.rewards.length > 0 && (
                             <div style={{ marginBottom: '20px' }}>
                                 <h4 style={{ color: '#aaa' }}>You will receive:</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
+                                <div className="loot-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                                     {detail.rewards.map(i => renderRewardItem(i, false))}
                                 </div>
                             </div>
@@ -91,7 +85,7 @@ const QuestDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
                         {detail.choiceRewards && detail.choiceRewards.length > 0 && (
                             <div>
                                 <h4 style={{ color: '#aaa' }}>Choose one of:</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
+                                <div className="loot-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                                     {detail.choiceRewards.map(i => renderRewardItem(i, true))}
                                 </div>
                             </div>
@@ -110,10 +104,8 @@ const QuestDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
                                         <b style={{ color: '#fff' }}>{s.title} [{s.entry}]</b>
                                     ) : (
                                         <a 
+                                            className="quest-link"
                                             onClick={() => onNavigate('quest', s.entry)}
-                                            style={{ color: '#FFD100', cursor: 'pointer', textDecoration: 'none' }}
-                                            onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
-                                            onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
                                         >
                                             {s.title} [{s.entry}]
                                         </a>
@@ -130,7 +122,7 @@ const QuestDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
                             <h3 style={{ color: '#FFD100', marginTop: 0 }}>Prerequisites</h3>
                             {detail.prevQuests.map(q => (
                                 <div key={q.entry} style={{ fontSize: '13px', marginBottom: '5px' }}>
-                                    <a onClick={() => onNavigate('quest', q.entry)} style={{ color: '#FFD100', cursor: 'pointer' }}>
+                                    <a className="quest-link" onClick={() => onNavigate('quest', q.entry)}>
                                         {q.title} [{q.entry}]
                                     </a>
                                 </div>
