@@ -1,5 +1,7 @@
 package database
 
+import "fmt"
+
 // Creature represents a WoW NPC
 type Creature struct {
 	Entry     int    `json:"entry"`
@@ -53,26 +55,37 @@ func (r *ItemRepository) GetCreatureTypes() ([]*CreatureType, error) {
 }
 
 // GetCreaturesByType returns creatures filtered by type
-func (r *ItemRepository) GetCreaturesByType(creatureType int, limit, offset int) ([]*Creature, int, error) {
+func (r *ItemRepository) GetCreaturesByType(creatureType int, nameFilter string, limit, offset int) ([]*Creature, int, error) {
+	// Build WHERE clause
+	whereClause := "WHERE creature_type = ?"
+	args := []interface{}{creatureType}
+
+	if nameFilter != "" {
+		whereClause += " AND name LIKE ?"
+		args = append(args, "%"+nameFilter+"%")
+	}
+
 	// Count
 	var count int
-	err := r.db.DB().QueryRow(`
-		SELECT COUNT(*) FROM creatures WHERE creature_type = ?
-	`, creatureType).Scan(&count)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM creatures %s", whereClause)
+	err := r.db.DB().QueryRow(countQuery, args...).Scan(&count)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	// Data
-	rows, err := r.db.DB().Query(`
+	dataArgs := append(args, limit, offset)
+	dataQuery := fmt.Sprintf(`
 		SELECT entry, name, subname, level_min, level_max, 
 			health_min, health_max, mana_min, mana_max,
 			creature_type, creature_rank, faction, npc_flags
 		FROM creatures
-		WHERE creature_type = ?
+		%s
 		ORDER BY level_max DESC, name
 		LIMIT ? OFFSET ?
-	`, creatureType, limit, offset)
+	`, whereClause)
+
+	rows, err := r.db.DB().Query(dataQuery, dataArgs...)
 	if err != nil {
 		return nil, 0, err
 	}

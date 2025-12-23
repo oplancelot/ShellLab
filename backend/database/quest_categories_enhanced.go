@@ -63,13 +63,24 @@ func (r *ItemRepository) GetQuestCategoriesByGroup(groupID int) ([]*QuestCategor
 }
 
 // GetQuestsByEnhancedCategory returns quests for a given category (ZoneOrSort value)
-func (r *ItemRepository) GetQuestsByEnhancedCategory(categoryID int) ([]*Quest, error) {
-	rows, err := r.db.DB().Query(`
+func (r *ItemRepository) GetQuestsByEnhancedCategory(categoryID int, nameFilter string) ([]*Quest, error) {
+	whereClause := "WHERE zone_or_sort = ?"
+	args := []interface{}{categoryID}
+
+	if nameFilter != "" {
+		whereClause += " AND title LIKE ?"
+		args = append(args, "%"+nameFilter+"%")
+	}
+
+	query := fmt.Sprintf(`
 		SELECT entry, title, quest_level, min_level, type, zone_or_sort, rew_xp
 		FROM quests 
-		WHERE zone_or_sort = ?
+		%s
 		ORDER BY quest_level, title
-	`, categoryID)
+		LIMIT 10000
+	`, whereClause)
+
+	rows, err := r.db.DB().Query(query, args...)
 	if err != nil {
 		return nil, err
 	}

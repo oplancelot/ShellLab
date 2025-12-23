@@ -110,24 +110,35 @@ func (r *ItemRepository) GetItemClasses() ([]*ItemClass, error) {
 }
 
 // GetItemsByClass returns items filtered by class and subclass
-func (r *ItemRepository) GetItemsByClass(class, subClass int, limit, offset int) ([]*Item, int, error) {
+func (r *ItemRepository) GetItemsByClass(class, subClass int, nameFilter string, limit, offset int) ([]*Item, int, error) {
+	// Build WHERE clause
+	whereClause := "WHERE class = ? AND subclass = ?"
+	args := []interface{}{class, subClass}
+
+	if nameFilter != "" {
+		whereClause += " AND name LIKE ?"
+		args = append(args, "%"+nameFilter+"%")
+	}
+
 	// Count
 	var count int
-	err := r.db.DB().QueryRow(`
-		SELECT COUNT(*) FROM items WHERE class = ? AND subclass = ?
-	`, class, subClass).Scan(&count)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM items %s", whereClause)
+	err := r.db.DB().QueryRow(countQuery, args...).Scan(&count)
 	if err != nil {
 		return nil, 0, err
 	}
 
 	// Data
-	rows, err := r.db.DB().Query(`
+	dataArgs := append(args, limit, offset)
+	dataQuery := fmt.Sprintf(`
 		SELECT entry, name, quality, item_level, required_level, class, subclass, inventory_type, icon_path
 		FROM items
-		WHERE class = ? AND subclass = ?
+		%s
 		ORDER BY quality DESC, item_level DESC
 		LIMIT ? OFFSET ?
-	`, class, subClass, limit, offset)
+	`, whereClause)
+
+	rows, err := r.db.DB().Query(dataQuery, dataArgs...)
 	if err != nil {
 		return nil, 0, err
 	}

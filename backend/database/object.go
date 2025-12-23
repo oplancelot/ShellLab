@@ -1,5 +1,7 @@
 package database
 
+import "fmt"
+
 // GameObject represents a WoW game object
 type GameObject struct {
 	Entry     int     `json:"entry"`
@@ -45,14 +47,24 @@ func (r *ItemRepository) GetObjectTypes() ([]*ObjectType, error) {
 }
 
 // GetObjectsByType returns objects filtered by type
-func (r *ItemRepository) GetObjectsByType(typeID int) ([]*GameObject, error) {
-	rows, err := r.db.DB().Query(`
+func (r *ItemRepository) GetObjectsByType(typeID int, nameFilter string) ([]*GameObject, error) {
+	whereClause := "WHERE type = ?"
+	args := []interface{}{typeID}
+
+	if nameFilter != "" {
+		whereClause += " AND name LIKE ?"
+		args = append(args, "%"+nameFilter+"%")
+	}
+
+	query := fmt.Sprintf(`
 		SELECT entry, name, type, display_id, size
 		FROM objects
-		WHERE type = ?
+		%s
 		ORDER BY name
-		LIMIT 500
-	`, typeID)
+		LIMIT 10000
+	`, whereClause)
+
+	rows, err := r.db.DB().Query(query, args...)
 	if err != nil {
 		return nil, err
 	}

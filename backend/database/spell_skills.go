@@ -65,14 +65,25 @@ func (r *ItemRepository) GetSpellSkillsByCategory(categoryID int) ([]*SpellSkill
 
 // GetSpellsBySkill returns all spells for a given skill
 // GetSpellsBySkill returns all spells for a given skill
-func (r *ItemRepository) GetSpellsBySkill(skillID int) ([]*Spell, error) {
-	rows, err := r.db.DB().Query(`
+func (r *ItemRepository) GetSpellsBySkill(skillID int, nameFilter string) ([]*Spell, error) {
+	whereClause := "WHERE ss.skill_id = ?"
+	args := []interface{}{skillID}
+
+	if nameFilter != "" {
+		whereClause += " AND sp.name LIKE ?"
+		args = append(args, "%"+nameFilter+"%")
+	}
+
+	query := fmt.Sprintf(`
 		SELECT sp.entry, sp.name, sp.description
 		FROM spells sp
 		INNER JOIN spell_skill_spells ss ON ss.spell_id = sp.entry
-		WHERE ss.skill_id = ?
+		%s
 		ORDER BY sp.name
-	`, skillID)
+		LIMIT 10000
+	`, whereClause)
+
+	rows, err := r.db.DB().Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
