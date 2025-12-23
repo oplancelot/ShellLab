@@ -53,3 +53,5 @@ data/shelllab_back.db
 scripts/test_browsing_full.go
 scripts/test_db_rebuild.go
 scripts/debug_items.go
+data/shelllab.db
+.agent/rules/shelllootlab.md
