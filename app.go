@@ -141,9 +141,13 @@ func (a *App) GetItemClasses() []*database.ItemClass {
 }
 
 // BrowseItemsByClass returns items for a specific class/subclass
-func (a *App) BrowseItemsByClass(class, subClass int) []*database.Item {
-	// Hardcoded limit for now, maybe pagination later
-	items, _, err := a.itemRepo.GetItemsByClass(class, subClass, 200, 0)
+func (a *App) BrowseItemsByClass(class, subClass int, nameFilter string) []*database.Item {
+	limit := 10000 // High limit for full search
+	if nameFilter == "" {
+		limit = 500 // Default limit when no filter
+	}
+
+	items, _, err := a.itemRepo.GetItemsByClass(class, subClass, nameFilter, limit, 0)
 	if err != nil {
 		fmt.Printf("Error browsing items: %v\n", err)
 		return []*database.Item{}
@@ -221,8 +225,13 @@ func (a *App) GetCreatureTypes() []*database.CreatureType {
 }
 
 // BrowseCreaturesByType returns creatures filtered by type
-func (a *App) BrowseCreaturesByType(creatureType int) []*database.Creature {
-	creatures, _, err := a.itemRepo.GetCreaturesByType(creatureType, 200, 0)
+func (a *App) BrowseCreaturesByType(creatureType int, nameFilter string) []*database.Creature {
+	limit := 10000
+	if nameFilter == "" {
+		limit = 500
+	}
+
+	creatures, _, err := a.itemRepo.GetCreaturesByType(creatureType, nameFilter, limit, 0)
 	if err != nil {
 		fmt.Printf("Error browsing creatures: %v\n", err)
 		return []*database.Creature{}
@@ -281,8 +290,8 @@ func (a *App) GetObjectTypes() []*database.ObjectType {
 }
 
 // GetObjectsByType returns objects filtered by type
-func (a *App) GetObjectsByType(typeID int) []*database.GameObject {
-	objects, err := a.itemRepo.GetObjectsByType(typeID)
+func (a *App) GetObjectsByType(typeID int, nameFilter string) []*database.GameObject {
+	objects, err := a.itemRepo.GetObjectsByType(typeID, nameFilter)
 	if err != nil {
 		fmt.Printf("Error browsing objects: %v\n", err)
 		return []*database.GameObject{}
@@ -486,9 +495,9 @@ func (a *App) GetSpellSkillsByCategory(categoryID int) []*database.SpellSkill {
 }
 
 // GetSpellsBySkill returns spells for a skill
-func (a *App) GetSpellsBySkill(skillID int) []*database.Spell {
+func (a *App) GetSpellsBySkill(skillID int, nameFilter string) []*database.Spell {
 	fmt.Printf("[API] GetSpellsBySkill called: %d\n", skillID)
-	spells, err := a.itemRepo.GetSpellsBySkill(skillID)
+	spells, err := a.itemRepo.GetSpellsBySkill(skillID, nameFilter)
 	if err != nil {
 		fmt.Printf("[API] Error: %v\n", err)
 		return []*database.Spell{}
@@ -521,9 +530,9 @@ func (a *App) GetQuestCategoriesByGroup(groupID int) []*database.QuestCategoryEn
 }
 
 // GetQuestsByEnhancedCategory returns quests for a category (ZoneOrSort value)
-func (a *App) GetQuestsByEnhancedCategory(categoryID int) []*database.Quest {
+func (a *App) GetQuestsByEnhancedCategory(categoryID int, nameFilter string) []*database.Quest {
 	fmt.Printf("[API] GetQuestsByEnhancedCategory called: %d\n", categoryID)
-	quests, err := a.itemRepo.GetQuestsByEnhancedCategory(categoryID)
+	quests, err := a.itemRepo.GetQuestsByEnhancedCategory(categoryID, nameFilter)
 	if err != nil {
 		fmt.Printf("[API] Error: %v\n", err)
 		return []*database.Quest{}
