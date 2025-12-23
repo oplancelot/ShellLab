@@ -113,6 +113,12 @@ func (a *App) startup(ctx context.Context) {
 	fmt.Println("Checking metadata...")
 	a.itemRepo.CheckAndImportMetadata("data")
 
+	// Import AtlasLoot Data
+	fmt.Println("Checking AtlasLoot data...")
+	if err := a.itemRepo.CheckAndImportAtlasLoot("data"); err != nil {
+		fmt.Printf("ERROR: Failed to import AtlasLoot: %v\n", err)
+	}
+
 	fmt.Println("✓ ShellLab ready!")
 }
 
