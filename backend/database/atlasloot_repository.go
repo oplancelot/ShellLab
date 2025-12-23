@@ -111,7 +111,7 @@ func (r *AtlasLootRepository) GetLootItems(categoryName, moduleName, tableKey st
 			al.drop_chance,
 			al.sort_order,
 			i.name,
-			i.icon_path,
+			COALESCE(i.icon_path, ''),
 			i.quality
 		FROM atlasloot_items al
 		JOIN atlasloot_tables t ON al.table_id = t.id
