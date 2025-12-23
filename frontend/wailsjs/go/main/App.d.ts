@@ -5,11 +5,11 @@ import {main} from '../models';
 
 export function AdvancedSearch(arg1:database.SearchFilter):Promise<database.SearchResult>;
 
-export function BrowseCreaturesByType(arg1:number):Promise<Array<database.Creature>>;
+export function BrowseCreaturesByType(arg1:number,arg2:string):Promise<Array<database.Creature>>;
 
-export function BrowseItemsByClass(arg1:number,arg2:number):Promise<Array<database.Item>>;
+export function BrowseItemsByClass(arg1:number,arg2:number,arg3:string):Promise<Array<database.Item>>;
 
-export function BrowseItemsByClassAndSlot(arg1:number,arg2:number,arg3:number):Promise<Array<database.Item>>;
+export function BrowseItemsByClassAndSlot(arg1:number,arg2:number,arg3:number,arg4:string):Promise<Array<database.Item>>;
 
 export function GetCategories():Promise<Array<string>>;
 
@@ -39,7 +39,7 @@ export function GetLoot(arg1:string,arg2:string,arg3:string):Promise<main.Legacy
 
 export function GetObjectTypes():Promise<Array<database.ObjectType>>;
 
-export function GetObjectsByType(arg1:number):Promise<Array<database.GameObject>>;
+export function GetObjectsByType(arg1:number,arg2:string):Promise<Array<database.GameObject>>;
 
 export function GetQuestCategories():Promise<Array<database.QuestCategory>>;
 
@@ -51,7 +51,7 @@ export function GetQuestDetail(arg1:number):Promise<database.QuestDetail>;
 
 export function GetQuestsByCategory(arg1:number):Promise<Array<database.Quest>>;
 
-export function GetQuestsByEnhancedCategory(arg1:number):Promise<Array<database.Quest>>;
+export function GetQuestsByEnhancedCategory(arg1:number,arg2:string):Promise<Array<database.Quest>>;
 
 export function GetRootCategories():Promise<Array<database.Category>>;
 
@@ -59,7 +59,7 @@ export function GetSpellSkillCategories():Promise<Array<database.SpellSkillCateg
 
 export function GetSpellSkillsByCategory(arg1:number):Promise<Array<database.SpellSkill>>;
 
-export function GetSpellsBySkill(arg1:number):Promise<Array<database.Spell>>;
+export function GetSpellsBySkill(arg1:number,arg2:string):Promise<Array<database.Spell>>;
 
 export function GetTables(arg1:string,arg2:string):Promise<Array<database.AtlasTable>>;
 

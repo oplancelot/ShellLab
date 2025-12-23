@@ -243,6 +243,7 @@ export namespace database {
 	    typeName: string;
 	    displayId: number;
 	    size: number;
+	    data?: number[];
 	
 	    static createFrom(source: any = {}) {
 	        return new GameObject(source);
@@ -256,6 +257,7 @@ export namespace database {
 	        this.typeName = source["typeName"];
 	        this.displayId = source["displayId"];
 	        this.size = source["size"];
+	        this.data = source["data"];
 	    }
 	}
 	export class InventorySlot {

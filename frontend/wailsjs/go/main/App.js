@@ -6,16 +6,16 @@ export function AdvancedSearch(arg1) {
   return window['go']['main']['App']['AdvancedSearch'](arg1);
 }
 
-export function BrowseCreaturesByType(arg1) {
-  return window['go']['main']['App']['BrowseCreaturesByType'](arg1);
+export function BrowseCreaturesByType(arg1, arg2) {
+  return window['go']['main']['App']['BrowseCreaturesByType'](arg1, arg2);
 }
 
-export function BrowseItemsByClass(arg1, arg2) {
-  return window['go']['main']['App']['BrowseItemsByClass'](arg1, arg2);
+export function BrowseItemsByClass(arg1, arg2, arg3) {
+  return window['go']['main']['App']['BrowseItemsByClass'](arg1, arg2, arg3);
 }
 
-export function BrowseItemsByClassAndSlot(arg1, arg2, arg3) {
-  return window['go']['main']['App']['BrowseItemsByClassAndSlot'](arg1, arg2, arg3);
+export function BrowseItemsByClassAndSlot(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['BrowseItemsByClassAndSlot'](arg1, arg2, arg3, arg4);
 }
 
 export function GetCategories() {
@@ -74,8 +74,8 @@ export function GetObjectTypes() {
   return window['go']['main']['App']['GetObjectTypes']();
 }
 
-export function GetObjectsByType(arg1) {
-  return window['go']['main']['App']['GetObjectsByType'](arg1);
+export function GetObjectsByType(arg1, arg2) {
+  return window['go']['main']['App']['GetObjectsByType'](arg1, arg2);
 }
 
 export function GetQuestCategories() {
@@ -98,8 +98,8 @@ export function GetQuestsByCategory(arg1) {
   return window['go']['main']['App']['GetQuestsByCategory'](arg1);
 }
 
-export function GetQuestsByEnhancedCategory(arg1) {
-  return window['go']['main']['App']['GetQuestsByEnhancedCategory'](arg1);
+export function GetQuestsByEnhancedCategory(arg1, arg2) {
+  return window['go']['main']['App']['GetQuestsByEnhancedCategory'](arg1, arg2);
 }
 
 export function GetRootCategories() {
@@ -114,8 +114,8 @@ export function GetSpellSkillsByCategory(arg1) {
   return window['go']['main']['App']['GetSpellSkillsByCategory'](arg1);
 }
 
-export function GetSpellsBySkill(arg1) {
-  return window['go']['main']['App']['GetSpellsBySkill'](arg1);
+export function GetSpellsBySkill(arg1, arg2) {
+  return window['go']['main']['App']['GetSpellsBySkill'](arg1, arg2);
 }
 
 export function GetTables(arg1, arg2) {

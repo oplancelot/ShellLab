@@ -1,339 +1,427 @@
-# MySQL 数据库表结构文档
+# MySQL Database Schema Documentation
 
-## 数据库概览
+## Database Overview
 
-| 数据库     | 表数量 | 用途                                         |
-| ---------- | ------ | -------------------------------------------- |
-| `aowow`    | 22     | AOWOW 网站数据（图标、法术、阵营等元数据）   |
-| `tw_world` | 180+   | Turtle WoW 游戏世界数据（物品、NPC、任务等） |
+| Database   | Tables | Purpose                                               |
+| ---------- | ------ | ----------------------------------------------------- |
+| `aowow`    | 22     | AOWOW Website Data (Icons, Spells, Factions metadata) |
+| `tw_world` | 180+   | Turtle WoW World Data (Items, NPCs, Quests, etc.)     |
 
 ---
 
-## aowow 数据库（22 表）
+## aowow Database (22 Tables)
 
-### 角色相关
+### Character Related
 
-| 表名                | 用途     |
-| ------------------- | -------- |
-| `aowow_char_titles` | 角色称号 |
+| Table Name          | Purpose          |
+| ------------------- | ---------------- |
+| `aowow_char_titles` | Character Titles |
 
-### 阵营相关
+### Faction Related
 
-| 表名                    | 用途                          |
+| Table Name              | Purpose                       |
 | ----------------------- | ----------------------------- |
-| `aowow_factions`        | 阵营数据                      |
-| `aowow_factiontemplate` | 阵营模板（包含友好/敌对关系） |
+| `aowow_factions`        | Faction Data                  |
+| `aowow_factiontemplate` | Faction Templates (Relations) |
 
-### 物品相关
+### Item Related
 
-| 表名                    | 用途                               |
-| ----------------------- | ---------------------------------- |
-| `aowow_icons`           | 物品/法术图标名称映射              |
-| `aowow_itemenchantment` | 物品附魔效果                       |
-| `aowow_itemset`         | 套装数据（包含套装部件和套装奖励） |
+| Table Name              | Purpose                              |
+| ----------------------- | ------------------------------------ |
+| `aowow_icons`           | Item/Spell Icon Name Mappings        |
+| `aowow_itemenchantment` | Item Enchantment Effects             |
+| `aowow_itemset`         | Item Set Data (components & bonuses) |
 
-### 技能相关
+### Skill Related
 
-| 表名                       | 用途           |
-| -------------------------- | -------------- |
-| `aowow_skill`              | 技能数据       |
-| `aowow_skill_line_ability` | 技能线能力关联 |
+| Table Name                 | Purpose                      |
+| -------------------------- | ---------------------------- |
+| `aowow_skill`              | Skill Data                   |
+| `aowow_skill_line_ability` | Skill Line Ability Relations |
 
-### 法术相关
+### Spell Related
 
-| 表名                    | 用途                       |
-| ----------------------- | -------------------------- |
-| `aowow_spell`           | 法术基础数据               |
-| `aowow_spellcasttimes`  | 施法时间                   |
-| `aowow_spelldispeltype` | 驱散类型                   |
-| `aowow_spellduration`   | 法术持续时间               |
-| `aowow_spellicons`      | 法术图标                   |
-| `aowow_spellmechanic`   | 法术机制（如昏迷、恐惧等） |
-| `aowow_spellradius`     | 法术半径                   |
-| `aowow_spellrange`      | 法术距离                   |
+| Table Name              | Purpose         |
+| ----------------------- | --------------- |
+| `aowow_spell`           | Spell Base Data |
+| `aowow_spellcasttimes`  | Cast Times      |
+| `aowow_spelldispeltype` | Dispel Types    |
+| `aowow_spellduration`   | Spell Durations |
+| `aowow_spellicons`      | Spell Icons     |
+| `aowow_spellmechanic`   | Spell Mechanics |
+| `aowow_spellradius`     | Spell Radius    |
+| `aowow_spellrange`      | Spell Range     |
 
-### 其他
+### Others
 
-| 表名                   | 用途               |
+| Table Name             | Purpose         |
+| ---------------------- | --------------- |
+| `aowow_comments`       | User Comments   |
+| `aowow_comments_rates` | Comment Ratings |
+| `aowow_lock`           | Lock Data       |
+| `aowow_news`           | News            |
+| `aowow_resistances`    | Resistance Data |
+| `aowow_zones`          | Zone/Map Data   |
+
+---
+
+## tw_world Database (Main Tables)
+
+### Item Related
+
+| Table Name                   | Purpose                   |
+| ---------------------------- | ------------------------- |
+| `item_template`              | Item Template (Base data) |
+| `item_display_info`          | Item Display Info         |
+| `item_enchantment_template`  | Item Enchantment Template |
+| `item_loot_template`         | Item Loot Template        |
+| `item_required_target`       | Item Required Target      |
+| `item_transmogrify_template` | Transmogrify Template     |
+| `locales_item`               | Item Localization         |
+
+### NPC/Creature Related
+
+| Table Name                    | Purpose                     |
+| ----------------------------- | --------------------------- |
+| `creature_template`           | Creature Template           |
+| `creature`                    | Creature Instances (Spawns) |
+| `creature_addon`              | Creature Addon Data (Auras) |
+| `creature_ai_events`          | Creature AI Events          |
+| `creature_ai_scripts`         | Creature AI Scripts         |
+| `creature_equip_template`     | Creature Equipment Template |
+| `creature_groups`             | Creature Groups             |
+| `creature_involvedrelation`   | Quest Relations (Finisher)  |
+| `creature_loot_template`      | Creature Loot Template      |
+| `creature_movement`           | Creature Movement Paths     |
+| `creature_movement_template`  | Creature Movement Template  |
+| `creature_onkill_reputation`  | On-Kill Reputation          |
+| `creature_questrelation`      | Quest Relations (Starter)   |
+| `creature_spells`             | Creature Spells             |
+| `creature_display_info_addon` | Creature Display Info Addon |
+| `locales_creature`            | Creature Localization       |
+
+### Quest Related
+
+| Table Name             | Purpose              |
+| ---------------------- | -------------------- |
+| `quest_template`       | Quest Template       |
+| `quest_cast_objective` | Quest Cast Objective |
+| `quest_end_scripts`    | Quest End Scripts    |
+| `quest_greeting`       | Quest Greeting       |
+| `quest_start_scripts`  | Quest Start Scripts  |
+| `locales_quest`        | Quest Localization   |
+
+### GameObject Related
+
+| Table Name                      | Purpose                     |
+| ------------------------------- | --------------------------- |
+| `gameobject_template`           | GameObject Template         |
+| `gameobject`                    | GameObject Instances        |
+| `gameobject_involvedrelation`   | GameObject Quest (Finisher) |
+| `gameobject_loot_template`      | GameObject Loot Template    |
+| `gameobject_questrelation`      | GameObject Quest (Starter)  |
+| `gameobject_scripts`            | GameObject Scripts          |
+| `gameobject_display_info_addon` | GameObject Display Info     |
+| `locales_gameobject`            | GameObject Localization     |
+
+### Spell Related
+
+| Table Name              | Purpose               |
+| ----------------------- | --------------------- |
+| `spell_template`        | Spell Template        |
+| `spell_affect`          | Spell Affects         |
+| `spell_area`            | Area Spells           |
+| `spell_chain`           | Spell Chain (Ranks)   |
+| `spell_disabled`        | Disabled Spells       |
+| `spell_effect_mod`      | Spell Effect Mods     |
+| `spell_elixir`          | Elixir Types          |
+| `spell_group`           | Spell Groups          |
+| `spell_learn_spell`     | Learn Spell Relations |
+| `spell_mod`             | Spell Mods            |
+| `spell_proc_event`      | Spell Proc Events     |
+| `spell_scripts`         | Spell Scripts         |
+| `spell_target_position` | Spell Target Position |
+| `locales_spell`         | Spell Localization    |
+
+### Loot Templates
+
+| Table Name                    | Purpose               |
+| ----------------------------- | --------------------- |
+| `creature_loot_template`      | Creature Loot         |
+| `gameobject_loot_template`    | GameObject Loot       |
+| `item_loot_template`          | Item Loot (Container) |
+| `disenchant_loot_template`    | Disenchant Loot       |
+| `fishing_loot_template`       | Fishing Loot          |
+| `mail_loot_template`          | Mail Loot             |
+| `pickpocketing_loot_template` | Pickpocket Loot       |
+| `reference_loot_template`     | Reference Loot        |
+| `skinning_loot_template`      | Skinning Loot         |
+
+### NPC Interaction
+
+| Table Name             | Purpose            |
 | ---------------------- | ------------------ |
-| `aowow_comments`       | 用户评论           |
-| `aowow_comments_rates` | 评论评分           |
-| `aowow_lock`           | 锁数据（开锁相关） |
-| `aowow_news`           | 新闻               |
-| `aowow_resistances`    | 抗性数据           |
-| `aowow_zones`          | 区域/地图数据      |
+| `npc_gossip`           | NPC Gossip         |
+| `npc_text`             | NPC Text           |
+| `npc_trainer`          | NPC Trainer        |
+| `npc_trainer_template` | Trainer Template   |
+| `npc_vendor`           | NPC Vendor         |
+| `npc_vendor_template`  | Vendor Template    |
+| `gossip_menu`          | Gossip Menu        |
+| `gossip_menu_option`   | Gossip Menu Option |
+| `gossip_scripts`       | Gossip Scripts     |
+
+### Map/Area Related
+
+| Table Name               | Purpose           |
+| ------------------------ | ----------------- |
+| `area_template`          | Area Template     |
+| `areatrigger_teleport`   | Teleport Triggers |
+| `areatrigger_template`   | Trigger Template  |
+| `areatrigger_tavern`     | Tavern Triggers   |
+| `map_template`           | Map Template      |
+| `game_graveyard_zone`    | Graveyards        |
+| `world_safe_locs_facing` | Safe Locations    |
+| `locales_area`           | Area Localization |
+
+### Battlegrounds
+
+| Table Name                | Purpose            |
+| ------------------------- | ------------------ |
+| `battleground_events`     | BG Events          |
+| `battleground_template`   | BG Template        |
+| `battlemaster_entry`      | Battlemaster Entry |
+| `creature_battleground`   | BG Creatures       |
+| `gameobject_battleground` | BG GameObjects     |
+
+### Faction/Reputation
+
+| Table Name                      | Purpose                |
+| ------------------------------- | ---------------------- |
+| `faction`                       | Faction                |
+| `faction_template`              | Faction Template       |
+| `reputation_reward_rate`        | Rep Reward Rate        |
+| `reputation_spillover_template` | Rep Spillover Template |
+| `locales_faction`               | Faction Localization   |
+
+### Player Related
+
+| Table Name                | Purpose             |
+| ------------------------- | ------------------- |
+| `player_classlevelstats`  | Class Level Stats   |
+| `player_levelstats`       | Level Stats         |
+| `player_xp_for_level`     | XP for Level        |
+| `playercreateinfo`        | Create Info         |
+| `playercreateinfo_action` | Create Actions      |
+| `playercreateinfo_item`   | Create Items        |
+| `playercreateinfo_spell`  | Create Spells       |
+| `player_factionchange_*`  | Faction Change Data |
+
+### Skill Related
+
+| Table Name                 | Purpose            |
+| -------------------------- | ------------------ |
+| `skill_fishing_base_level` | Fishing Base Level |
+| `skill_line_ability`       | Skill Line Ability |
+
+### Pet Related
+
+| Table Name            | Purpose           |
+| --------------------- | ----------------- |
+| `pet_levelstats`      | Pet Level Stats   |
+| `pet_name_generation` | Pet Name Gen      |
+| `pet_spell_data`      | Pet Spell Data    |
+| `petcreateinfo_spell` | Pet Create Spells |
+| `collection_pet`      | Pet Collection    |
+| `collection_mount`    | Mount Collection  |
+
+### Transport
+
+| Table Name              | Purpose            |
+| ----------------------- | ------------------ |
+| `taxi_nodes`            | Flight Paths       |
+| `taxi_path_transitions` | Flight Transitions |
+| `transports`            | Transports (Ships) |
+| `game_tele`             | Teleport Locations |
+| `locales_taxi_node`     | Flight Path Loc    |
+
+### Scripts
+
+| Table Name             | Purpose            |
+| ---------------------- | ------------------ |
+| `event_scripts`        | Event Scripts      |
+| `generic_scripts`      | Generic Scripts    |
+| `script_texts`         | Script Texts       |
+| `script_waypoint`      | Script Waypoints   |
+| `scripted_areatrigger` | Scripted Triggers  |
+| `scripted_event_id`    | Scripted Event IDs |
+
+### Game Events
+
+| Table Name                 | Purpose             |
+| -------------------------- | ------------------- |
+| `game_event_creature`      | Event Creatures     |
+| `game_event_creature_data` | Event Creature Data |
+| `game_event_gameobject`    | Event Objects       |
+| `game_event_mail`          | Event Mail          |
+| `game_event_quest`         | Event Quests        |
+
+### Pools
+
+| Table Name                 | Purpose            |
+| -------------------------- | ------------------ |
+| `pool_creature`            | Creature Pool      |
+| `pool_creature_template`   | Creature Pool Tmpl |
+| `pool_gameobject`          | GameObject Pool    |
+| `pool_gameobject_template` | Object Pool Tmpl   |
+| `pool_pool`                | Pool of Pools      |
+| `pool_template`            | Pool Template      |
+
+### Shop
+
+| Table Name        | Purpose         |
+| ----------------- | --------------- |
+| `shop_categories` | Shop Categories |
+| `shop_items`      | Shop Items      |
+
+### Others
+
+| Table Name           | Purpose           |
+| -------------------- | ----------------- |
+| `autobroadcast`      | Autobroadcast     |
+| `broadcast_text`     | Broadcast Text    |
+| `conditions`         | Conditions        |
+| `exploration_basexp` | Exploration XP    |
+| `game_weather`       | Weather           |
+| `mangos_string`      | MaNGOS Strings    |
+| `page_text`          | Page Text (Books) |
+| `points_of_interest` | POI               |
+| `reserved_name`      | Reserved Names    |
+| `sound_entries`      | Sound Entries     |
+| `variables`          | Server Variables  |
+| `warden_checks`      | Warden Checks     |
+| `warden_scans`       | Warden Scans      |
 
 ---
 
-## tw_world 数据库（主要表）
+## ShellLab Database Architecture
 
-### 物品相关
+This project uses an ETL (Extract-Transform-Load) pipeline to export data from the source (MySQL) to JSON, and then import it into the local SQLite database.
 
-| 表名                         | 用途                           |
-| ---------------------------- | ------------------------------ |
-| `item_template`              | 物品模板（所有物品的基础数据） |
-| `item_display_info`          | 物品显示信息                   |
-| `item_enchantment_template`  | 物品附魔模板                   |
-| `item_loot_template`         | 物品掉落模板                   |
-| `item_required_target`       | 物品使用目标要求               |
-| `item_transmogrify_template` | 幻化模板                       |
-| `locales_item`               | 物品本地化（多语言）           |
+### ETL Process Status
 
-### NPC/生物相关
+| Module        | Source Table (MySQL)       | Intermediate File (JSON) | Target Table (SQLite) | Status  | Import Script             |
+| ------------- | -------------------------- | ------------------------ | --------------------- | ------- | ------------------------- |
+| **Items**     | `item_template`            | `item_template.json`     | `items`               | ✅ Done | `db_import/main.go`       |
+| **Objects**   | `gameobject_template`      | `objects.json`           | `objects`             | ✅ Done | `export_objects_mysql.py` |
+| **Locks**     | `aowow_lock`               | `locks.json`             | `locks`               | ✅ Done | `export_objects_mysql.py` |
+| **Quests**    | `quest_template`           | `quests.json`            | `quests`              | ✅ Done | `export_quests.py`        |
+| **Creatures** | `creature_template`        | `creatures.json`         | `creatures`           | ✅ Done | `export_creatures.py`     |
+| **Factions**  | `aowow_factions`           | `factions.json`          | `factions`            | ✅ Done | `export_factions.py`      |
+| **Spells**    | `spell_template`           | `spells.json`            | `spells`              | ✅ Done | `export_spells.py`        |
+| **Loot**      | `creature_loot_template`   | `creature_loot.json`     | `creature_loot`       | ✅ Done | `export_loot.py`          |
+|               | `reference_loot_template`  | `reference_loot.json`    | `reference_loot`      | ✅ Done | `export_loot.py`          |
+|               | `gameobject_loot_template` | `gameobject_loot.json`   | `gameobject_loot`     | ✅ Done | `export_loot.py`          |
+|               | `item_loot_template`       | `item_loot.json`         | `item_loot`           | ✅ Done | `export_loot.py`          |
+|               | `disenchant_loot_template` | `disenchant_loot.json`   | `disenchant_loot`     | ✅ Done | `export_loot.py`          |
 
-| 表名                          | 用途                         |
-| ----------------------------- | ---------------------------- |
-| `creature_template`           | NPC/生物模板                 |
-| `creature`                    | 生物实例（世界中的位置）     |
-| `creature_addon`              | 生物附加数据（光环、武器等） |
-| `creature_ai_events`          | 生物 AI 事件                 |
-| `creature_ai_scripts`         | 生物 AI 脚本                 |
-| `creature_equip_template`     | 生物装备模板                 |
-| `creature_groups`             | 生物组                       |
-| `creature_involvedrelation`   | 生物任务关联（任务完成）     |
-| `creature_loot_template`      | 生物掉落模板                 |
-| `creature_movement`           | 生物移动路径                 |
-| `creature_movement_template`  | 生物移动模板                 |
-| `creature_onkill_reputation`  | 击杀声望奖励                 |
-| `creature_questrelation`      | 生物任务关联（任务接取）     |
-| `creature_spells`             | 生物法术                     |
-| `creature_display_info_addon` | 生物显示信息附加             |
-| `locales_creature`            | 生物本地化                   |
+### SQLite Table Schema Definitions
 
-### 任务相关
+Below are the main table structures for the local SQLite database (`data/shelllab.db`).
 
-| 表名                   | 用途         |
-| ---------------------- | ------------ |
-| `quest_template`       | 任务模板     |
-| `quest_cast_objective` | 任务施法目标 |
-| `quest_end_scripts`    | 任务结束脚本 |
-| `quest_greeting`       | 任务问候语   |
-| `quest_start_scripts`  | 任务开始脚本 |
-| `locales_quest`        | 任务本地化   |
+#### 1. Objects
 
-### 游戏对象相关
+```sql
+CREATE TABLE objects (
+    entry INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    type INTEGER NOT NULL,
+    display_id INTEGER,
+    size REAL,
+    data0-7 INTEGER  -- Contains critical data like LockID
+);
+```
 
-| 表名                            | 用途                         |
-| ------------------------------- | ---------------------------- |
-| `gameobject_template`           | 游戏对象模板                 |
-| `gameobject`                    | 游戏对象实例（世界中的位置） |
-| `gameobject_involvedrelation`   | 游戏对象任务关联（任务完成） |
-| `gameobject_loot_template`      | 游戏对象掉落模板             |
-| `gameobject_questrelation`      | 游戏对象任务关联（任务接取） |
-| `gameobject_scripts`            | 游戏对象脚本                 |
-| `gameobject_display_info_addon` | 游戏对象显示信息             |
-| `locales_gameobject`            | 游戏对象本地化               |
+#### 2. Locks
 
-### 法术相关
+Used to derive special Object categories (e.g. Herb, Mine).
 
-| 表名                    | 用途                   |
-| ----------------------- | ---------------------- |
-| `spell_template`        | 法术模板               |
-| `spell_affect`          | 法术影响               |
-| `spell_area`            | 区域法术               |
-| `spell_chain`           | 法术链（技能升级关系） |
-| `spell_disabled`        | 禁用的法术             |
-| `spell_effect_mod`      | 法术效果修正           |
-| `spell_elixir`          | 药剂类型               |
-| `spell_group`           | 法术分组               |
-| `spell_learn_spell`     | 学习法术关联           |
-| `spell_mod`             | 法术修正               |
-| `spell_proc_event`      | 法术触发事件           |
-| `spell_scripts`         | 法术脚本               |
-| `spell_target_position` | 法术目标位置           |
-| `locales_spell`         | 法术本地化             |
+```sql
+CREATE TABLE locks (
+    id INTEGER PRIMARY KEY,
+    type1-5 INTEGER,
+    prop1-5 INTEGER, -- Key properties (1=Lockpicking, 2=Herbalism, 3=Mining)
+    req1-5 INTEGER
+);
+```
 
-### 掉落模板
+#### 3. Quests
 
-| 表名                          | 用途               |
-| ----------------------------- | ------------------ |
-| `creature_loot_template`      | 生物掉落           |
-| `gameobject_loot_template`    | 游戏对象掉落       |
-| `item_loot_template`          | 物品掉落（如箱子） |
-| `disenchant_loot_template`    | 分解掉落           |
-| `fishing_loot_template`       | 钓鱼掉落           |
-| `mail_loot_template`          | 邮件掉落           |
-| `pickpocketing_loot_template` | 扒窃掉落           |
-| `reference_loot_template`     | 引用掉落模板       |
-| `skinning_loot_template`      | 剥皮掉落           |
+```sql
+CREATE TABLE quests (
+    entry INTEGER PRIMARY KEY,
+    title TEXT,
+    min_level INTEGER,
+    quest_level INTEGER,
+    ... -- Contains detailed text, rewards, objectives, etc.
+);
+```
 
-### NPC 交互
+#### 4. Creatures
 
-| 表名                   | 用途         |
-| ---------------------- | ------------ |
-| `npc_gossip`           | NPC 对话     |
-| `npc_text`             | NPC 文本     |
-| `npc_trainer`          | NPC 训练师   |
-| `npc_trainer_template` | 训练师模板   |
-| `npc_vendor`           | NPC 商人     |
-| `npc_vendor_template`  | 商人模板     |
-| `gossip_menu`          | 对话菜单     |
-| `gossip_menu_option`   | 对话菜单选项 |
-| `gossip_scripts`       | 对话脚本     |
+```sql
+CREATE TABLE creatures (
+    entry INTEGER PRIMARY KEY,
+    name TEXT,
+    subname TEXT,
+    level_min/max INTEGER,
+    health_min/max INTEGER,
+    creature_type INTEGER,
+    creature_rank INTEGER,
+    loot_id INTEGER,
+    skin_loot_id INTEGER,
+    pickpocket_loot_id INTEGER
+    ...
+);
+```
 
-### 地图/区域相关
+#### 5. Loot Tables
 
-| 表名                     | 用途             |
-| ------------------------ | ---------------- |
-| `area_template`          | 区域模板         |
-| `areatrigger_teleport`   | 区域触发器传送点 |
-| `areatrigger_template`   | 区域触发器模板   |
-| `areatrigger_tavern`     | 旅馆区域触发器   |
-| `map_template`           | 地图模板         |
-| `game_graveyard_zone`    | 墓地区域         |
-| `world_safe_locs_facing` | 世界安全位置朝向 |
-| `locales_area`           | 区域本地化       |
+All loot tables share the same structure:
 
-### 战场相关
+```sql
+CREATE TABLE *_loot (
+    entry INTEGER,          -- Related ID (e.g. creature.loot_id)
+    item INTEGER,           -- Item ID (FK: items.entry)
+    chance REAL,            -- Drop rate
+    groupid INTEGER,
+    mincount_or_ref INTEGER, -- Positive=Count, Negative=Reference to other loot table
+    maxcount INTEGER
+);
+```
 
-| 表名                      | 用途           |
-| ------------------------- | -------------- |
-| `battleground_events`     | 战场事件       |
-| `battleground_template`   | 战场模板       |
-| `battlemaster_entry`      | 战场管理员入口 |
-| `creature_battleground`   | 战场生物       |
-| `gameobject_battleground` | 战场游戏对象   |
+#### 6. Spells
 
-### 阵营/声望
+Used for displaying spell details and calculating set/item effects.
 
-| 表名                            | 用途         |
-| ------------------------------- | ------------ |
-| `faction`                       | 阵营         |
-| `faction_template`              | 阵营模板     |
-| `reputation_reward_rate`        | 声望奖励倍率 |
-| `reputation_spillover_template` | 声望溢出模板 |
-| `locales_faction`               | 阵营本地化   |
+```sql
+CREATE TABLE spells (
+    entry INTEGER PRIMARY KEY,
+    name TEXT,
+    description TEXT,
+    effect_base_points1-3 INTEGER,
+    effect_die_sides1-3 INTEGER
+);
+```
 
-### 玩家相关
+#### 7. Factions
 
-| 表名                      | 用途             |
-| ------------------------- | ---------------- |
-| `player_classlevelstats`  | 玩家职业等级属性 |
-| `player_levelstats`       | 玩家等级属性     |
-| `player_xp_for_level`     | 升级经验值       |
-| `playercreateinfo`        | 玩家创建信息     |
-| `playercreateinfo_action` | 玩家创建动作栏   |
-| `playercreateinfo_item`   | 玩家创建物品     |
-| `playercreateinfo_spell`  | 玩家创建法术     |
-| `player_factionchange_*`  | 阵营转换相关     |
-
-### 技能相关
-
-| 表名                       | 用途         |
-| -------------------------- | ------------ |
-| `skill_fishing_base_level` | 钓鱼基础等级 |
-| `skill_line_ability`       | 技能线能力   |
-
-### 宠物相关
-
-| 表名                  | 用途         |
-| --------------------- | ------------ |
-| `pet_levelstats`      | 宠物等级属性 |
-| `pet_name_generation` | 宠物名称生成 |
-| `pet_spell_data`      | 宠物法术数据 |
-| `petcreateinfo_spell` | 宠物创建法术 |
-| `collection_pet`      | 宠物收藏     |
-| `collection_mount`    | 坐骑收藏     |
-
-### 交通/传送
-
-| 表名                    | 用途         |
-| ----------------------- | ------------ |
-| `taxi_nodes`            | 飞行点       |
-| `taxi_path_transitions` | 飞行路径过渡 |
-| `transports`            | 传送门/船    |
-| `game_tele`             | 游戏传送点   |
-| `locales_taxi_node`     | 飞行点本地化 |
-
-### 脚本相关
-
-| 表名                   | 用途           |
-| ---------------------- | -------------- |
-| `event_scripts`        | 事件脚本       |
-| `generic_scripts`      | 通用脚本       |
-| `script_texts`         | 脚本文本       |
-| `script_waypoint`      | 脚本路径点     |
-| `scripted_areatrigger` | 脚本区域触发器 |
-| `scripted_event_id`    | 脚本事件 ID    |
-
-### 游戏事件
-
-| 表名                       | 用途             |
-| -------------------------- | ---------------- |
-| `game_event_creature`      | 游戏事件生物     |
-| `game_event_creature_data` | 游戏事件生物数据 |
-| `game_event_gameobject`    | 游戏事件游戏对象 |
-| `game_event_mail`          | 游戏事件邮件     |
-| `game_event_quest`         | 游戏事件任务     |
-
-### 刷怪池
-
-| 表名                       | 用途           |
-| -------------------------- | -------------- |
-| `pool_creature`            | 生物池         |
-| `pool_creature_template`   | 生物池模板     |
-| `pool_gameobject`          | 游戏对象池     |
-| `pool_gameobject_template` | 游戏对象池模板 |
-| `pool_pool`                | 池的池         |
-| `pool_template`            | 池模板         |
-
-### 商城相关
-
-| 表名              | 用途     |
-| ----------------- | -------- |
-| `shop_categories` | 商城分类 |
-| `shop_items`      | 商城物品 |
-
-### 其他
-
-| 表名                 | 用途          |
-| -------------------- | ------------- |
-| `autobroadcast`      | 自动广播      |
-| `broadcast_text`     | 广播文本      |
-| `conditions`         | 条件系统      |
-| `exploration_basexp` | 探索基础经验  |
-| `game_weather`       | 天气          |
-| `mangos_string`      | MaNGOS 字符串 |
-| `page_text`          | 书页文本      |
-| `points_of_interest` | 兴趣点        |
-| `reserved_name`      | 保留名称      |
-| `sound_entries`      | 声音入口      |
-| `variables`          | 变量          |
-| `warden_checks`      | 反作弊检查    |
-| `warden_scans`       | 反作弊扫描    |
-
----
-
-## ShellLab 需要导入的表
-
-### 已导入
-
-| 表名                         | 来源     | 状态                        |
-| ---------------------------- | -------- | --------------------------- |
-| `items` (来自 item_template) | tw_world | ✅ 已导入                   |
-| `aowow_icons`                | aowow    | ✅ 已合并到 items.icon_path |
-
-### 待导入 - 高优先级
-
-| 表名                | 来源     | 用途     |
-| ------------------- | -------- | -------- |
-| `aowow_itemset`     | aowow    | 套装浏览 |
-| `creature_template` | tw_world | NPC 浏览 |
-| `quest_template`    | tw_world | 任务浏览 |
-
-### 待导入 - 中优先级
-
-| 表名                  | 来源     | 用途         |
-| --------------------- | -------- | ------------ |
-| `gameobject_template` | tw_world | 游戏对象浏览 |
-| `spell_template`      | tw_world | 法术浏览     |
-| `aowow_factions`      | aowow    | 阵营浏览     |
-| `aowow_zones`         | aowow    | 区域筛选     |
-
-### 待导入 - 低优先级
-
-| 表名                     | 来源     | 用途         |
-| ------------------------ | -------- | ------------ |
-| `aowow_spell`            | aowow    | 法术元数据   |
-| `npc_vendor`             | tw_world | NPC 商人物品 |
-| `creature_loot_template` | tw_world | NPC 掉落     |
+```sql
+CREATE TABLE factions (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    description TEXT,
+    side INTEGER,      -- Alliance/Horde/Neutral
+    category_id INTEGER
+);
+```
