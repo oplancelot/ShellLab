@@ -2,9 +2,9 @@
 // These wrap Wails Go bindings with fallbacks
 
 // Items APIs
-export const BrowseItemsByClassAndSlot = (classId, subClass, inventoryType) => {
+export const BrowseItemsByClassAndSlot = (classId, subClass, inventoryType, nameFilter = '') => {
     if (window?.go?.main?.App?.BrowseItemsByClassAndSlot) {
-        return window.go.main.App.BrowseItemsByClassAndSlot(classId, subClass, inventoryType)
+        return window.go.main.App.BrowseItemsByClassAndSlot(classId, subClass, inventoryType, nameFilter)
     }
     return Promise.resolve([])
 }
