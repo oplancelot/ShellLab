@@ -67,40 +67,40 @@ func (r *ItemRepository) ImportFromJSON(jsonPath string) (int, error) {
 			cleanName(getString(item, "name")),
 			cleanName(getString(item, "description")),
 			getInt(item, "quality"),
-			getInt(item, "itemLevel"),
-			getInt(item, "requiredLevel"),
+			getInt(item, "item_level"),
+			getInt(item, "required_level"),
 			getInt(item, "class"),
 			getInt(item, "subclass"),
-			getInt(item, "inventoryType"),
-			getInt(item, "displayId"),
+			getInt(item, "inventory_type"),
+			getInt(item, "display_id"),
 			"", // icon_path - will be populated later
-			getInt(item, "buyPrice"),
-			getInt(item, "sellPrice"),
-			getInt(item, "allowableClass"),
-			getInt(item, "allowableRace"),
+			getInt(item, "buy_price"),
+			getInt(item, "sell_price"),
+			getInt(item, "allowable_class"),
+			getInt(item, "allowable_race"),
 			getInt(item, "stackable"),
 			getInt(item, "bonding"),
-			getInt(item, "maxDurability"),
-			getInt(item, "statType1"), getInt(item, "statValue1"),
-			getInt(item, "statType2"), getInt(item, "statValue2"),
-			getInt(item, "statType3"), getInt(item, "statValue3"),
-			getInt(item, "statType4"), getInt(item, "statValue4"),
-			getInt(item, "statType5"), getInt(item, "statValue5"),
-			getInt(item, "statType6"), getInt(item, "statValue6"),
-			getInt(item, "statType7"), getInt(item, "statValue7"),
-			getInt(item, "statType8"), getInt(item, "statValue8"),
-			getInt(item, "statType9"), getInt(item, "statValue9"),
-			getInt(item, "statType10"), getInt(item, "statValue10"),
+			getInt(item, "max_durability"),
+			getInt(item, "stat_type1"), getInt(item, "stat_value1"),
+			getInt(item, "stat_type2"), getInt(item, "stat_value2"),
+			getInt(item, "stat_type3"), getInt(item, "stat_value3"),
+			getInt(item, "stat_type4"), getInt(item, "stat_value4"),
+			getInt(item, "stat_type5"), getInt(item, "stat_value5"),
+			getInt(item, "stat_type6"), getInt(item, "stat_value6"),
+			getInt(item, "stat_type7"), getInt(item, "stat_value7"),
+			getInt(item, "stat_type8"), getInt(item, "stat_value8"),
+			getInt(item, "stat_type9"), getInt(item, "stat_value9"),
+			getInt(item, "stat_type10"), getInt(item, "stat_value10"),
 			getInt(item, "delay"),
-			getFloat(item, "dmgMin1"), getFloat(item, "dmgMax1"), getInt(item, "dmgType1"),
-			getFloat(item, "dmgMin2"), getFloat(item, "dmgMax2"), getInt(item, "dmgType2"),
+			getFloat(item, "dmg_min1"), getFloat(item, "dmg_max1"), getInt(item, "dmg_type1"),
+			getFloat(item, "dmg_min2"), getFloat(item, "dmg_max2"), getInt(item, "dmg_type2"),
 			getInt(item, "armor"),
-			getInt(item, "holyRes"), getInt(item, "fireRes"), getInt(item, "natureRes"),
-			getInt(item, "frostRes"), getInt(item, "shadowRes"), getInt(item, "arcaneRes"),
-			getInt(item, "spellId1"), getInt(item, "spellTrigger1"),
-			getInt(item, "spellId2"), getInt(item, "spellTrigger2"),
-			getInt(item, "spellId3"), getInt(item, "spellTrigger3"),
-			getInt(item, "setId"),
+			getInt(item, "holy_res"), getInt(item, "fire_res"), getInt(item, "nature_res"),
+			getInt(item, "frost_res"), getInt(item, "shadow_res"), getInt(item, "arcane_res"),
+			getInt(item, "spellid_1"), getInt(item, "spelltrigger_1"),
+			getInt(item, "spellid_2"), getInt(item, "spelltrigger_2"),
+			getInt(item, "spellid_3"), getInt(item, "spelltrigger_3"),
+			getInt(item, "set_id"),
 		)
 		if err != nil {
 			fmt.Printf("Warning: failed to insert item %v: %v\n", getInt(item, "entry"), err)
@@ -123,7 +123,7 @@ func (r *ItemRepository) SearchItems(query string, limit int) ([]*Item, error) {
 	}
 
 	rows, err := r.db.DB().Query(`
-		SELECT entry, name, quality, item_level, required_level, class, subclass, inventory_type, icon_path
+		SELECT entry, name, quality, item_level, required_level, class, subclass, inventory_type, COALESCE(icon_path, '')
 		FROM items
 		WHERE name LIKE ?
 		ORDER BY quality DESC, item_level DESC
@@ -154,7 +154,7 @@ func (r *ItemRepository) SearchItems(query string, limit int) ([]*Item, error) {
 func (r *ItemRepository) GetItemByID(id int) (*Item, error) {
 	row := r.db.DB().QueryRow(`
 		SELECT entry, name, description, quality, item_level, required_level,
-			class, subclass, inventory_type, icon_path, sell_price, bonding, max_durability,
+			class, subclass, inventory_type, COALESCE(icon_path, ''), sell_price, bonding, max_durability,
 			allowable_class, allowable_race,
 			stat_type1, stat_value1, stat_type2, stat_value2,
 			stat_type3, stat_value3, stat_type4, stat_value4,

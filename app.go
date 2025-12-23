@@ -44,6 +44,12 @@ func (a *App) startup(ctx context.Context) {
 		return
 	}
 
+	// Ensure schema exists
+	if err := db.InitSchema(); err != nil {
+		fmt.Printf("ERROR: Failed to initialize schema: %v\n", err)
+		return
+	}
+
 	a.db = db
 	a.itemRepo = database.NewItemRepository(db)
 	a.categoryRepo = database.NewCategoryRepository(db)
@@ -58,6 +64,54 @@ func (a *App) startup(ctx context.Context) {
 
 	// Build category cache
 	a.buildCategoryCache()
+
+	// Import Items (if table is empty and JSON exists)
+	fmt.Println("Checking for item data...")
+	if err := a.itemRepo.CheckAndImportItems("data"); err != nil {
+		fmt.Printf("ERROR: Failed to import items: %v\n", err)
+	}
+
+	// Import Items
+	fmt.Println("Checking item data...")
+	if err := a.itemRepo.CheckAndImportItems("data"); err != nil {
+		fmt.Printf("ERROR: Failed to import items: %v\n", err)
+	}
+
+	// Import Objects
+	fmt.Println("Checking object data...")
+	if err := a.itemRepo.CheckAndImportObjects("data/objects.json", "data/locks.json"); err != nil {
+		fmt.Printf("ERROR: Failed to import objects: %v\n", err)
+	}
+
+	// Import Item Sets
+	fmt.Println("Checking item sets...")
+	if err := a.itemRepo.CheckAndImportItemSets("data"); err != nil {
+		fmt.Printf("ERROR: Failed to import item sets: %v\n", err)
+	}
+
+	// Import Loot
+	fmt.Println("Checking loot data...")
+	a.itemRepo.CheckAndImportLoot("data")
+
+	// Import Quests
+	fmt.Println("Checking quest data...")
+	a.itemRepo.CheckAndImportQuests("data")
+
+	// Import Creatures
+	fmt.Println("Checking creature data...")
+	a.itemRepo.CheckAndImportCreatures("data")
+
+	// Import Factions
+	fmt.Println("Checking faction data...")
+	a.itemRepo.CheckAndImportFactions("data")
+
+	// Import Spells
+	fmt.Println("Checking spell data...")
+	a.itemRepo.CheckAndImportSpells("data")
+
+	// Import Metadata (Zones, Skills)
+	fmt.Println("Checking metadata...")
+	a.itemRepo.CheckAndImportMetadata("data")
 
 	fmt.Println("✓ ShellLab ready!")
 }

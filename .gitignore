@@ -45,4 +45,11 @@ data/shelllab.db-wal
 
 # Python scripts (may contain database credentials)
 scripts/*.py
+scripts/*.go
 tmp/
+.env
+scripts/__pycache__/db_config.cpython-313.pyc
+data/shelllab_back.db
+scripts/test_browsing_full.go
+scripts/test_db_rebuild.go
+scripts/debug_items.go

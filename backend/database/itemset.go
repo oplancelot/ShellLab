@@ -1,5 +1,7 @@
 package database
 
+import "fmt"
+
 // ItemSetBrowse represents an item set for browsing list
 type ItemSetBrowse struct {
 	ItemSetID  int    `json:"itemsetId"`
@@ -63,6 +65,7 @@ func (r *ItemRepository) GetItemSets() ([]*ItemSetBrowse, error) {
 
 // GetItemSetDetail returns detailed information about an item set
 func (r *ItemRepository) GetItemSetDetail(itemSetID int) (*ItemSetDetail, error) {
+	fmt.Printf("[API] GetItemSetDetail called for ID: %d\n", itemSetID)
 	// First get the set info
 	row := r.db.DB().QueryRow(`
 		SELECT 
@@ -118,5 +121,6 @@ func (r *ItemRepository) GetItemSetDetail(itemSetID int) (*ItemSetDetail, error)
 		}
 	}
 
+	fmt.Printf("[API] GetItemSetDetail returning set '%s' with %d items and %d bonuses\n", detail.Name, len(detail.Items), len(detail.Bonuses))
 	return detail, nil
 }

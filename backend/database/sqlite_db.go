@@ -139,10 +139,16 @@ func (s *SQLiteDB) InitSchema() error {
 	CREATE INDEX IF NOT EXISTS idx_category_items_item ON category_items(item_id);
 
 	-- Item Sets table
-	CREATE TABLE IF NOT EXISTS item_sets (
-		id INTEGER PRIMARY KEY,
-		name TEXT NOT NULL,
-		items_json TEXT -- JSON array of item IDs
+	CREATE TABLE IF NOT EXISTS itemsets (
+		itemset_id INTEGER PRIMARY KEY,
+		name TEXT,
+		item1 INTEGER DEFAULT 0, item2 INTEGER DEFAULT 0, item3 INTEGER DEFAULT 0, item4 INTEGER DEFAULT 0, item5 INTEGER DEFAULT 0,
+		item6 INTEGER DEFAULT 0, item7 INTEGER DEFAULT 0, item8 INTEGER DEFAULT 0, item9 INTEGER DEFAULT 0, item10 INTEGER DEFAULT 0,
+		spell1 INTEGER DEFAULT 0, spell2 INTEGER DEFAULT 0, spell3 INTEGER DEFAULT 0, spell4 INTEGER DEFAULT 0,
+		spell5 INTEGER DEFAULT 0, spell6 INTEGER DEFAULT 0, spell7 INTEGER DEFAULT 0, spell8 INTEGER DEFAULT 0,
+		bonus1 INTEGER DEFAULT 0, bonus2 INTEGER DEFAULT 0, bonus3 INTEGER DEFAULT 0, bonus4 INTEGER DEFAULT 0,
+		bonus5 INTEGER DEFAULT 0, bonus6 INTEGER DEFAULT 0, bonus7 INTEGER DEFAULT 0, bonus8 INTEGER DEFAULT 0,
+		skill_id INTEGER DEFAULT 0, skill_level INTEGER DEFAULT 0
 	);
 
 	-- Quests table
@@ -179,6 +185,162 @@ func (s *SQLiteDB) InitSchema() error {
 	CREATE TABLE IF NOT EXISTS npc_quest_end (entry INTEGER, quest INTEGER, PRIMARY KEY(entry, quest));
 	CREATE TABLE IF NOT EXISTS go_quest_start (entry INTEGER, quest INTEGER, PRIMARY KEY(entry, quest));
 	CREATE TABLE IF NOT EXISTS go_quest_end (entry INTEGER, quest INTEGER, PRIMARY KEY(entry, quest));
+
+	-- Objects table (gameobject_template)
+	CREATE TABLE IF NOT EXISTS objects (
+		entry INTEGER PRIMARY KEY,
+		name TEXT NOT NULL,
+		type INTEGER NOT NULL,
+		display_id INTEGER,
+		size REAL,
+		data0 INTEGER, data1 INTEGER, data2 INTEGER, data3 INTEGER,
+		data4 INTEGER, data5 INTEGER, data6 INTEGER, data7 INTEGER
+	);
+	CREATE INDEX IF NOT EXISTS idx_objects_type ON objects(type);
+	CREATE INDEX IF NOT EXISTS idx_objects_name ON objects(name);
+
+	-- Locks table (aowow_lock)
+	CREATE TABLE IF NOT EXISTS locks (
+		id INTEGER PRIMARY KEY,
+		type1 INTEGER, type2 INTEGER, type3 INTEGER, type4 INTEGER, type5 INTEGER,
+		prop1 INTEGER, prop2 INTEGER, prop3 INTEGER, prop4 INTEGER, prop5 INTEGER,
+		req1 INTEGER, req2 INTEGER, req3 INTEGER, req4 INTEGER, req5 INTEGER
+	);
+	CREATE INDEX IF NOT EXISTS idx_locks_prop1 ON locks(prop1);
+
+	-- Loot tables
+	CREATE TABLE IF NOT EXISTS creature_loot (
+		entry INTEGER,
+		item INTEGER,
+		chance REAL,
+		groupid INTEGER,
+		mincount_or_ref INTEGER,
+		maxcount INTEGER
+	);
+	CREATE INDEX IF NOT EXISTS idx_creature_loot_entry ON creature_loot(entry);
+
+	CREATE TABLE IF NOT EXISTS reference_loot (
+		entry INTEGER,
+		item INTEGER,
+		chance REAL,
+		groupid INTEGER,
+		mincount_or_ref INTEGER,
+		maxcount INTEGER
+	);
+	CREATE INDEX IF NOT EXISTS idx_reference_loot_entry ON reference_loot(entry);
+	
+	CREATE TABLE IF NOT EXISTS gameobject_loot (
+		entry INTEGER,
+		item INTEGER,
+		chance REAL,
+		groupid INTEGER,
+		mincount_or_ref INTEGER,
+		maxcount INTEGER
+	);
+	CREATE INDEX IF NOT EXISTS idx_gameobject_loot_entry ON gameobject_loot(entry);
+	
+	CREATE TABLE IF NOT EXISTS item_loot (
+		entry INTEGER,
+		item INTEGER,
+		chance REAL,
+		groupid INTEGER,
+		mincount_or_ref INTEGER,
+		maxcount INTEGER
+	);
+	CREATE INDEX IF NOT EXISTS idx_item_loot_entry ON item_loot(entry);
+	
+	CREATE TABLE IF NOT EXISTS disenchant_loot (
+		entry INTEGER,
+		item INTEGER,
+		chance REAL,
+		groupid INTEGER,
+		mincount_or_ref INTEGER,
+		maxcount INTEGER
+	);
+	CREATE INDEX IF NOT EXISTS idx_disenchant_loot_entry ON disenchant_loot(entry);
+
+	-- Creatures table (creature_template)
+	CREATE TABLE IF NOT EXISTS creatures (
+		entry INTEGER PRIMARY KEY,
+		name TEXT NOT NULL,
+		subname TEXT,
+		level_min INTEGER,
+		level_max INTEGER,
+		health_min INTEGER,
+		health_max INTEGER,
+		mana_min INTEGER,
+		mana_max INTEGER,
+		creature_type INTEGER,
+		creature_rank INTEGER,
+		faction INTEGER,
+		npc_flags INTEGER,
+		loot_id INTEGER,
+		skin_loot_id INTEGER,
+		pickpocket_loot_id INTEGER
+	);
+	CREATE INDEX IF NOT EXISTS idx_creatures_name ON creatures(name);
+	CREATE INDEX IF NOT EXISTS idx_creatures_name ON creatures(name);
+	CREATE INDEX IF NOT EXISTS idx_creatures_type ON creatures(creature_type);
+
+	-- Factions table
+	CREATE TABLE IF NOT EXISTS factions (
+		id INTEGER PRIMARY KEY,
+		name TEXT,
+		description TEXT,
+		side INTEGER,
+		category_id INTEGER
+	);
+
+	-- Spells table
+	CREATE TABLE IF NOT EXISTS spells (
+		entry INTEGER PRIMARY KEY,
+		name TEXT,
+		description TEXT,
+		effect_base_points1 INTEGER DEFAULT 0,
+		effect_base_points2 INTEGER DEFAULT 0,
+		effect_base_points3 INTEGER DEFAULT 0,
+		effect_die_sides1 INTEGER DEFAULT 0,
+		effect_die_sides2 INTEGER DEFAULT 0,
+		effect_die_sides3 INTEGER DEFAULT 0
+	);
+	CREATE INDEX IF NOT EXISTS idx_spells_name ON spells(name);
+
+	-- Quest Category Metadata
+	CREATE TABLE IF NOT EXISTS quest_category_groups (
+		id INTEGER PRIMARY KEY,
+		name TEXT
+	);
+
+	CREATE TABLE IF NOT EXISTS quest_categories_enhanced (
+		id INTEGER PRIMARY KEY, -- zone_or_sort
+		group_id INTEGER,
+		name TEXT,
+		quest_count INTEGER DEFAULT 0
+	);
+
+	-- Spell Skill Metadata
+	CREATE TABLE IF NOT EXISTS spell_skill_categories (
+		id INTEGER PRIMARY KEY,
+		name TEXT
+	);
+
+	CREATE TABLE IF NOT EXISTS spell_skills (
+		id INTEGER PRIMARY KEY,
+		category_id INTEGER,
+		name TEXT
+	);
+
+	CREATE TABLE IF NOT EXISTS spell_skill_spells (
+		skill_id INTEGER,
+		spell_id INTEGER,
+		PRIMARY KEY(skill_id, spell_id)
+	);
+	
+	-- AtlasLoot Categories (for legacy API compatibility if needed)
+	CREATE TABLE IF NOT EXISTS atlasloot_categories (
+		id INTEGER PRIMARY KEY,
+		name TEXT
+	);
 	`
 
 	_, err := s.db.Exec(schema)

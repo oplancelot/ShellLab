@@ -27,6 +27,7 @@ type InventorySlot struct {
 
 // GetItemClasses returns all item classes with their subclasses and inventory slots
 func (r *ItemRepository) GetItemClasses() ([]*ItemClass, error) {
+	fmt.Println("[API] GetItemClasses called")
 	// 1. Get distinct classes
 	rows, err := r.db.DB().Query(`
 		SELECT DISTINCT class
@@ -111,6 +112,7 @@ func (r *ItemRepository) GetItemClasses() ([]*ItemClass, error) {
 
 // GetItemsByClass returns items filtered by class and subclass
 func (r *ItemRepository) GetItemsByClass(class, subClass int, nameFilter string, limit, offset int) ([]*Item, int, error) {
+	fmt.Printf("[API] GetItemsByClass called: Class=%d, Sub=%d, Filter='%s', Limit=%d, Offset=%d\n", class, subClass, nameFilter, limit, offset)
 	// Build WHERE clause
 	whereClause := "WHERE class = ? AND subclass = ?"
 	args := []interface{}{class, subClass}
@@ -125,13 +127,14 @@ func (r *ItemRepository) GetItemsByClass(class, subClass int, nameFilter string,
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM items %s", whereClause)
 	err := r.db.DB().QueryRow(countQuery, args...).Scan(&count)
 	if err != nil {
+		fmt.Printf("[API] Error counting items: %v\n", err)
 		return nil, 0, err
 	}
 
 	// Data
 	dataArgs := append(args, limit, offset)
 	dataQuery := fmt.Sprintf(`
-		SELECT entry, name, quality, item_level, required_level, class, subclass, inventory_type, icon_path
+		SELECT entry, name, quality, item_level, required_level, class, subclass, inventory_type, COALESCE(icon_path, '')
 		FROM items
 		%s
 		ORDER BY quality DESC, item_level DESC
@@ -140,6 +143,7 @@ func (r *ItemRepository) GetItemsByClass(class, subClass int, nameFilter string,
 
 	rows, err := r.db.DB().Query(dataQuery, dataArgs...)
 	if err != nil {
+		fmt.Printf("[API] Error querying items: %v\n", err)
 		return nil, 0, err
 	}
 	defer rows.Close()
@@ -162,6 +166,7 @@ func (r *ItemRepository) GetItemsByClass(class, subClass int, nameFilter string,
 
 // GetItemsByClassAndSlot returns items filtered by class, subclass, and inventory type
 func (r *ItemRepository) GetItemsByClassAndSlot(class, subClass, inventoryType int, nameFilter string, limit, offset int) ([]*Item, int, error) {
+	fmt.Printf("[API] GetItemsByClassAndSlot called: Class=%d, Sub=%d, Slot=%d, Filter='%s'\n", class, subClass, inventoryType, nameFilter)
 	// Build WHERE clause
 	whereClause := "WHERE class = ? AND subclass = ? AND inventory_type = ?"
 	args := []interface{}{class, subClass, inventoryType}
@@ -183,7 +188,7 @@ func (r *ItemRepository) GetItemsByClassAndSlot(class, subClass, inventoryType i
 	// Data - add limit and offset args
 	dataArgs := append(args, limit, offset)
 	dataQuery := fmt.Sprintf(`
-		SELECT entry, name, quality, item_level, required_level, class, subclass, inventory_type, icon_path
+		SELECT entry, name, quality, item_level, required_level, class, subclass, inventory_type, COALESCE(icon_path, '')
 		FROM items
 		%s
 		ORDER BY quality DESC, item_level DESC
