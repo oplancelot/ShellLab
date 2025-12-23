@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { SectionHeader } from '../SectionHeader'
+import { SectionHeader } from '../../common/SectionHeader'
 import { GetQuestCategoryGroups, GetQuestCategoriesByGroup, GetQuestsByEnhancedCategory, filterItems } from '../../../utils/databaseApi'
 
 function QuestsTab({ onNavigate }) {

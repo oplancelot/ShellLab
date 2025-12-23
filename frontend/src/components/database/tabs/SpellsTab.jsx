@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { SectionHeader } from '../SectionHeader'
+import { SectionHeader } from '../../common/SectionHeader'
 import { GetSpellSkillCategories, GetSpellSkillsByCategory, GetSpellsBySkill, filterItems } from '../../../utils/databaseApi'
 
 function SpellsTab() {

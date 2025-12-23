@@ -221,6 +221,7 @@ export namespace database {
 	    name: string;
 	    description: string;
 	    side: number;
+	    categoryId: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Faction(source);
@@ -232,6 +233,7 @@ export namespace database {
 	        this.name = source["name"];
 	        this.description = source["description"];
 	        this.side = source["side"];
+	        this.categoryId = source["categoryId"];
 	    }
 	}
 	export class GameObject {

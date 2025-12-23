@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { SectionHeader } from '../SectionHeader'
+import { SectionHeader } from '../../common/SectionHeader'
 import { GetFactions, filterItems } from '../../../utils/databaseApi'
 
 const FACTION_GROUPS = [] // Removed

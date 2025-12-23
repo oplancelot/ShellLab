@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { SectionHeader } from '../SectionHeader'
+import { SectionHeader } from '../../common/SectionHeader'
 import { GetCreatureTypes, BrowseCreaturesByType, GetCreatureLoot, filterItems } from '../../../utils/databaseApi'
 import { getQualityColor } from '../../../utils/wow'
 

@@ -3,6 +3,7 @@ import { useItemTooltip } from '../hooks/useItemTooltip'
 import ItemTooltip from './ItemTooltip'
 import { NPCDetailView, QuestDetailView, ItemDetailView } from './database/detailview'
 import { getQualityColor } from '../utils/wow'
+import { GRID_LAYOUT } from './common/layout'
 
 // Import tab components
 import { ItemsTab, SetsTab, NPCsTab, QuestsTab, ObjectsTab, SpellsTab, FactionsTab } from './database/tabs'
@@ -133,7 +134,7 @@ function DatabasePage() {
             </div>
 
             {/* Content Area - 4 columns for three-level classification */}
-            <div className="content" style={{ flex: 1, display: 'grid', gridTemplateColumns: '180px 180px 150px 1fr', gap: 0, overflow: 'hidden' }}>
+            <div className="content" style={{ flex: 1, display: 'grid', gridTemplateColumns: GRID_LAYOUT, gap: 0, overflow: 'hidden' }}>
                 
                 {/* ITEMS TAB */}
                 {activeTab === 'items' && (

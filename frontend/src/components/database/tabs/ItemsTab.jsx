@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { GetItemClasses, BrowseItemsByClass } from '../../../../wailsjs/go/main/App'
-import { SectionHeader } from '../SectionHeader'
+import { SectionHeader } from '../../common/SectionHeader'
 import { BrowseItemsByClassAndSlot, filterItems } from '../../../utils/databaseApi'
 import { getQualityColor } from '../../../utils/wow'
 

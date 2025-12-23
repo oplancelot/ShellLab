@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { GetCategories, GetInstances, GetTables } from '../../wailsjs/go/main/App'
 import { useItemTooltip } from '../hooks/useItemTooltip'
 import ItemTooltip, { getQualityColor } from './ItemTooltip'
+import { SectionHeader } from './common/SectionHeader'
+import { filterItems } from '../utils/databaseApi'
+import { GRID_LAYOUT } from './common/layout'
 
 // Direct call to GetLoot - using window binding
 const GetLoot = (category, instance, boss) => {
@@ -24,6 +27,12 @@ function AtlasLootPage() {
     const [selectedModule, setSelectedModule] = useState('')
     const [selectedTable, setSelectedTable] = useState('')
 
+    // Filter states for each column
+    const [categoryFilter, setCategoryFilter] = useState('')
+    const [moduleFilter, setModuleFilter] = useState('')
+    const [tableFilter, setTableFilter] = useState('')
+    const [itemFilter, setItemFilter] = useState('')
+
     // Use shared tooltip hook
     const {
         hoveredItem,
@@ -38,15 +47,24 @@ function AtlasLootPage() {
     // Get quality class name
     const getQualityClass = (quality) => `q${quality || 0}`
 
-    // Preload tooltips for visible items
-    const preloadTooltips = (items) => {
-        if (!items) return
-        items.forEach(item => {
-            if (item.itemId && !tooltipCache[item.itemId]) {
-                loadTooltipData(item.itemId)
+    // Filtered lists
+    const filteredCategories = useMemo(() => filterItems(categories, categoryFilter), [categories, categoryFilter])
+    const filteredModules = useMemo(() => filterItems(modules, moduleFilter), [modules, moduleFilter])
+    const filteredTables = useMemo(() => {
+        // Convert tables to format with name property for filtering
+        const tablesWithNames = tables.map(t => {
+            if (typeof t === 'string') {
+                return { original: t, name: t }
+            } else {
+                return { original: t, name: t.displayName || t.key || t }
             }
         })
-    }
+        return filterItems(tablesWithNames, tableFilter)
+    }, [tables, tableFilter])
+    const filteredItems = useMemo(() => {
+        if (!loot?.items) return []
+        return filterItems(loot.items.map(item => ({ ...item, name: item.itemName })), itemFilter)
+    }, [loot, itemFilter])
 
     // Load categories on mount
     useEffect(() => {
@@ -72,6 +90,9 @@ function AtlasLootPage() {
             setLoot(null)
             setSelectedModule('')
             setSelectedTable('')
+            setModuleFilter('')
+            setTableFilter('')
+            setItemFilter('')
 
             GetInstances(selectedCategory)
                 .then(mods => {
@@ -92,6 +113,8 @@ function AtlasLootPage() {
             setTables([])
             setLoot(null)
             setSelectedTable('')
+            setTableFilter('')
+            setItemFilter('')
 
             GetTables(selectedCategory, selectedModule)
                 .then(tbls => {
@@ -108,9 +131,13 @@ function AtlasLootPage() {
     // Preload tooltips when loot changes
     useEffect(() => {
         if (loot?.items) {
-            preloadTooltips(loot.items)
+            loot.items.slice(0, 20).forEach(item => {
+                if (item.itemId && !tooltipCache[item.itemId]) {
+                    loadTooltipData(item.itemId)
+                }
+            })
         }
-    }, [loot])
+    }, [loot, tooltipCache, loadTooltipData])
 
     // Load loot when table is clicked
     const loadLoot = (table) => {
@@ -128,25 +155,8 @@ function AtlasLootPage() {
             })
     }
 
-    // Render tooltip content using shared component
-    const renderTooltip = (item) => {
-        if (hoveredItem !== item.itemId) return null
-        
-        const tooltip = tooltipCache[item.itemId]
-        
-        return (
-            <ItemTooltip
-                item={item}
-                tooltip={tooltip}
-                style={getTooltipStyle()}
-                onMouseEnter={() => setHoveredItem(item.itemId)}
-                onMouseLeave={() => setHoveredItem(null)}
-            />
-        )
-    }
-
     return (
-        <div className="app">
+        <div className="database-page" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {error && (
                 <div className="error-alert">
                     <span>❌</span>
@@ -154,19 +164,26 @@ function AtlasLootPage() {
                 </div>
             )}
 
-            <div className="content" style={{ display: 'grid', gridTemplateColumns: '150px 200px 200px 1fr', gap: 0 }}>
+            <div className="content" style={{ flex: 1, display: 'grid', gridTemplateColumns: GRID_LAYOUT, gap: 0, overflow: 'hidden' }}>
                 {/* Column 1: Categories */}
                 <aside className="sidebar">
-                    <h2>Categories</h2>
-                    {loading && categories.length === 0 && (
-                        <div className="loading">Loading...</div>
-                    )}
+                    <SectionHeader 
+                        title={`Categories (${filteredCategories.length})`}
+                        placeholder="Filter categories..."
+                        onFilterChange={setCategoryFilter}
+                    />
                     <div className="list">
-                        {categories.map(cat => (
+                        {loading && categories.length === 0 && (
+                            <div className="loading">Loading...</div>
+                        )}
+                        {filteredCategories.map(cat => (
                             <button
                                 key={cat}
                                 className={selectedCategory === cat ? 'active' : ''}
-                                onClick={() => setSelectedCategory(cat)}
+                                onClick={() => {
+                                    setSelectedCategory(cat)
+                                    setCategoryFilter('')
+                                }}
                             >
                                 {cat}
                             </button>
@@ -176,20 +193,25 @@ function AtlasLootPage() {
 
                 {/* Column 2: Modules/Instances */}
                 <section className="instances">
-                    <h2>
-                        {selectedCategory || 'Select Category'}
-                    </h2>
+                    <SectionHeader 
+                        title={selectedCategory ? `${selectedCategory} (${filteredModules.length})` : 'Select Category'}
+                        placeholder="Filter modules..."
+                        onFilterChange={setModuleFilter}
+                    />
                     {selectedCategory && (
                         <div className="list">
                             {loading && modules.length === 0 ? (
                                 <div className="loading">Loading...</div>
                             ) : (
                                 <>
-                                    {modules.map(mod => (
+                                    {filteredModules.map(mod => (
                                         <div
                                             key={mod}
                                             className={`item ${selectedModule === mod ? 'active' : ''}`}
-                                            onClick={() => setSelectedModule(mod)}
+                                            onClick={() => {
+                                                setSelectedModule(mod)
+                                                setModuleFilter('')
+                                            }}
                                         >
                                             {mod}
                                         </div>
@@ -202,24 +224,33 @@ function AtlasLootPage() {
 
                 {/* Column 3: Tables/Bosses */}
                 <section className="instances">
-                    <h2>
-                        {selectedModule || 'Select Instance'}
-                    </h2>
+                    <SectionHeader 
+                        title={selectedModule ? `${selectedModule} (${filteredTables.length})` : 'Select Instance'}
+                        placeholder="Filter bosses..."
+                        onFilterChange={setTableFilter}
+                    />
                     {selectedModule && (
                         <div className="list">
                             {loading && tables.length === 0 ? (
                                 <div className="loading">Loading...</div>
                             ) : (
                                 <>
-                                    {tables.map(tbl => (
+                                    {filteredTables.map((tbl, idx) => {
+                                        const originalTable = tbl.original
+                                        const tableKey = typeof originalTable === 'string' ? originalTable : (originalTable.key || originalTable)
+                                        return (
                                         <div
-                                            key={tbl.key || tbl}
-                                            className={`item ${selectedTable === (tbl.key || tbl) ? 'active' : ''}`}
-                                            onClick={() => loadLoot(tbl.key || tbl)}
+                                            key={tableKey || idx}
+                                            className={`item ${selectedTable === tableKey ? 'active' : ''}`}
+                                            onClick={() => {
+                                                loadLoot(tableKey)
+                                                setTableFilter('')
+                                            }}
                                         >
-                                            {tbl.displayName || tbl}
+                                            {tbl.name}
                                         </div>
-                                    ))}
+                                        )
+                                    })}
                                 </>
                             )}
                         </div>
@@ -228,20 +259,25 @@ function AtlasLootPage() {
 
                 {/* Column 4: Loot Display */}
                 <section className="loot">
-                    <h2>
-                        {loot ? `${loot.bossName} (${loot.items?.length || 0} items)` : 'Loot Table'}
-                    </h2>
+                    <SectionHeader 
+                        title={loot ? `${loot.bossName} (${filteredItems.length})` : 'Loot Table'}
+                        placeholder="Filter items..."
+                        onFilterChange={setItemFilter}
+                    />
+                    
                     {loading && !loot ? (
                         <div className="loading">Loading loot...</div>
-                    ) : loot && loot.items && loot.items.length > 0 ? (
+                    ) : filteredItems.length > 0 ? (
                         <div className="loot-items">
-                            {loot.items.map((item, idx) => (
+                            {filteredItems.map((item, idx) => {
+                                const itemId = item.itemId || item.entry || item.id
+                                return (
                                 <div 
-                                    key={idx} 
+                                    key={itemId || idx} 
                                     className="loot-item"
                                     data-quality={item.quality || 0}
-                                    onMouseEnter={() => handleItemEnter(item.itemId)}
-                                    onMouseMove={(e) => handleMouseMove(e, item.itemId)}
+                                    onMouseEnter={() => handleItemEnter(itemId)}
+                                    onMouseMove={(e) => handleMouseMove(e, itemId)}
                                     onMouseLeave={() => setHoveredItem(null)}
                                 >
                                     {item.iconName ? (
@@ -261,7 +297,7 @@ function AtlasLootPage() {
                                         <div className="item-icon-placeholder">?</div>
                                     )}
                                     
-                                    <span className="item-id">[{item.itemId}]</span>
+                                    <span className="item-id">[{itemId}]</span>
                                     
                                     <span 
                                         className={`item-name ${getQualityClass(item.quality)}`}
@@ -273,10 +309,9 @@ function AtlasLootPage() {
                                     {item.dropChance && (
                                         <span className="item-drop-chance">{item.dropChance}</span>
                                     )}
-                                    
-                                    {renderTooltip(item)}
                                 </div>
-                            ))}
+                                )
+                            })}
                         </div>
                     ) : selectedTable ? (
                         <p className="placeholder">No loot data found for {selectedTable}</p>
@@ -285,6 +320,15 @@ function AtlasLootPage() {
                     )}
                 </section>
             </div>
+
+            {/* Global Tooltip Layer */}
+            {hoveredItem && tooltipCache[hoveredItem] && (
+                 <ItemTooltip
+                     item={tooltipCache[hoveredItem]}
+                     tooltip={tooltipCache[hoveredItem]}
+                     style={getTooltipStyle()}
+                 />
+            )}
         </div>
     )
 }
