@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { SectionHeader } from '../../common/SectionHeader'
 import { GetItemSets, GetItemSetDetail, filterItems } from '../../../utils/databaseApi'
 import { getQualityColor } from '../../../utils/wow'
+import '../../common/PageLayout.css'
 
 // Helper for quality class
 const getQualityClass = (quality) => `q${quality || 0}`
@@ -146,10 +147,10 @@ function SetsTab({ tooltipHook }) {
                         
                         {/* Set Bonuses */}
                         {setDetail.bonuses && setDetail.bonuses.length > 0 && (
-                            <div style={{ marginTop: '20px', padding: '10px', background: '#1a1a1a', borderRadius: '4px' }}>
-                                <h3 style={{ color: '#ffd100', marginBottom: '10px' }}>Set Bonuses</h3>
+                            <div className="set-bonuses">
+                                <h3 className="set-bonuses-title">Set Bonuses</h3>
                                 {setDetail.bonuses.map((bonus, idx) => (
-                                    <div key={idx} style={{ color: '#1eff00', marginBottom: '5px' }}>
+                                    <div key={idx} className="set-bonus-item">
                                         ({bonus.threshold}) Spell ID: {bonus.spellId}
                                     </div>
                                 ))}

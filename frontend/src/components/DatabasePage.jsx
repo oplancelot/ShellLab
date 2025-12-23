@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useItemTooltip } from '../hooks/useItemTooltip'
+import './DatabasePage.css'
 import ItemTooltip from './ItemTooltip'
 import { NPCDetailView, QuestDetailView, ItemDetailView } from './database/detailview'
 import { getQualityColor } from '../utils/wow'
@@ -56,26 +57,16 @@ function DatabasePage() {
     // Render Detail View if active
     if (currentDetail) {
         return (
-            <div className="database-page" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '10px', background: '#252525', borderBottom: '1px solid #404040' }}>
-                    <button 
-                        onClick={goBack}
-                        style={{ 
-                            background: '#333', 
-                            border: '1px solid #555', 
-                            color: '#fff', 
-                            padding: '5px 15px', 
-                            cursor: 'pointer',
-                            borderRadius: '3px'
-                        }}
-                    >
+            <div className="database-page">
+                <div className="detail-header">
+                    <button className="back-button" onClick={goBack}>
                         ← Back
                     </button>
-                    <span style={{ marginLeft: '15px', color: '#888' }}>
+                    <span className="detail-info">
                         Viewing: {currentDetail.type.toUpperCase()} #{currentDetail.entry}
                     </span>
                 </div>
-                <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
+                <div className="detail-content">
                     {currentDetail.type === 'npc' && (
                         <NPCDetailView 
                             entry={currentDetail.entry} 
@@ -103,30 +94,14 @@ function DatabasePage() {
     }
 
     return (
-        <div className="database-page" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div className="database-page">
             {/* Tabs */}
-            <div className="tabs" style={{ 
-                display: 'flex', 
-                gap: 0, 
-                padding: '0 10px', 
-                background: '#1a1a1a', 
-                borderBottom: '1px solid #404040' 
-            }}>
+            <div className="tabs">
                 {['Items', 'Sets', 'NPCs', 'Quests', 'Objects', 'Spells', 'Factions'].map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab.toLowerCase())}
-                        style={{
-                            padding: '8px 16px',
-                            background: activeTab === tab.toLowerCase() ? '#383838' : 'transparent',
-                            color: activeTab === tab.toLowerCase() ? '#fff' : '#FFD100',
-                            border: activeTab === tab.toLowerCase() ? '1px solid #484848' : '1px solid transparent',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            borderRadius: '0',
-                            fontSize: '13px',
-                            textTransform: 'uppercase'
-                        }}
+                        className={`tab-button ${activeTab === tab.toLowerCase() ? 'active' : ''}`}
                     >
                         {tab}
                     </button>
@@ -134,7 +109,7 @@ function DatabasePage() {
             </div>
 
             {/* Content Area - 4 columns for three-level classification */}
-            <div className="content" style={{ flex: 1, display: 'grid', gridTemplateColumns: GRID_LAYOUT, gap: 0, overflow: 'hidden' }}>
+            <div className="content" style={{ gridTemplateColumns: GRID_LAYOUT }}>
                 
                 {/* ITEMS TAB */}
                 {activeTab === 'items' && (

@@ -5,6 +5,7 @@ import ItemTooltip, { getQualityColor } from './ItemTooltip'
 import { SectionHeader } from './common/SectionHeader'
 import { filterItems } from '../utils/databaseApi'
 import { GRID_LAYOUT } from './common/layout'
+import './common/PageLayout.css'
 
 // Direct call to GetLoot - using window binding
 const GetLoot = (category, instance, boss) => {
@@ -156,7 +157,7 @@ function AtlasLootPage() {
     }
 
     return (
-        <div className="database-page" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div className="database-page">
             {error && (
                 <div className="error-alert">
                     <span>❌</span>
@@ -164,7 +165,7 @@ function AtlasLootPage() {
                 </div>
             )}
 
-            <div className="content" style={{ flex: 1, display: 'grid', gridTemplateColumns: GRID_LAYOUT, gap: 0, overflow: 'hidden' }}>
+            <div className="content" style={{ gridTemplateColumns: GRID_LAYOUT }}>
                 {/* Column 1: Categories */}
                 <aside className="sidebar">
                     <SectionHeader 

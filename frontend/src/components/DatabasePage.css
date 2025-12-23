@@ -1,0 +1,6 @@
+/* DatabasePage Component Styles */
+
+/* Import shared page layout styles */
+@import './common/PageLayout.css';
+
+/* Component-specific styles can be added here */
