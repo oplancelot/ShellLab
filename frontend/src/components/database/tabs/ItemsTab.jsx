@@ -21,7 +21,7 @@ function ItemsTab({ tooltipHook }) {
     const [slotFilter, setSlotFilter] = useState('')
     const [itemFilter, setItemFilter] = useState('')
 
-    const { setHoveredItem, loadTooltipData, handleItemEnter, handleMouseMove, renderTooltip, tooltipCache } = tooltipHook
+    const { setHoveredItem, loadTooltipData, handleItemEnter, handleMouseMove, tooltipCache } = tooltipHook
 
     // Load item classes on mount
     useEffect(() => {
@@ -193,13 +193,16 @@ function ItemsTab({ tooltipHook }) {
                 
                 {items.length > 0 && (
                 <div className="loot-items">
-                        {filteredItems.map((item, idx) => (
+                        {filteredItems.map((item, idx) => {
+                            const itemId = item.entry || item.id || item.itemId
+                            
+                            return (
                             <div 
-                                key={item.entry} 
+                                key={itemId || idx} 
                                 className="loot-item"
                                 data-quality={item.quality || 0}
-                                onMouseEnter={() => handleItemEnter(item.entry)}
-                                onMouseMove={(e) => handleMouseMove(e, item.entry)}
+                                onMouseEnter={() => handleItemEnter(itemId)}
+                                onMouseMove={(e) => handleMouseMove(e, itemId)}
                                 onMouseLeave={() => setHoveredItem(null)}
                             >
                                 {item.iconPath ? (
@@ -227,10 +230,9 @@ function ItemsTab({ tooltipHook }) {
                                 >
                                     {item.name}
                                 </span>
-                                
-                                {renderTooltip(item)}
                             </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 )}
             </section>

@@ -29,15 +29,8 @@ function DatabasePage() {
     const getQualityClass = (quality) => `q${quality || 0}`
 
     // Tooltip renderer helper to pass to tabs
+    // Note: Tooltip is now rendered globally in DatabasePage to avoid overflow clipping
     const renderTooltip = (item) => {
-        if (hoveredItem === item.entry && tooltipCache[item.entry]) {
-            return (
-                <ItemTooltip
-                    item={tooltipCache[item.entry]}
-                    style={getTooltipStyle()}
-                />
-            )
-        }
         return null
     }
 
@@ -109,7 +102,7 @@ function DatabasePage() {
     }
 
     return (
-        <div className="database-page" onMouseMove={(e) => handleMouseMove(e, hoveredItem)} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div className="database-page" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* Tabs */}
             <div className="tabs" style={{ 
                 display: 'flex', 
@@ -180,6 +173,15 @@ function DatabasePage() {
                     <FactionsTab />
                 )}
             </div>
+
+            {/* Global Tooltip Layer */}
+            {hoveredItem && tooltipCache[hoveredItem] && (
+                 <ItemTooltip
+                     item={tooltipCache[hoveredItem]}
+                     tooltip={tooltipCache[hoveredItem]}
+                     style={getTooltipStyle()}
+                 />
+            )}
         </div>
     )
 }
