@@ -27,87 +27,28 @@ A comprehensive, cross-platform desktop application suite for World of Warcraft 
 
 ### Data Pipeline
 
-```
-Source Data:
-├── tw_world.sql (191MB)        → Item Templates
-├── aowow.sql (9MB)             → Icon Mappings
-└── AtlasLoot/*.lua             → Loot Tables
+**New Architecture (ETF: MySQL -> JSON -> SQLite)**
 
-Processing:
-├── extract-sql     → item_template.json (60MB)
-├── import-items    → SQLite Database
-├── import-icons    → Icon Path Mappings
-└── extract-loot    → AtlasLoot Hierarchy
+To decouple the application from the production MySQL database, we use a JSON-based intermediate format:
 
-Application:
-└── Wails Desktop App (React + Go)
-```
+1.  **Extract (Python)**: Export data from MySQL tables to JSON files (`data/*.json`).
+2.  **Import (Go)**: On application startup, the Go backend reads these JSON files and populates the local SQLite database.
 
-## 📁 Project Structure
-
-```
-ShellLab/
-├── backend/                    # Go backend
-│   ├── database/              # SQLite schema & repositories
-│   │   ├── sqlite_db.go       # Core database
-│   │   ├── item_repository.go # Item data access
-│   │   ├── atlasloot_*.go     # Loot table management
-│   │   └── category_*.go      # Category hierarchy
-│   └── main.go                # Entry point (deprecated)
-├── frontend/                   # React frontend
-│   ├── src/
-│   │   ├── components/        # UI components
-│   │   │   ├── AtlasLootPage.jsx
-│   │   │   └── ItemTooltip.jsx
-│   │   └── App.tsx
-│   └── public/items/icons/    # Item icon cache
-├── scripts/                    # Data import tools
-│   ├── db_import/             # Item data pipeline
-│   ├── import_icons/          # Icon mapping import
-│   ├── download_icons/        # Icon downloader
-│   └── extract_atlasloot/     # Loot table extractor
-├── data/                       # Data files
-│   ├── sql/                   # Source SQL dumps
-│   ├── shelllab.db            # Main database
-│   ├── item_template.json     # Base item data
-│   └── item_template_update.json  # Custom modifications
-├── addons/AtlasLoot/          # Original addon source
-├── app.go                      # Wails application
-├── main.go                     # Application entry
-├── wails.json                  # Wails configuration
-└── go.mod
+```mermaid
+graph LR
+    MySQL[(MySQL TW/AOWOW)] -->|Python Scripts| JSON[JSON Files]
+    JSON -->|Go Import| SQLite[(Local SQLite)]
+    SQLite --> App[ShellLab Desktop]
 ```
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### 1. Run Application
 
-- **Go**: >= 1.24
-- **Node.js**: >= 18
-- **Wails CLI**: v2.11+
-
-### Installation
+Start the application. It will automatically detect the JSON files in `data/` and import them into the internal SQLite database on startup.
 
 ```bash
-# Install Wails CLI
-go install github.com/wailsapp/wails/v2/cmd/wails@latest
-
-# Clone repository
-git clone <repository-url>
-cd ShellLab
-
-# Install dependencies
-wails dev  # Auto-installs Go and npm dependencies
-```
-
-### Development
-
-```bash
-# Run in development mode (hot reload)
 wails dev
-
-# Build for production
-wails build
 ```
 
 ## 📊 Data Import Pipeline
