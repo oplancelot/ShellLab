@@ -66,7 +66,7 @@ const NPCDetailView = ({ entry, onBack, onNavigate, setHoveredItem, hoveredItem,
                 <div>
                     <h3 style={{ borderBottom: '1px solid #FFD100', paddingBottom: '5px', color: '#FFD100' }}>Loot Table</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '8px', marginTop: '10px' }}>
-                        {detail.loot.length > 0 ? detail.loot.sort((a,b)=>b.chance-a.chance).map(renderLootItem) : <div style={{color:'#666'}}>No loot.</div>}
+                        {detail.loot && detail.loot.length > 0 ? detail.loot.sort((a,b)=>b.chance-a.chance).map(renderLootItem) : <div style={{color:'#666'}}>No loot.</div>}
                     </div>
                 </div>
                 <div>
