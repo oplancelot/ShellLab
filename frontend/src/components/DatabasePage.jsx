@@ -54,101 +54,105 @@ function DatabasePage() {
         renderTooltip,
     }
 
-    // Render Detail View if active
-    if (currentDetail) {
-        return (
-            <div className="database-page">
-                <div className="detail-header">
-                    <button className="back-button" onClick={goBack}>
-                        ← Back
-                    </button>
-                    <span className="detail-info">
-                        Viewing: {currentDetail.type.toUpperCase()} #{currentDetail.entry}
-                    </span>
-                </div>
-                <div className="detail-content">
-                    {currentDetail.type === 'npc' && (
-                        <NPCDetailView 
-                            entry={currentDetail.entry} 
-                            onNavigate={navigateTo}
-                            onBack={goBack}
-                        />
-                    )}
-                    {currentDetail.type === 'quest' && (
-                        <QuestDetailView 
-                            entry={currentDetail.entry} 
-                            onNavigate={navigateTo}
-                            onBack={goBack}
-                        />
-                    )}
-                    {currentDetail.type === 'item' && (
-                        <ItemDetailView 
-                            entry={currentDetail.entry} 
-                            onNavigate={navigateTo}
-                            onBack={goBack}
-                        />
-                    )}
-                </div>
-            </div>
-        )
-    }
-
     return (
         <div className="database-page">
-            {/* Tabs */}
-            <div className="tabs">
-                {['Items', 'Sets', 'NPCs', 'Quests', 'Objects', 'Spells', 'Factions'].map(tab => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab.toLowerCase())}
-                        className={`tab-button ${activeTab === tab.toLowerCase() ? 'active' : ''}`}
-                    >
-                        {tab}
-                    </button>
-                ))}
+            {/* Tabs View - Hidden when detail active, but kept mounted to preserve state */}
+            <div style={{ display: currentDetail ? 'none' : 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', flex: 1 }}>
+                {/* Tabs */}
+                <div className="tabs">
+                    {['Items', 'Sets', 'NPCs', 'Quests', 'Objects', 'Spells', 'Factions'].map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab.toLowerCase())}
+                            className={`tab-button ${activeTab === tab.toLowerCase() ? 'active' : ''}`}
+                        >
+                            {tab}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Content Area - 4 columns for three-level classification */}
+                <div className="content" style={{ gridTemplateColumns: GRID_LAYOUT }}>
+                    
+                    {/* ITEMS TAB */}
+                    {activeTab === 'items' && (
+                        <ItemsTab tooltipHook={enhancedTooltipHook} />
+                    )}
+
+                    {/* SETS TAB */}
+                    {activeTab === 'sets' && (
+                        <SetsTab tooltipHook={enhancedTooltipHook} />
+                    )}
+
+                    {/* NPCS TAB */}
+                    {activeTab === 'npcs' && (
+                        <NPCsTab 
+                            onNavigate={navigateTo}
+                            tooltipHook={enhancedTooltipHook}
+                        />
+                    )}
+
+                    {/* QUESTS TAB */}
+                    {activeTab === 'quests' && (
+                        <QuestsTab onNavigate={navigateTo} />
+                    )}
+
+                    {/* OBJECTS TAB */}
+                    {activeTab === 'objects' && (
+                        <ObjectsTab />
+                    )}
+
+                    {/* SPELLS TAB */}
+                    {activeTab === 'spells' && (
+                        <SpellsTab />
+                    )}
+
+                    {/* FACTIONS TAB */}
+                    {activeTab === 'factions' && (
+                        <FactionsTab />
+                    )}
+                </div>
             </div>
 
-            {/* Content Area - 4 columns for three-level classification */}
-            <div className="content" style={{ gridTemplateColumns: GRID_LAYOUT }}>
-                
-                {/* ITEMS TAB */}
-                {activeTab === 'items' && (
-                    <ItemsTab tooltipHook={enhancedTooltipHook} />
-                )}
-
-                {/* SETS TAB */}
-                {activeTab === 'sets' && (
-                    <SetsTab tooltipHook={enhancedTooltipHook} />
-                )}
-
-                {/* NPCS TAB */}
-                {activeTab === 'npcs' && (
-                    <NPCsTab 
-                        onNavigate={navigateTo}
-                        tooltipHook={enhancedTooltipHook}
-                    />
-                )}
-
-                {/* QUESTS TAB */}
-                {activeTab === 'quests' && (
-                    <QuestsTab onNavigate={navigateTo} />
-                )}
-
-                {/* OBJECTS TAB */}
-                {activeTab === 'objects' && (
-                    <ObjectsTab />
-                )}
-
-                {/* SPELLS TAB */}
-                {activeTab === 'spells' && (
-                    <SpellsTab />
-                )}
-
-                {/* FACTIONS TAB */}
-                {activeTab === 'factions' && (
-                    <FactionsTab />
-                )}
-            </div>
+            {/* Detail View Overlay */}
+            {currentDetail && (
+                <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', flex: 1 }}>
+                    <div className="detail-header">
+                        <button className="back-button" onClick={goBack}>
+                            ← Back
+                        </button>
+                        <span className="detail-info">
+                            Viewing: {currentDetail.type.toUpperCase()} #{currentDetail.entry}
+                        </span>
+                    </div>
+                    <div className="detail-content">
+                        {currentDetail.type === 'npc' && (
+                            <NPCDetailView 
+                                entry={currentDetail.entry} 
+                                onNavigate={navigateTo}
+                                onBack={goBack}
+                                tooltipHook={enhancedTooltipHook}
+                            />
+                        )}
+                        {currentDetail.type === 'quest' && (
+                            <QuestDetailView 
+                                entry={currentDetail.entry} 
+                                onNavigate={navigateTo}
+                                onBack={goBack}
+                                tooltipHook={enhancedTooltipHook}
+                            />
+                        )}
+                        {currentDetail.type === 'item' && (
+                            <ItemDetailView 
+                                entry={currentDetail.entry} 
+                                onNavigate={navigateTo}
+                                onBack={goBack}
+                                tooltipHook={enhancedTooltipHook}
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Global Tooltip Layer */}
             {hoveredItem && tooltipCache[hoveredItem] && (

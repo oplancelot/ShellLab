@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { GetCreatureDetail } from '../../../services/api'
 import { getQualityColor } from '../../../utils/wow'
-import ItemTooltip from '../../ItemTooltip'
 
-const NPCDetailView = ({ entry, onBack, onNavigate, setHoveredItem, hoveredItem, tooltipCache, loadTooltipData }) => {
+
+const NPCDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
     const [detail, setDetail] = useState(null)
     const [loading, setLoading] = useState(true)
 
@@ -16,19 +16,13 @@ const NPCDetailView = ({ entry, onBack, onNavigate, setHoveredItem, hoveredItem,
     }, [entry])
 
     const renderLootItem = (item) => {
-        const hasTooltip = hoveredItem === item.itemId
-        if (hasTooltip && !tooltipCache[item.itemId]) {
-            loadTooltipData(item.itemId)
-        }
-
         return (
             <div 
                 key={item.itemId}
                 className="loot-tile" 
                 style={{ position: 'relative', display: 'flex', alignItems: 'center', background: '#242424', padding: '5px', borderRadius: '4px', cursor: 'pointer' }}
-                onMouseEnter={() => setHoveredItem(item.itemId)}
-                onMouseLeave={() => setHoveredItem(null)}
                 onClick={() => onNavigate('item', item.itemId)}
+                {...tooltipHook.getItemHandlers(item.itemId)}
             >
                 <div style={{ width: '32px', height: '32px', border: `1px solid ${getQualityColor(item.quality)}`, marginRight: '8px' }}>
                     {item.icon ? <img src={`/items/icons/${item.icon}.jpg`} style={{width:'100%'}} /> : '?'}
@@ -37,11 +31,6 @@ const NPCDetailView = ({ entry, onBack, onNavigate, setHoveredItem, hoveredItem,
                     <div style={{ color: getQualityColor(item.quality), fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.itemName}</div>
                     <div style={{ color: '#aaa', fontSize: '11px' }}>{item.chance.toFixed(1)}% {item.minCount > 1 && `(${item.minCount}-${item.maxCount})`}</div>
                 </div>
-                {hasTooltip && tooltipCache[item.itemId] && (
-                    <div style={{ position: 'absolute', left: '100%', top: 0, zIndex: 1000, marginLeft: '10px' }}>
-                        <ItemTooltip item={{entry: item.itemId, quality: item.quality, name: item.itemName}} tooltip={tooltipCache[item.itemId]} />
-                    </div>
-                )}
             </div>
         )
     }
@@ -51,7 +40,7 @@ const NPCDetailView = ({ entry, onBack, onNavigate, setHoveredItem, hoveredItem,
 
     return (
         <div className="detail-view" style={{ flex: 1, overflowY: 'auto', padding: '20px', background: '#121212', color: '#e0e0e0' }}>
-            <button onClick={onBack} style={{ background: '#333', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}>&larr; Back to List</button>
+
             
             <header style={{ marginBottom: '30px', borderBottom: '1px solid #333', paddingBottom: '20px' }}>
                 <h1 style={{ color: getQualityColor(detail.rank >= 1 ? 3 : 1), margin: '0 0 10px 0' }}>{detail.name}</h1>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { GetQuestDetail } from '../../../services/api'
 import { getQualityColor } from '../../../utils/wow'
-import ItemTooltip from '../../ItemTooltip'
 
-const QuestDetailView = ({ entry, onBack, onNavigate, setHoveredItem, hoveredItem, tooltipCache, loadTooltipData }) => {
+
+const QuestDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
     const [detail, setDetail] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -31,17 +31,12 @@ const QuestDetailView = ({ entry, onBack, onNavigate, setHoveredItem, hoveredIte
     }, [entry])
 
     const renderRewardItem = (item, isChoice) => {
-        const hasTooltip = hoveredItem === item.entry
-        if (hasTooltip && !tooltipCache[item.entry]) {
-            loadTooltipData(item.entry)
-        }
         return (
             <div 
                 key={item.entry}
                 style={{ position: 'relative', display: 'flex', alignItems: 'center', background: '#242424', padding: '5px', borderRadius: '4px', margin: '5px 0', cursor: 'pointer' }}
                 onClick={() => onNavigate('item', item.entry)}
-                onMouseEnter={() => setHoveredItem(item.entry)}
-                onMouseLeave={() => setHoveredItem(null)}
+                {...tooltipHook.getItemHandlers(item.entry)}
             >
                  <div style={{ width: '32px', height: '32px', border: `1px solid ${getQualityColor(item.quality)}`, marginRight: '8px' }}>
                     {item.icon ? <img src={`/items/icons/${item.icon}.jpg`} style={{width:'100%'}} /> : '?'}
@@ -50,11 +45,6 @@ const QuestDetailView = ({ entry, onBack, onNavigate, setHoveredItem, hoveredIte
                    <div style={{ color: getQualityColor(item.quality) }}>{item.name}</div>
                    {item.count > 1 && <div style={{ color: '#aaa', fontSize: '11px' }}>x{item.count}</div>}
                 </div>
-                {hasTooltip && tooltipCache[item.entry] && (
-                    <div style={{ position: 'absolute', left: '100%', top: 0, zIndex: 1000, marginLeft: '10px' }}>
-                        <ItemTooltip item={{entry: item.entry, quality: item.quality, name: item.name}} tooltip={tooltipCache[item.entry]} />
-                    </div>
-                )}
             </div>
         )
     }
@@ -71,7 +61,7 @@ const QuestDetailView = ({ entry, onBack, onNavigate, setHoveredItem, hoveredIte
     
     return (
          <div className="detail-view" style={{ flex: 1, overflowY: 'auto', padding: '20px', background: '#121212', color: '#e0e0e0' }}>
-            <button onClick={onBack} style={{ background: '#333', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}>&larr; Back to List</button>
+
             
             <h1 style={{ color: '#FFD100', marginBottom: '10px' }}>{detail.title} [{detail.entry}]</h1>
             <div style={{ color: '#888', marginBottom: '20px' }}>Level {detail.questLevel} (Min {detail.minLevel}) - {detail.type === 41 ? 'PVP' : detail.type === 81 ? 'Dungeon' : 'Normal'}</div>
