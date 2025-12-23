@@ -1,5 +1,5 @@
 import React from 'react'
-import { FilterInput } from '../FilterInput'
+import { FilterInput } from './FilterInput/FilterInput'
 
 /**
  * Standardized header for database tab sections.

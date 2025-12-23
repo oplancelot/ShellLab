@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
-import { SectionHeader } from '../../common/SectionHeader'
+import { SidebarPanel, ContentPanel, ScrollList, SectionHeader, ListItem, EntityIcon } from '../../ui'
 import { GetSpellSkillCategories, GetSpellSkillsByCategory, GetSpellsBySkill, filterItems } from '../../../utils/databaseApi'
+
+const SPELL_COLOR = '#772ce8'
 
 function SpellsTab() {
     const [categories, setCategories] = useState([])
@@ -10,7 +12,6 @@ function SpellsTab() {
     const [selectedSkill, setSelectedSkill] = useState(null)
     const [loading, setLoading] = useState(false)
 
-    // Independent filter states for each column
     const [categoryFilter, setCategoryFilter] = useState('')
     const [skillFilter, setSkillFilter] = useState('')
     const [spellFilter, setSpellFilter] = useState('')
@@ -65,7 +66,6 @@ function SpellsTab() {
         }
     }, [selectedSkill])
 
-    // Filtered lists
     const filteredCategories = useMemo(() => filterItems(categories, categoryFilter), [categories, categoryFilter])
     const filteredSkills = useMemo(() => filterItems(skills, skillFilter), [skills, skillFilter])
     const filteredSpells = useMemo(() => filterItems(spells, spellFilter), [spells, spellFilter])
@@ -73,17 +73,17 @@ function SpellsTab() {
     return (
         <>
             {/* 1. Categories */}
-            <aside className="sidebar">
+            <SidebarPanel>
                 <SectionHeader 
                     title={`Categories (${filteredCategories.length})`}
                     placeholder="Filter categories..."
                     onFilterChange={setCategoryFilter}
                 />
-                <div className="list">
+                <ScrollList>
                     {filteredCategories.map(cat => (
-                        <button
+                        <ListItem
                             key={cat.id}
-                            className={selectedCategory?.id === cat.id ? 'active' : ''}
+                            active={selectedCategory?.id === cat.id}
                             onClick={() => {
                                 setSelectedCategory(cat)
                                 setSkillFilter('')
@@ -91,83 +91,96 @@ function SpellsTab() {
                             }}
                         >
                             {cat.name}
-                        </button>
+                        </ListItem>
                     ))}
-                </div>
-            </aside>
+                </ScrollList>
+            </SidebarPanel>
 
             {/* 2. Skills */}
-            <section className="instances">
+            <SidebarPanel>
                 <SectionHeader 
                     title={selectedCategory ? `${selectedCategory.name} (${filteredSkills.length})` : 'Select Category'}
                     placeholder="Filter skills..."
                     onFilterChange={setSkillFilter}
                 />
-                <div className="list">
+                <ScrollList>
                     {filteredSkills.map(skill => (
-                        <div
+                        <ListItem
                             key={skill.id}
-                            className={`item ${selectedSkill?.id === skill.id ? 'active' : ''}`}
+                            active={selectedSkill?.id === skill.id}
                             onClick={() => {
                                 setSelectedSkill(skill)
                                 setSpellFilter('')
                             }}
                         >
-                            {skill.name} ({skill.spellCount})
-                        </div>
+                            <span className="flex justify-between w-full">
+                                <span>{skill.name}</span>
+                                <span className="text-gray-600 text-xs">({skill.spellCount})</span>
+                            </span>
+                        </ListItem>
                     ))}
-                </div>
-            </section>
+                </ScrollList>
+            </SidebarPanel>
 
             {/* 3. Spells List */}
-            <section className="loot" style={{ gridColumn: '3 / -1' }}>
+            <ContentPanel className="col-span-2">
                 <SectionHeader 
                     title={selectedSkill ? `${selectedSkill.name} (${filteredSpells.length})` : 'Select Skill'}
                     placeholder="Filter spells..."
                     onFilterChange={setSpellFilter}
-                    titleColor="#772ce8"
+                    titleColor={SPELL_COLOR}
                 />
 
-                {loading && selectedSkill && <div className="loading">Loading spells...</div>}
+                {loading && selectedSkill && (
+                    <div className="flex-1 flex items-center justify-center italic animate-pulse" style={{ color: SPELL_COLOR }}>
+                        Loading spells...
+                    </div>
+                )}
                 
-                {!selectedSkill && (
-                    <p className="placeholder">Select a skill to browse spells.</p>
+                {!selectedSkill && !loading && (
+                    <div className="flex-1 flex items-center justify-center text-gray-600 italic">
+                        Select a skill to browse spells.
+                    </div>
                 )}
 
-                <div className="loot-items">
-                    {filteredSpells.map(spell => (
-                        <div 
-                            key={spell.entry}
-                            className="loot-item"
-                            style={{ borderLeft: '3px solid #772ce8' }}
-                        >
-                            <div className="item-icon-placeholder" style={{ 
-                                background: '#772ce8',
-                                color: '#fff',
-                                fontWeight: 'bold',
-                                fontSize: '10px'
-                            }}>
-                                SPL
-                            </div>
-                            
-                            <span className="item-id">[{spell.entry}]</span>
-                            
-                            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                                <span style={{ color: '#772ce8', fontWeight: 'bold' }}>
-                                    {spell.name} {spell.subname ? `(${spell.subname})` : ''}
+                {!loading && spells.length > 0 && (
+                    <ScrollList className="p-2 space-y-1">
+                        {filteredSpells.map(spell => (
+                            <div 
+                                key={spell.entry}
+                                className="flex items-center gap-3 p-2 bg-white/[0.02] hover:bg-white/5 border-l-[3px] transition-colors rounded-r"
+                                style={{ borderLeftColor: SPELL_COLOR }}
+                            >
+                                <EntityIcon 
+                                    label="SPL"
+                                    color={SPELL_COLOR}
+                                    size="md"
+                                />
+                                
+                                <span className="text-gray-600 text-[11px] font-mono min-w-[50px]">
+                                    [{spell.entry}]
                                 </span>
-                                {spell.description && (
-                                    <span style={{ color: '#888', fontSize: '11px', marginTop: '2px' }}>
-                                        {spell.description.length > 100 
-                                            ? spell.description.substring(0, 100) + '...' 
-                                            : spell.description}
+                                
+                                <div className="flex flex-col flex-1 min-w-0">
+                                    <span 
+                                        className="font-bold truncate"
+                                        style={{ color: SPELL_COLOR }}
+                                    >
+                                        {spell.name} {spell.subname ? `(${spell.subname})` : ''}
                                     </span>
-                                )}
+                                    {spell.description && (
+                                        <span className="text-gray-500 text-xs truncate mt-0.5">
+                                            {spell.description.length > 100 
+                                                ? spell.description.substring(0, 100) + '...' 
+                                                : spell.description}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
+                        ))}
+                    </ScrollList>
+                )}
+            </ContentPanel>
         </>
     )
 }

@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
-import { SectionHeader } from '../../common/SectionHeader'
+import { SidebarPanel, ContentPanel, ScrollList, SectionHeader, ListItem, EntityIcon } from '../../ui'
 import { GetObjectTypes, GetObjectsByType, filterItems } from '../../../utils/databaseApi'
+
+const OBJECT_COLOR = '#00B4FF'
 
 function ObjectsTab() {
     const [objectTypes, setObjectTypes] = useState([])
@@ -8,7 +10,6 @@ function ObjectsTab() {
     const [objects, setObjects] = useState([])
     const [loading, setLoading] = useState(false)
 
-    // Independent filter states
     const [typeFilter, setTypeFilter] = useState('')
     const [objectFilter, setObjectFilter] = useState('')
 
@@ -43,40 +44,42 @@ function ObjectsTab() {
         }
     }, [selectedObjectType])
 
-    // Filtered lists
     const filteredTypes = useMemo(() => filterItems(objectTypes, typeFilter), [objectTypes, typeFilter])
     const filteredObjects = useMemo(() => filterItems(objects, objectFilter), [objects, objectFilter])
 
     return (
         <>
-            {/* Object Types List */}
-            <aside className="sidebar" style={{ gridColumn: '1 / 2' }}>
+            {/* Object Types */}
+            <SidebarPanel className="col-span-1">
                 <SectionHeader 
                     title={`Object Types (${filteredTypes.length})`}
                     placeholder="Filter types..."
                     onFilterChange={setTypeFilter}
                 />
-                <div className="list">
+                <ScrollList>
                     {loading && objectTypes.length === 0 && (
-                        <div className="loading">Loading types...</div>
+                        <div className="p-4 text-center text-wow-gold italic animate-pulse">Loading types...</div>
                     )}
                     {filteredTypes.map(type => (
-                        <div
+                        <ListItem
                             key={type.id}
-                            className={`item ${selectedObjectType?.id === type.id ? 'active' : ''}`}
+                            active={selectedObjectType?.id === type.id}
                             onClick={() => {
                                 setSelectedObjectType(type)
                                 setObjectFilter('')
                             }}
                         >
-                            {type.name} ({type.count})
-                        </div>
+                            <span className="flex justify-between w-full">
+                                <span>{type.name}</span>
+                                <span className="text-gray-600 text-xs">({type.count})</span>
+                            </span>
+                        </ListItem>
                     ))}
-                </div>
-            </aside>
+                </ScrollList>
+            </SidebarPanel>
 
             {/* Objects List */}
-            <section className="loot" style={{ gridColumn: '2 / -1' }}>
+            <ContentPanel className="col-span-3">
                 <SectionHeader 
                     title={selectedObjectType ? `${selectedObjectType.name} (${filteredObjects.length})` : 'Select a Type'}
                     placeholder="Filter objects..."
@@ -84,44 +87,50 @@ function ObjectsTab() {
                 />
                 
                 {loading && selectedObjectType && (
-                    <div className="loading">Loading objects...</div>
+                    <div className="flex-1 flex items-center justify-center text-wow-gold italic animate-pulse">
+                        Loading objects...
+                    </div>
                 )}
                 
-                {objects.length > 0 && (
-                    <div className="loot-items">
+                {!loading && objects.length > 0 && (
+                    <ScrollList className="p-2 space-y-1">
                         {filteredObjects.map(obj => (
                             <div 
                                 key={obj.entry}
-                                className="loot-item"
-                                style={{ borderLeft: '3px solid #00B4FF' }}
+                                className="flex items-center gap-3 p-2 bg-white/[0.02] hover:bg-white/5 border-l-[3px] cursor-pointer transition-colors rounded-r"
+                                style={{ borderLeftColor: OBJECT_COLOR }}
                             >
-                                <div className="item-icon-placeholder" style={{ 
-                                    background: '#00B4FF',
-                                    color: '#fff',
-                                    fontWeight: 'bold',
-                                    fontSize: '10px'
-                                }}>
-                                    OBJ
-                                </div>
+                                <EntityIcon 
+                                    label="OBJ"
+                                    color={OBJECT_COLOR}
+                                    size="md"
+                                />
                                 
-                                <span className="item-id">[{obj.entry}]</span>
+                                <span className="text-gray-600 text-[11px] font-mono min-w-[50px]">
+                                    [{obj.entry}]
+                                </span>
                                 
-                                <span style={{ color: '#00B4FF', fontWeight: 'bold' }}>
+                                <span 
+                                    className="font-bold flex-1 truncate"
+                                    style={{ color: OBJECT_COLOR }}
+                                >
                                     {obj.name}
                                 </span>
                                 
-                                <span style={{ marginLeft: 'auto', color: '#888', fontSize: '11px' }}>
+                                <span className="text-gray-500 text-xs ml-auto">
                                     Type: {obj.typeName || obj.type} | Size: {obj.size.toFixed(1)}
                                 </span>
                             </div>
                         ))}
-                    </div>
+                    </ScrollList>
                 )}
                 
-                {!selectedObjectType && (
-                    <p className="placeholder">Select an object type to browse</p>
+                {!selectedObjectType && !loading && (
+                    <div className="flex-1 flex items-center justify-center text-gray-600 italic">
+                        Select an object type to browse
+                    </div>
                 )}
-            </section>
+            </ContentPanel>
         </>
     )
 }

@@ -1,11 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import { SectionHeader } from '../../common/SectionHeader'
+import { SidebarPanel, ContentPanel, ScrollList, SectionHeader, ListItem, LootItem } from '../../ui'
 import { GetItemSets, GetItemSetDetail, filterItems } from '../../../utils/databaseApi'
-import { getQualityColor } from '../../../utils/wow'
-import '../../common/PageLayout.css'
-
-// Helper for quality class
-const getQualityClass = (quality) => `q${quality || 0}`
 
 function SetsTab({ tooltipHook }) {
     const [itemSets, setItemSets] = useState([])
@@ -13,11 +8,10 @@ function SetsTab({ tooltipHook }) {
     const [setDetail, setSetDetail] = useState(null)
     const [loading, setLoading] = useState(false)
 
-    // Independent filter states
     const [setFilter, setSetFilter] = useState('')
     const [itemFilter, setItemFilter] = useState('')
 
-    const { setHoveredItem, loadTooltipData, handleItemEnter, handleMouseMove, renderTooltip, tooltipCache } = tooltipHook
+    const { setHoveredItem, loadTooltipData, handleItemEnter, handleMouseMove, tooltipCache } = tooltipHook
 
     // Load item sets on mount
     useEffect(() => {
@@ -57,7 +51,6 @@ function SetsTab({ tooltipHook }) {
         }
     }, [selectedSet])
 
-    // Filtered lists
     const filteredItemSets = useMemo(() => filterItems(itemSets, setFilter), [itemSets, setFilter])
     const filteredSetItems = useMemo(() => {
         if (!setDetail?.items) return []
@@ -67,33 +60,36 @@ function SetsTab({ tooltipHook }) {
     return (
         <>
             {/* Sets List */}
-            <aside className="sidebar" style={{ gridColumn: '1 / 2' }}>
+            <SidebarPanel className="col-span-1">
                 <SectionHeader 
                     title={`Item Sets (${filteredItemSets.length})`}
                     placeholder="Filter sets..."
                     onFilterChange={setSetFilter}
                 />
-                <div className="list">
+                <ScrollList>
                     {loading && itemSets.length === 0 && (
-                        <div className="loading">Loading sets...</div>
+                        <div className="p-4 text-center text-wow-gold italic animate-pulse">Loading sets...</div>
                     )}
                     {filteredItemSets.map(set => (
-                        <div
+                        <ListItem
                             key={set.itemsetId}
-                            className={`item ${selectedSet?.itemsetId === set.itemsetId ? 'active' : ''}`}
+                            active={selectedSet?.itemsetId === set.itemsetId}
                             onClick={() => {
                                 setSelectedSet(set)
                                 setItemFilter('')
                             }}
                         >
-                            {set.name} ({set.itemCount})
-                        </div>
+                            <span className="flex justify-between w-full">
+                                <span className="truncate">{set.name}</span>
+                                <span className="text-gray-600 text-xs">({set.itemCount})</span>
+                            </span>
+                        </ListItem>
                     ))}
-                </div>
-            </aside>
+                </ScrollList>
+            </SidebarPanel>
 
             {/* Set Details */}
-            <section className="loot" style={{ gridColumn: '2 / -1' }}>
+            <ContentPanel className="col-span-3">
                 <SectionHeader 
                     title={selectedSet ? `${selectedSet.name} (${filteredSetItems.length})` : 'Select a Set'}
                     placeholder="Filter items..."
@@ -101,68 +97,62 @@ function SetsTab({ tooltipHook }) {
                 />
                 
                 {loading && selectedSet && (
-                    <div className="loading">Loading set details...</div>
-                )}
-                
-                {setDetail && !loading && (
-                    <div className="loot-items">
-                        {filteredSetItems.map((item, idx) => (
-                            <div 
-                                key={item.entry || idx}
-                                className="loot-item"
-                                data-quality={item.quality || 0}
-                                onMouseEnter={() => handleItemEnter(item.entry)}
-                                onMouseMove={(e) => handleMouseMove(e, item.entry)}
-                                onMouseLeave={() => setHoveredItem(null)}
-                            >
-                                {item.iconPath ? (
-                                    <img 
-                                        className="item-icon"
-                                        src={`/items/icons/${item.iconPath}.jpg`}
-                                        alt={item.name}
-                                        onError={(e) => {
-                                            if (!e.target.src.includes('zamimg.com')) {
-                                                e.target.src = `https://wow.zamimg.com/images/wow/icons/medium/${item.iconPath}.jpg`
-                                            } else {
-                                                e.target.style.display = 'none'
-                                            }
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="item-icon-placeholder">?</div>
-                                )}
-                                
-                                <span className="item-id">[{item.entry}]</span>
-                                
-                                <span 
-                                    className={`item-name ${getQualityClass(item.quality)}`}
-                                    style={{color: getQualityColor(item.quality)}}
-                                >
-                                    {item.name}
-                                </span>
-                                
-                                {renderTooltip(item)}
-                            </div>
-                        ))}
-                        
-                        {/* Set Bonuses */}
-                        {setDetail.bonuses && setDetail.bonuses.length > 0 && (
-                            <div className="set-bonuses">
-                                <h3 className="set-bonuses-title">Set Bonuses</h3>
-                                {setDetail.bonuses.map((bonus, idx) => (
-                                    <div key={idx} className="set-bonus-item">
-                                        ({bonus.threshold}) Spell ID: {bonus.spellId}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                    <div className="flex-1 flex items-center justify-center text-wow-gold italic animate-pulse">
+                        Loading set details...
                     </div>
                 )}
                 
-                {!selectedSet && (
-                    <p className="placeholder">Select an item set to view its items</p>
+                {setDetail && !loading && (
+                    <ScrollList className="p-2 space-y-2">
+                        {/* Set Items */}
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-1">
+                            {filteredSetItems.map((item, idx) => {
+                                const handlers = tooltipHook.getItemHandlers?.(item.entry) || {
+                                    onMouseEnter: () => handleItemEnter(item.entry),
+                                    onMouseMove: (e) => handleMouseMove(e, item.entry),
+                                    onMouseLeave: () => setHoveredItem(null),
+                                }
+                                
+                                return (
+                                    <LootItem 
+                                        key={item.entry || idx}
+                                        item={item}
+                                        {...handlers}
+                                    />
+                                )
+                            })}
+                        </div>
+                        
+                        {/* Set Bonuses */}
+                        {setDetail.bonuses?.length > 0 && (
+                            <div className="mt-4 p-4 bg-bg-main rounded-lg border border-border-dark">
+                                <h3 className="text-wow-gold font-bold mb-3 text-sm uppercase tracking-wider">
+                                    Set Bonuses
+                                </h3>
+                                <div className="space-y-2">
+                                    {setDetail.bonuses.map((bonus, idx) => (
+                                        <div 
+                                            key={idx} 
+                                            className="text-wow-uncommon text-sm flex items-center gap-2"
+                                        >
+                                            <span className="bg-wow-uncommon/10 text-wow-uncommon px-2 py-0.5 rounded text-xs font-mono">
+                                                {bonus.threshold}pc
+                                            </span>
+                                            <span>Spell ID: {bonus.spellId}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </ScrollList>
                 )}
-            </section>
+                
+                {!selectedSet && !loading && (
+                    <div className="flex-1 flex items-center justify-center text-gray-600 italic">
+                        Select an item set to view its items
+                    </div>
+                )}
+            </ContentPanel>
         </>
     )
 }

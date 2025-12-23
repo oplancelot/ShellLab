@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { GetItemDetail } from '../../../services/api'
 import { getQualityColor } from '../../../utils/wow'
-import ItemTooltip from '../../ItemTooltip'
+import { 
+    DetailPageLayout, 
+    DetailHeader, 
+    DetailSection,
+    DetailLoading,
+    DetailError
+} from '../../ui'
+import { ItemTooltip } from '../../ui'
 
 const ItemDetailView = ({ entry, onBack, onNavigate, setHoveredItem, tooltipCache, loadTooltipData }) => {
     const [detail, setDetail] = useState(null)
@@ -27,75 +34,103 @@ const ItemDetailView = ({ entry, onBack, onNavigate, setHoveredItem, tooltipCach
         }
         
         return (
-             <div style={{ display: 'inline-block', verticalAlign: 'top', minWidth: '300px' }}>
+            <div className="inline-block align-top min-w-[300px]">
                 <ItemTooltip 
                     item={dummyItem} 
                     tooltip={tooltipCache[entry]} 
-                    style={{ position: 'static', border: '1px solid #444', background: '#000' }} 
+                    style={{ position: 'static' }} 
                 />
-             </div>
+            </div>
         )
     }
 
-    if (loading) return <div className="loading">Loading Item...</div>
-    if (!detail) return <div className="error">Item not found</div>
+    if (loading) return <DetailLoading />
+    if (!detail) return <DetailError message="Item not found" onBack={onBack} />
+
+    const qualityColor = getQualityColor(detail.quality)
 
     return (
-        <div className="detail-view" style={{ flex: 1, overflowY: 'auto', padding: '20px', background: '#121212', color: '#e0e0e0' }}>
-            <button onClick={onBack} style={{ background: '#333', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}>&larr; Back to List</button>
-            
-            <header style={{ marginBottom: '30px', display: 'flex', gap: '20px' }}>
-                <div style={{ width: '56px', height: '56px', border: `2px solid ${getQualityColor(detail.quality)}`, borderRadius: '4px' }}>
-                     {detail.iconPath ? <img src={`/items/icons/${detail.iconPath}.jpg`} style={{width:'100%', height:'100%'}} /> : '?'}
-                </div>
-                <div>
-                     <h1 style={{ color: getQualityColor(detail.quality), margin: '0 0 5px 0' }}>{detail.name}</h1>
-                     <div style={{ color: '#888' }}>Item Level {detail.itemLevel}</div>
-                </div>
-            </header>
+        <DetailPageLayout onBack={onBack}>
+            <DetailHeader
+                icon={
+                    detail.iconPath ? (
+                        <img 
+                            src={`/items/icons/${detail.iconPath}.jpg`} 
+                            className="w-full h-full object-cover" 
+                            alt="" 
+                        />
+                    ) : '?'
+                }
+                iconBorderColor={qualityColor}
+                title={detail.name}
+                titleColor={qualityColor}
+                subtitle={`Item Level ${detail.itemLevel}`}
+            />
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px' }}>
+            <div className="flex flex-wrap gap-10">
+                {/* Tooltip Block */}
                 {renderTooltipBlock()}
                 
-                <div style={{ flex: 1, minWidth: '300px' }}>
-                     {detail.droppedBy && detail.droppedBy.length > 0 && (
-                        <div style={{ marginBottom: '30px' }}>
-                            <h3 style={{ borderBottom: '1px solid #FFD100', paddingBottom: '5px', color: '#FFD100' }}>Dropped By</h3>
-                            <ul style={{ listStyle: 'none', padding: 0 }}>
+                {/* Relations */}
+                <div className="flex-1 min-w-[300px] space-y-8">
+                    {/* Dropped By */}
+                    {detail.droppedBy?.length > 0 && (
+                        <DetailSection title="Dropped By">
+                            <div className="space-y-1">
                                 {detail.droppedBy.map(npc => (
-                                    <li key={npc.entry} style={{ padding: '8px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div 
+                                        key={npc.entry} 
+                                        className="flex items-center justify-between p-2 bg-white/[0.02] hover:bg-white/5 border-b border-white/5 cursor-pointer transition-colors"
+                                        onClick={() => onNavigate('npc', npc.entry)}
+                                    >
                                         <div>
-                                            <a onClick={() => onNavigate('npc', npc.entry)} style={{ cursor: 'pointer', color: '#fff', fontWeight: 'bold' }}>
+                                            <div className="text-white font-bold hover:text-wow-gold">
                                                 {npc.name}
-                                            </a>
-                                            <div style={{ fontSize: '12px', color: '#888' }}>Level {npc.levelMin}-{npc.levelMax}</div>
+                                            </div>
+                                            <div className="text-xs text-gray-500">
+                                                Level {npc.levelMin}{npc.levelMax > npc.levelMin ? `-${npc.levelMax}` : ''}
+                                            </div>
                                         </div>
-                                        <div style={{ color: '#FFD100' }}>{npc.chance.toFixed(1)}%</div>
-                                    </li>
+                                        <div className="text-wow-gold font-mono text-sm">
+                                            {npc.chance.toFixed(1)}%
+                                        </div>
+                                    </div>
                                 ))}
-                            </ul>
-                        </div>
-                     )}
-                     
-                     {detail.rewardFrom && detail.rewardFrom.length > 0 && (
-                        <div>
-                            <h3 style={{ borderBottom: '1px solid #FFD100', paddingBottom: '5px', color: '#FFD100' }}>Reward From</h3>
-                            <ul style={{ listStyle: 'none', padding: 0 }}>
+                            </div>
+                        </DetailSection>
+                    )}
+                    
+                    {/* Reward From */}
+                    {detail.rewardFrom?.length > 0 && (
+                        <DetailSection title="Reward From">
+                            <div className="space-y-1">
                                 {detail.rewardFrom.map(q => (
-                                    <li key={q.entry} style={{ padding: '8px', borderBottom: '1px solid #333' }}>
-                                        <a onClick={() => onNavigate('quest', q.entry)} style={{ cursor: 'pointer', color: '#FFD100' }}>
-                                            {q.title}
-                                        </a>
-                                        <span style={{ marginLeft: '10px', fontSize: '12px', color: '#888' }}>Level {q.level}</span>
-                                        {q.isChoice && <span style={{ marginLeft: '10px', fontSize: '10px', color: '#aaa', border: '1px solid #555', padding: '0 3px' }}>Choice</span>}
-                                    </li>
+                                    <div 
+                                        key={q.entry} 
+                                        className="flex items-center gap-3 p-2 bg-white/[0.02] hover:bg-white/5 border-b border-white/5 cursor-pointer transition-colors"
+                                        onClick={() => onNavigate('quest', q.entry)}
+                                    >
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-wow-gold font-bold truncate">
+                                                {q.title}
+                                            </div>
+                                            <div className="text-xs text-gray-500">
+                                                Level {q.level}
+                                                {q.isChoice && (
+                                                    <span className="ml-2 text-[10px] border border-white/10 px-1 rounded uppercase">
+                                                        Choice
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
                                 ))}
-                            </ul>
-                        </div>
-                     )}
+                            </div>
+                        </DetailSection>
+                    )}
                 </div>
             </div>
-        </div>
+        </DetailPageLayout>
     )
 }
 

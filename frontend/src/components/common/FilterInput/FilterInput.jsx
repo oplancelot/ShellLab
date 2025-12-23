@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import './FilterInput.css'
 
 /**
  * A reusable filter input component with client-side filtering logic
@@ -25,22 +24,25 @@ export function FilterInput({ placeholder = 'Filter...', onFilterChange, style =
     }
 
     return (
-        <div className="filter-input-container" style={style}>
-            <div className="filter-icon-wrapper">
+        <div 
+            className="flex items-center bg-bg-main rounded border border-border-dark overflow-hidden transition-colors focus-within:border-border-light"
+            style={style}
+        >
+            <div className="px-2 text-gray-600 flex items-center">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                 </svg>
             </div>
             <input 
                 type="text"
-                className="filter-input-field"
+                className="flex-1 px-2 py-1.5 bg-transparent border-none text-white text-[13px] outline-none min-w-[80px] placeholder:text-gray-600"
                 value={value}
                 onChange={handleChange}
                 placeholder={placeholder}
             />
             {value && (
                 <button
-                    className="filter-clear-btn"
+                    className="px-2 py-1 bg-transparent border-none text-gray-500 cursor-pointer text-sm hover:text-white transition-colors"
                     onClick={handleClear}
                     title="Clear filter"
                 >

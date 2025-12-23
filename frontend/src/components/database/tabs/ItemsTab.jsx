@@ -1,11 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { GetItemClasses, BrowseItemsByClass } from '../../../../wailsjs/go/main/App'
-import { SectionHeader } from '../../common/SectionHeader'
+import { SidebarPanel, ContentPanel, ScrollList, SectionHeader, ListItem, LootItem } from '../../ui'
 import { BrowseItemsByClassAndSlot, filterItems } from '../../../utils/databaseApi'
-import { getQualityColor } from '../../../utils/wow'
-
-// Helper for quality class
-const getQualityClass = (quality) => `q${quality || 0}`
 
 function ItemsTab({ tooltipHook }) {
     const [itemClasses, setItemClasses] = useState([])
@@ -43,7 +39,6 @@ function ItemsTab({ tooltipHook }) {
             setLoading(true)
             setItems([])
             
-            // If slot is selected, use three-level filter
             if (selectedSlot !== null) {
                 BrowseItemsByClassAndSlot(selectedClass.class, selectedSubClass.subClass, selectedSlot.inventoryType, '')
                     .then(res => {
@@ -55,7 +50,6 @@ function ItemsTab({ tooltipHook }) {
                         setLoading(false)
                     })
             } else {
-                // Otherwise use two-level filter
                 BrowseItemsByClass(selectedClass.class, selectedSubClass.subClass)
                     .then(res => {
                         setItems(res || [])
@@ -71,7 +65,7 @@ function ItemsTab({ tooltipHook }) {
 
     // Preload tooltips when items change
     useEffect(() => {
-        if (items && items.length > 0) {
+        if (items?.length > 0) {
             items.slice(0, 20).forEach(item => {
                 if (item.entry && !tooltipCache[item.entry]) {
                     loadTooltipData(item.entry)
@@ -80,7 +74,7 @@ function ItemsTab({ tooltipHook }) {
         }
     }, [items])
 
-    // Filtered lists - each column has its own filter
+    // Filtered lists
     const filteredClasses = useMemo(() => filterItems(itemClasses, classFilter), [itemClasses, classFilter])
     const filteredSubClasses = useMemo(() => {
         if (!selectedClass?.subClasses) return []
@@ -90,23 +84,22 @@ function ItemsTab({ tooltipHook }) {
         if (!selectedSubClass?.inventorySlots) return []
         return filterItems(selectedSubClass.inventorySlots, slotFilter)
     }, [selectedSubClass, slotFilter])
-    // Frontend filtering for items
     const filteredItems = useMemo(() => filterItems(items, itemFilter), [items, itemFilter])
 
     return (
         <>
             {/* 1. Classes */}
-            <aside className="sidebar">
+            <SidebarPanel>
                 <SectionHeader 
                     title={`Item Class (${filteredClasses.length})`}
                     placeholder="Filter classes..."
                     onFilterChange={setClassFilter}
                 />
-                <div className="list">
+                <ScrollList>
                     {filteredClasses.map(cls => (
-                        <button
+                        <ListItem
                             key={cls.class}
-                            className={selectedClass?.class === cls.class ? 'active' : ''}
+                            active={selectedClass?.class === cls.class}
                             onClick={() => {
                                 setSelectedClass(cls)
                                 setSelectedSubClass(null)
@@ -118,23 +111,23 @@ function ItemsTab({ tooltipHook }) {
                             }}
                         >
                             {cls.name}
-                        </button>
+                        </ListItem>
                     ))}
-                </div>
-            </aside>
+                </ScrollList>
+            </SidebarPanel>
 
             {/* 2. SubClasses */}
-            <section className="instances">
+            <SidebarPanel>
                 <SectionHeader 
                     title={selectedClass ? `${selectedClass.name} (${filteredSubClasses.length})` : 'Select Class'}
                     placeholder="Filter types..."
                     onFilterChange={setSubClassFilter}
                 />
-                <div className="list">
+                <ScrollList>
                     {filteredSubClasses.map(sc => (
-                        <div
+                        <ListItem
                             key={sc.subClass}
-                            className={`item ${selectedSubClass?.subClass === sc.subClass ? 'active' : ''}`}
+                            active={selectedSubClass?.subClass === sc.subClass}
                             onClick={() => {
                                 setSelectedSubClass(sc)
                                 setSelectedSlot(null)
@@ -143,100 +136,90 @@ function ItemsTab({ tooltipHook }) {
                             }}
                         >
                             {sc.name}
-                        </div>
+                        </ListItem>
                     ))}
-                </div>
-            </section>
+                </ScrollList>
+            </SidebarPanel>
 
-            {/* 3. Inventory Slots (Third Level) */}
-            <section className="instances">
+            {/* 3. Inventory Slots */}
+            <SidebarPanel>
                 <SectionHeader 
                     title={selectedSubClass ? `Slot (${filteredSlots.length})` : 'Select Type'}
                     placeholder="Filter slots..."
                     onFilterChange={setSlotFilter}
                 />
-                <div className="list">
+                <ScrollList>
                     {filteredSlots.map(slot => (
-                        <div
+                        <ListItem
                             key={slot.inventoryType}
-                            className={`item ${selectedSlot?.inventoryType === slot.inventoryType ? 'active' : ''}`}
+                            active={selectedSlot?.inventoryType === slot.inventoryType}
                             onClick={() => {
                                 setSelectedSlot(slot)
                                 setItemFilter('')
                             }}
                         >
                             {slot.name}
-                        </div>
+                        </ListItem>
                     ))}
-                    {selectedSubClass && selectedSubClass.inventorySlots?.length > 1 && (
-                        <div
-                            className={`item ${selectedSlot === null ? 'active' : ''}`}
+                    {selectedSubClass?.inventorySlots?.length > 1 && (
+                        <ListItem
+                            active={selectedSlot === null}
                             onClick={() => {
                                 setSelectedSlot(null)
                                 setItemFilter('')
                             }}
-                            style={{ fontStyle: 'italic', color: '#888' }}
+                            className="italic text-gray-500"
                         >
                             All Slots
-                        </div>
+                        </ListItem>
                     )}
-                </div>
-            </section>
+                </ScrollList>
+            </SidebarPanel>
 
             {/* 4. Items List */}
-            <section className="loot">
+            <ContentPanel>
                 <SectionHeader 
-                    title={selectedSubClass ? `${selectedSlot ? selectedSlot.name : selectedSubClass.name} (${filteredItems.length})` : 'Select SubClass'}
+                    title={selectedSubClass 
+                        ? `${selectedSlot ? selectedSlot.name : selectedSubClass.name} (${filteredItems.length})` 
+                        : 'Select SubClass'
+                    }
                     placeholder="Filter items..."
                     onFilterChange={setItemFilter}
                 />
-                {loading && <div className="loading">Loading items...</div>}
                 
-                {items.length > 0 && (
-                <div className="loot-items">
-                        {filteredItems.map((item, idx) => {
-                            const itemId = item.entry || item.id || item.itemId
-                            
-                            return (
-                            <div 
-                                key={itemId || idx} 
-                                className="loot-item"
-                                data-quality={item.quality || 0}
-                                onMouseEnter={() => handleItemEnter(itemId)}
-                                onMouseMove={(e) => handleMouseMove(e, itemId)}
-                                onMouseLeave={() => setHoveredItem(null)}
-                            >
-                                {item.iconPath ? (
-                                    <img 
-                                        className="item-icon"
-                                        src={`/items/icons/${item.iconPath}.jpg`}
-                                        alt={item.name}
-                                        onError={(e) => {
-                                            if (!e.target.src.includes('zamimg.com')) {
-                                                e.target.src = `https://wow.zamimg.com/images/wow/icons/medium/${item.iconPath}.jpg`
-                                            } else {
-                                                e.target.style.display = 'none'
-                                            }
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="item-icon-placeholder">?</div>
-                                )}
-                                
-                                <span className="item-id">[{item.entry}]</span>
-                                
-                                <span 
-                                    className={`item-name ${getQualityClass(item.quality)}`}
-                                    style={{color: getQualityColor(item.quality)}}
-                                >
-                                    {item.name}
-                                </span>
-                            </div>
-                            )
-                        })}
+                {loading && (
+                    <div className="flex-1 flex items-center justify-center text-wow-gold italic animate-pulse">
+                        Loading items...
                     </div>
                 )}
-            </section>
+                
+                {!loading && items.length > 0 && (
+                    <ScrollList className="grid grid-cols-1 xl:grid-cols-2 gap-1 p-2 auto-rows-min">
+                        {filteredItems.map((item, idx) => {
+                            const itemId = item.entry || item.id || item.itemId
+                            const handlers = tooltipHook.getItemHandlers?.(itemId) || {
+                                onMouseEnter: () => handleItemEnter(itemId),
+                                onMouseMove: (e) => handleMouseMove(e, itemId),
+                                onMouseLeave: () => setHoveredItem(null),
+                            }
+                            
+                            return (
+                                <LootItem 
+                                    key={itemId || idx}
+                                    item={item}
+                                    {...handlers}
+                                />
+                            )
+                        })}
+                    </ScrollList>
+                )}
+                
+                {!loading && items.length === 0 && selectedSubClass && (
+                    <div className="flex-1 flex items-center justify-center text-gray-600 italic">
+                        No items found
+                    </div>
+                )}
+            </ContentPanel>
         </>
     )
 }

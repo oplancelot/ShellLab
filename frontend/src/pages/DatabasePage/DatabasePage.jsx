@@ -1,13 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useItemTooltip } from '../../hooks/useItemTooltip'
-import './DatabasePage.css'
-import ItemTooltip from '../../components/ItemTooltip'
+import { 
+    PageLayout, 
+    ContentGrid, 
+    TabButton, 
+    TabBar,
+    ItemTooltip 
+} from '../../components/ui'
 import { NPCDetailView, QuestDetailView, ItemDetailView } from '../../components/database/detailview'
-import { getQualityColor } from '../../utils/wow'
 import { GRID_LAYOUT } from '../../components/common/layout'
 
 // Import tab components
 import { ItemsTab, SetsTab, NPCsTab, QuestsTab, ObjectsTab, SpellsTab, FactionsTab } from '../../components/database/tabs'
+
+const TABS = ['Items', 'Sets', 'NPCs', 'Quests', 'Objects', 'Spells', 'Factions']
 
 function DatabasePage() {
     const [activeTab, setActiveTab] = useState('items')
@@ -19,22 +25,9 @@ function DatabasePage() {
     const tooltipHook = useItemTooltip()
     const {
         hoveredItem,
-        setHoveredItem,
         tooltipCache,
-        loadTooltipData,
-        handleMouseMove,
-        handleItemEnter,
         getTooltipStyle,
     } = tooltipHook
-
-    // Helper for quality class
-    const getQualityClass = (quality) => `q${quality || 0}`
-
-    // Tooltip renderer helper to pass to tabs
-    // Note: Tooltip is now rendered globally in DatabasePage to avoid overflow clipping
-    const renderTooltip = (item) => {
-        return null
-    }
 
     // Detail View Logic
     const navigateTo = (type, entry) => {
@@ -51,81 +44,74 @@ function DatabasePage() {
     // Enhanced tooltip hook to pass to tabs
     const enhancedTooltipHook = {
         ...tooltipHook,
-        renderTooltip,
+        renderTooltip: () => null,
     }
 
     return (
-        <div className="database-page">
+        <PageLayout>
             {/* Tabs View - Hidden when detail active, but kept mounted to preserve state */}
-            <div style={{ display: currentDetail ? 'none' : 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', flex: 1 }}>
-                {/* Tabs */}
-                <div className="tabs">
-                    {['Items', 'Sets', 'NPCs', 'Quests', 'Objects', 'Spells', 'Factions'].map(tab => (
-                        <button
+            <div className={`flex flex-col h-full flex-1 overflow-hidden ${currentDetail ? 'hidden' : ''}`}>
+                {/* Tab Bar */}
+                <TabBar>
+                    {TABS.map(tab => (
+                        <TabButton
                             key={tab}
+                            active={activeTab === tab.toLowerCase()}
                             onClick={() => setActiveTab(tab.toLowerCase())}
-                            className={`tab-button ${activeTab === tab.toLowerCase() ? 'active' : ''}`}
                         >
                             {tab}
-                        </button>
+                        </TabButton>
                     ))}
-                </div>
+                </TabBar>
 
                 {/* Content Area - 4 columns for three-level classification */}
-                <div className="content" style={{ gridTemplateColumns: GRID_LAYOUT }}>
-                    
-                    {/* ITEMS TAB */}
+                <ContentGrid columns={GRID_LAYOUT}>
                     {activeTab === 'items' && (
                         <ItemsTab tooltipHook={enhancedTooltipHook} />
                     )}
-
-                    {/* SETS TAB */}
                     {activeTab === 'sets' && (
                         <SetsTab tooltipHook={enhancedTooltipHook} />
                     )}
-
-                    {/* NPCS TAB */}
                     {activeTab === 'npcs' && (
                         <NPCsTab 
                             onNavigate={navigateTo}
                             tooltipHook={enhancedTooltipHook}
                         />
                     )}
-
-                    {/* QUESTS TAB */}
                     {activeTab === 'quests' && (
                         <QuestsTab onNavigate={navigateTo} />
                     )}
-
-                    {/* OBJECTS TAB */}
                     {activeTab === 'objects' && (
                         <ObjectsTab />
                     )}
-
-                    {/* SPELLS TAB */}
                     {activeTab === 'spells' && (
                         <SpellsTab />
                     )}
-
-                    {/* FACTIONS TAB */}
                     {activeTab === 'factions' && (
                         <FactionsTab />
                     )}
-                </div>
+                </ContentGrid>
             </div>
 
             {/* Detail View Overlay */}
             {currentDetail && (
-                <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', flex: 1 }}>
-                    <div className="detail-header">
-                        <button className="back-button" onClick={goBack}>
+                <div className="flex flex-col h-full flex-1 overflow-hidden">
+                    {/* Detail Header with breadcrumb */}
+                    <div className="bg-bg-hover px-4 py-2 border-b border-border-dark flex items-center gap-4">
+                        <button 
+                            onClick={goBack}
+                            className="bg-bg-panel border border-border-light text-gray-400 px-4 py-1.5 rounded hover:bg-bg-active hover:text-white transition-colors text-sm"
+                        >
                             ← Back
                         </button>
-                        <span className="detail-info">
-                            Viewing: {currentDetail.type.toUpperCase()} #{currentDetail.entry}
+                        <span className="text-gray-500 text-sm">
+                            Viewing: <b className="text-gray-300 uppercase">{currentDetail.type}</b> 
+                            <span className="ml-2 font-mono bg-black/20 px-1.5 py-0.5 rounded">#{currentDetail.entry}</span>
                         </span>
                     </div>
-                    <div className="detail-content">
+                    
+                    {/* Detail Content */}
+                    <div className="flex-1 overflow-auto">
                         {currentDetail.type === 'npc' && (
                             <NPCDetailView 
                                 entry={currentDetail.entry} 
@@ -156,13 +142,13 @@ function DatabasePage() {
 
             {/* Global Tooltip Layer */}
             {hoveredItem && tooltipCache[hoveredItem] && (
-                 <ItemTooltip
-                     item={tooltipCache[hoveredItem]}
-                     tooltip={tooltipCache[hoveredItem]}
-                     style={getTooltipStyle()}
-                 />
+                <ItemTooltip
+                    item={tooltipCache[hoveredItem]}
+                    tooltip={tooltipCache[hoveredItem]}
+                    style={getTooltipStyle()}
+                />
             )}
-        </div>
+        </PageLayout>
     )
 }
 

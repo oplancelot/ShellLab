@@ -1,11 +1,20 @@
 import { useState, useEffect, useMemo } from 'react'
 import { GetCategories, GetInstances, GetTables } from '../../wailsjs/go/main/App'
 import { useItemTooltip } from '../hooks/useItemTooltip'
-import ItemTooltip, { getQualityColor } from './ItemTooltip'
-import { SectionHeader } from './common/SectionHeader'
+import { 
+    PageLayout, 
+    ContentGrid, 
+    SidebarPanel, 
+    ContentPanel,
+    ScrollList,
+    SectionHeader,
+    ListItem,
+    LootItem,
+    ItemTooltip
+} from './ui'
 import { filterItems } from '../utils/databaseApi'
 import { GRID_LAYOUT } from './common/layout'
-import './common/PageLayout.css'
+import { getQualityColor } from '../utils/wow'
 
 // Direct call to GetLoot - using window binding
 const GetLoot = (category, instance, boss) => {
@@ -45,14 +54,10 @@ function AtlasLootPage() {
         getTooltipStyle,
     } = useItemTooltip()
 
-    // Get quality class name
-    const getQualityClass = (quality) => `q${quality || 0}`
-
     // Filtered lists
     const filteredCategories = useMemo(() => filterItems(categories, categoryFilter), [categories, categoryFilter])
     const filteredModules = useMemo(() => filterItems(modules, moduleFilter), [modules, moduleFilter])
     const filteredTables = useMemo(() => {
-        // Convert tables to format with name property for filtering
         const tablesWithNames = tables.map(t => {
             if (typeof t === 'string') {
                 return { original: t, name: t }
@@ -157,180 +162,158 @@ function AtlasLootPage() {
     }
 
     return (
-        <div className="database-page">
+        <PageLayout>
             {error && (
-                <div className="error-alert">
+                <div className="mx-3 mt-3 p-3 bg-red-900/30 border border-red-500/30 rounded flex items-center gap-3 text-red-400">
                     <span>❌</span>
                     <span>{error}</span>
                 </div>
             )}
 
-            <div className="content" style={{ gridTemplateColumns: GRID_LAYOUT }}>
+            <ContentGrid columns={GRID_LAYOUT}>
                 {/* Column 1: Categories */}
-                <aside className="sidebar">
+                <SidebarPanel>
                     <SectionHeader 
                         title={`Categories (${filteredCategories.length})`}
                         placeholder="Filter categories..."
                         onFilterChange={setCategoryFilter}
                     />
-                    <div className="list">
+                    <ScrollList>
                         {loading && categories.length === 0 && (
-                            <div className="loading">Loading...</div>
+                            <div className="p-4 text-center text-wow-gold italic animate-pulse">Loading...</div>
                         )}
                         {filteredCategories.map(cat => (
-                            <button
+                            <ListItem
                                 key={cat}
-                                className={selectedCategory === cat ? 'active' : ''}
+                                active={selectedCategory === cat}
                                 onClick={() => {
                                     setSelectedCategory(cat)
                                     setCategoryFilter('')
                                 }}
                             >
                                 {cat}
-                            </button>
+                            </ListItem>
                         ))}
-                    </div>
-                </aside>
+                    </ScrollList>
+                </SidebarPanel>
 
                 {/* Column 2: Modules/Instances */}
-                <section className="instances">
+                <SidebarPanel>
                     <SectionHeader 
                         title={selectedCategory ? `${selectedCategory} (${filteredModules.length})` : 'Select Category'}
                         placeholder="Filter modules..."
                         onFilterChange={setModuleFilter}
                     />
-                    {selectedCategory && (
-                        <div className="list">
-                            {loading && modules.length === 0 ? (
-                                <div className="loading">Loading...</div>
-                            ) : (
-                                <>
-                                    {filteredModules.map(mod => (
-                                        <div
-                                            key={mod}
-                                            className={`item ${selectedModule === mod ? 'active' : ''}`}
-                                            onClick={() => {
-                                                setSelectedModule(mod)
-                                                setModuleFilter('')
-                                            }}
-                                        >
-                                            {mod}
-                                        </div>
-                                    ))}
-                                </>
-                            )}
-                        </div>
-                    )}
-                </section>
+                    <ScrollList>
+                        {loading && modules.length === 0 && selectedCategory && (
+                            <div className="p-4 text-center text-wow-gold italic animate-pulse">Loading...</div>
+                        )}
+                        {filteredModules.map(mod => (
+                            <ListItem
+                                key={mod}
+                                active={selectedModule === mod}
+                                onClick={() => {
+                                    setSelectedModule(mod)
+                                    setModuleFilter('')
+                                }}
+                            >
+                                {mod}
+                            </ListItem>
+                        ))}
+                    </ScrollList>
+                </SidebarPanel>
 
                 {/* Column 3: Tables/Bosses */}
-                <section className="instances">
+                <SidebarPanel>
                     <SectionHeader 
                         title={selectedModule ? `${selectedModule} (${filteredTables.length})` : 'Select Instance'}
                         placeholder="Filter bosses..."
                         onFilterChange={setTableFilter}
                     />
-                    {selectedModule && (
-                        <div className="list">
-                            {loading && tables.length === 0 ? (
-                                <div className="loading">Loading...</div>
-                            ) : (
-                                <>
-                                    {filteredTables.map((tbl, idx) => {
-                                        const originalTable = tbl.original
-                                        const tableKey = typeof originalTable === 'string' ? originalTable : (originalTable.key || originalTable)
-                                        return (
-                                        <div
-                                            key={tableKey || idx}
-                                            className={`item ${selectedTable === tableKey ? 'active' : ''}`}
-                                            onClick={() => {
-                                                loadLoot(tableKey)
-                                                setTableFilter('')
-                                            }}
-                                        >
-                                            {tbl.name}
-                                        </div>
-                                        )
-                                    })}
-                                </>
-                            )}
-                        </div>
-                    )}
-                </section>
+                    <ScrollList>
+                        {loading && tables.length === 0 && selectedModule && (
+                            <div className="p-4 text-center text-wow-gold italic animate-pulse">Loading...</div>
+                        )}
+                        {filteredTables.map((tbl, idx) => {
+                            const originalTable = tbl.original
+                            const tableKey = typeof originalTable === 'string' ? originalTable : (originalTable.key || originalTable)
+                            return (
+                                <ListItem
+                                    key={tableKey || idx}
+                                    active={selectedTable === tableKey}
+                                    onClick={() => {
+                                        loadLoot(tableKey)
+                                        setTableFilter('')
+                                    }}
+                                >
+                                    {tbl.name}
+                                </ListItem>
+                            )
+                        })}
+                    </ScrollList>
+                </SidebarPanel>
 
                 {/* Column 4: Loot Display */}
-                <section className="loot">
+                <ContentPanel>
                     <SectionHeader 
                         title={loot ? `${loot.bossName} (${filteredItems.length})` : 'Loot Table'}
                         placeholder="Filter items..."
                         onFilterChange={setItemFilter}
                     />
                     
-                    {loading && !loot ? (
-                        <div className="loading">Loading loot...</div>
-                    ) : filteredItems.length > 0 ? (
-                        <div className="loot-items">
+                    {loading && !loot && selectedTable && (
+                        <div className="flex-1 flex items-center justify-center text-wow-gold italic animate-pulse">
+                            Loading loot...
+                        </div>
+                    )}
+                    
+                    {filteredItems.length > 0 && (
+                        <ScrollList className="grid grid-cols-1 xl:grid-cols-2 gap-1 p-2 auto-rows-min">
                             {filteredItems.map((item, idx) => {
                                 const itemId = item.itemId || item.entry || item.id
                                 return (
-                                <div 
-                                    key={itemId || idx} 
-                                    className="loot-item"
-                                    data-quality={item.quality || 0}
-                                    onMouseEnter={() => handleItemEnter(itemId)}
-                                    onMouseMove={(e) => handleMouseMove(e, itemId)}
-                                    onMouseLeave={() => setHoveredItem(null)}
-                                >
-                                    {item.iconName ? (
-                                        <img 
-                                            src={`/items/icons/${item.iconName.toLowerCase()}.jpg`}
-                                            alt={item.itemName || 'Item'}
-                                            className="item-icon"
-                                            onError={(e) => {
-                                                if (!e.target.src.includes('zamimg.com')) {
-                                                    e.target.src = `https://wow.zamimg.com/images/wow/icons/medium/${item.iconName.toLowerCase()}.jpg`
-                                                } else {
-                                                    e.target.style.display = 'none'
-                                                }
-                                            }}
-                                        />
-                                    ) : (
-                                        <div className="item-icon-placeholder">?</div>
-                                    )}
-                                    
-                                    <span className="item-id">[{itemId}]</span>
-                                    
-                                    <span 
-                                        className={`item-name ${getQualityClass(item.quality)}`}
-                                        style={{color: getQualityColor(item.quality)}}
-                                    >
-                                        {item.itemName || item.dropChance || 'Unknown Item'}
-                                    </span>
-                                    
-                                    {item.dropChance && (
-                                        <span className="item-drop-chance">{item.dropChance}</span>
-                                    )}
-                                </div>
+                                    <LootItem 
+                                        key={itemId || idx}
+                                        item={{
+                                            entry: itemId,
+                                            name: item.itemName || 'Unknown Item',
+                                            quality: item.quality,
+                                            iconPath: item.iconName?.toLowerCase(),
+                                            dropChance: item.dropChance
+                                        }}
+                                        showDropChance
+                                        onMouseEnter={() => handleItemEnter(itemId)}
+                                        onMouseMove={(e) => handleMouseMove(e, itemId)}
+                                        onMouseLeave={() => setHoveredItem(null)}
+                                    />
                                 )
                             })}
-                        </div>
-                    ) : selectedTable ? (
-                        <p className="placeholder">No loot data found for {selectedTable}</p>
-                    ) : (
-                        <p className="placeholder">Select a boss to view loot</p>
+                        </ScrollList>
                     )}
-                </section>
-            </div>
+                    
+                    {!loading && filteredItems.length === 0 && selectedTable && (
+                        <div className="flex-1 flex items-center justify-center text-gray-600 italic">
+                            No loot data found for {selectedTable}
+                        </div>
+                    )}
+                    
+                    {!selectedTable && (
+                        <div className="flex-1 flex items-center justify-center text-gray-600 italic">
+                            Select a boss to view loot
+                        </div>
+                    )}
+                </ContentPanel>
+            </ContentGrid>
 
             {/* Global Tooltip Layer */}
             {hoveredItem && tooltipCache[hoveredItem] && (
-                 <ItemTooltip
-                     item={tooltipCache[hoveredItem]}
-                     tooltip={tooltipCache[hoveredItem]}
-                     style={getTooltipStyle()}
-                 />
+                <ItemTooltip
+                    item={tooltipCache[hoveredItem]}
+                    tooltip={tooltipCache[hoveredItem]}
+                    style={getTooltipStyle()}
+                />
             )}
-        </div>
+        </PageLayout>
     )
 }
 

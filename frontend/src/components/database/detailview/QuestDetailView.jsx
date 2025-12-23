@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { GetQuestDetail } from '../../../services/api'
-import { getQualityColor } from '../../../utils/wow'
-
-
-import './DetailView.css'
-
-import LootTile from '../../common/LootTile/LootTile'
+import { 
+    DetailPageLayout, 
+    DetailHeader, 
+    DetailSection,
+    DetailSidePanel,
+    LootGrid,
+    DetailLoading,
+    DetailError
+} from '../../ui'
+import { LootItem } from '../../ui'
 
 const QuestDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
     const [detail, setDetail] = useState(null)
@@ -31,154 +35,232 @@ const QuestDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
             })
     }, [entry])
 
-    const renderRewardItem = (item, isChoice) => {
+    const renderRewardItem = (item) => {
+        const handlers = tooltipHook?.getItemHandlers?.(item.entry) || {}
         return (
-            <LootTile
+            <LootItem
                 key={item.entry}
                 item={item}
                 onClick={() => onNavigate('item', item.entry)}
-                tooltipHandlers={tooltipHook.getItemHandlers(item.entry)}
+                {...handlers}
             />
         )
     }
 
-    if (loading) return <div className="loading-view">Loading quest details...</div>
-    if (error) return (
-        <div className="error-view">
-            <h3>Error Loading Quest</h3>
-            <p>{error}</p>
-            <button onClick={onBack} style={{ background: '#333', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>&larr; Back</button>
-        </div>
-    )
-    if (!detail) return <div className="error-view">Quest not found</div>
+    const getQuestType = (type) => {
+        const types = { 1: 'Group', 41: 'PVP', 62: 'Raid', 81: 'Dungeon' }
+        return types[type] || 'Normal'
+    }
+
+    if (loading) return <DetailLoading />
+    if (error) return <DetailError message={error} onBack={onBack} />
+    if (!detail) return <DetailError message="Quest not found" onBack={onBack} />
     
     return (
-         <div className="detail-view">
+        <DetailPageLayout onBack={onBack}>
+            <DetailHeader
+                title={`${detail.title} [${detail.entry}]`}
+                titleColor="#FFD100"
+                subtitle={`Level ${detail.questLevel} (Min ${detail.minLevel}) - ${getQuestType(detail.type)}`}
+            />
             
-            <header className="detail-page-header">
-                <h1 className="detail-title" style={{ color: '#FFD100' }}>{detail.title} [{detail.entry}]</h1>
-                <div className="detail-subtitle">Level {detail.questLevel} (Min {detail.minLevel}) - {detail.type === 41 ? 'PVP' : detail.type === 81 ? 'Dungeon' : 'Normal'}</div>
-            </header>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '40px' }}>
-                <div>
-                    <h3 className="section-header">Description</h3>
-                    <p style={{ lineHeight: '1.6', color: '#ccc' }}>{detail.details}</p>
+            <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
+                {/* Main Content */}
+                <div className="space-y-8">
+                    <DetailSection title="Description">
+                        <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+                            {detail.details || 'No description available.'}
+                        </p>
+                    </DetailSection>
                     
-                    <h3 className="section-header">Objectives</h3>
-                    <p style={{ lineHeight: '1.6', color: '#ccc' }}>{detail.objectives}</p>
+                    <DetailSection title="Objectives">
+                        <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+                            {detail.objectives || 'No objectives listed.'}
+                        </p>
+                    </DetailSection>
 
-                    <div style={{ marginTop: '30px', borderTop: '1px solid #333', paddingTop: '20px' }}>
-                        <h3 style={{ color: '#FFD100' }}>Rewards</h3>
-                        {detail.rewMoney > 0 && <div style={{marginBottom:'10px'}}>Money: {Math.floor(detail.rewMoney/10000)}g {(detail.rewMoney%10000)/100}s</div>}
-                        {detail.rewXp > 0 && <div style={{marginBottom:'10px'}}>XP: {detail.rewXp}</div>}
-                        
-                        {detail.rewards && detail.rewards.length > 0 && (
-                            <div style={{ marginBottom: '20px' }}>
-                                <h4 style={{ color: '#aaa' }}>You will receive:</h4>
-                                <div className="loot-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-                                    {detail.rewards.map(i => renderRewardItem(i, false))}
+                    {/* Rewards */}
+                    <DetailSection title="Rewards">
+                        <div className="space-y-4">
+                            {detail.rewMoney > 0 && (
+                                <div className="flex items-center gap-2 text-wow-gold bg-wow-gold/5 px-3 py-1.5 rounded border border-wow-gold/10 w-fit">
+                                    <span className="text-xs uppercase font-bold text-gray-500">Money:</span>
+                                    <span>{Math.floor(detail.rewMoney/10000)}g {Math.floor((detail.rewMoney%10000)/100)}s</span>
                                 </div>
+                            )}
+                            {detail.rewXp > 0 && (
+                                <div className="flex items-center gap-2 text-wow-rare bg-wow-rare/5 px-3 py-1.5 rounded border border-wow-rare/10 w-fit">
+                                    <span className="text-xs uppercase font-bold text-gray-500">Experience:</span>
+                                    <span>{detail.rewXp} XP</span>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {detail.rewards?.length > 0 && (
+                            <div className="mt-6">
+                                <h4 className="text-gray-400 text-sm font-semibold mb-3 uppercase tracking-wider">
+                                    You will receive:
+                                </h4>
+                                <LootGrid>
+                                    {detail.rewards.map(i => renderRewardItem(i))}
+                                </LootGrid>
                             </div>
                         )}
                         
-                        {detail.choiceRewards && detail.choiceRewards.length > 0 && (
-                            <div>
-                                <h4 style={{ color: '#aaa' }}>Choose one of:</h4>
-                                <div className="loot-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-                                    {detail.choiceRewards.map(i => renderRewardItem(i, true))}
-                                </div>
+                        {detail.choiceRewards?.length > 0 && (
+                            <div className="mt-6">
+                                <h4 className="text-gray-400 text-sm font-semibold mb-3 uppercase tracking-wider">
+                                    Choose one of:
+                                </h4>
+                                <LootGrid>
+                                    {detail.choiceRewards.map(i => renderRewardItem(i))}
+                                </LootGrid>
                             </div>
                         )}
-                    </div>
+                    </DetailSection>
                 </div>
                 
-                <div style={{ background: '#1a1a1a', padding: '20px', borderRadius: '8px', alignSelf: 'start' }}>
-                    <h3 style={{ color: '#FFD100', marginTop: 0 }}>Quest Chain</h3>
-                    {detail.series && detail.series.length > 0 ? (
-                        <div style={{ marginBottom: '20px' }}>
-                            {detail.series.map((s, index) => (
-                                <div key={s.entry} style={{ display: 'flex', gap: '8px', marginBottom: '4px', fontSize: '13px' }}>
-                                    <span style={{ color: '#666', width: '20px' }}>{index + 1}.</span>
-                                    {s.entry === detail.entry ? (
-                                        <b style={{ color: '#fff' }}>{s.title} [{s.entry}]</b>
-                                    ) : (
-                                        <a 
-                                            className="quest-link"
-                                            onClick={() => onNavigate('quest', s.entry)}
-                                        >
-                                            {s.title} [{s.entry}]
-                                        </a>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div style={{ color: '#666', fontSize: '13px', marginBottom: '20px' }}>This quest is not part of a series.</div>
-                    )}
-
-                    {detail.prevQuests && detail.prevQuests.length > 0 && (
-                        <div style={{ marginBottom: '20px' }}>
-                            <h3 style={{ color: '#FFD100', marginTop: 0 }}>Prerequisites</h3>
-                            {detail.prevQuests.map(q => (
-                                <div key={q.entry} style={{ fontSize: '13px', marginBottom: '5px' }}>
-                                    <a className="quest-link" onClick={() => onNavigate('quest', q.entry)}>
-                                        {q.title} [{q.entry}]
-                                    </a>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {detail.exclusiveQuests && detail.exclusiveQuests.length > 0 && (
-                        <div style={{ marginBottom: '20px' }}>
-                            <h3 style={{ color: '#FFD100', marginTop: 0 }}>Exclusive With</h3>
-                            <div style={{ fontSize: '12px', color: '#aaa', marginBottom: '5px' }}>Completion of this quest makes these unavailable:</div>
-                            {detail.exclusiveQuests.map(q => (
-                                <div key={q.entry} style={{ fontSize: '13px', marginBottom: '5px' }}>
-                                    <a onClick={() => onNavigate('quest', q.entry)} style={{ color: '#FFD100', cursor: 'pointer' }}>
-                                        {q.title} [{q.entry}]
-                                    </a>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    <h3 style={{ color: '#FFD100', marginTop: '20px' }}>Requirements</h3>
-                    <div style={{ fontSize: '13px', color: '#ccc' }}>
-                        {detail.requiredRaces > 0 && <div style={{ marginBottom: '5px' }}>Races: {detail.requiredRaces} (Mask)</div>}
-                        {detail.requiredClasses > 0 && <div style={{ marginBottom: '5px' }}>Classes: {detail.requiredClasses} (Mask)</div>}
-                        {detail.srcItemId > 0 && (
-                            <div style={{ marginBottom: '5px' }}>
-                                Item: <a onClick={() => onNavigate('item', detail.srcItemId)} style={{ color: '#FFD100', cursor: 'pointer' }}>[Item {detail.srcItemId}]</a>
+                {/* Side Panel */}
+                <DetailSidePanel className="space-y-6">
+                    {/* Quest Chain */}
+                    <div>
+                        <h3 className="text-wow-gold font-bold mb-3 border-b border-wow-gold/20 pb-1">
+                            Quest Chain
+                        </h3>
+                        {detail.series?.length > 0 ? (
+                            <div className="space-y-1">
+                                {detail.series.map((s, index) => (
+                                    <div key={s.entry} className="flex gap-2 text-[13px]">
+                                        <span className="text-gray-600 w-5 flex-shrink-0 text-right">{index + 1}.</span>
+                                        {s.entry === detail.entry ? (
+                                            <b className="text-white bg-white/5 px-1 rounded">{s.title}</b>
+                                        ) : (
+                                            <a 
+                                                className="text-wow-rare hover:underline cursor-pointer"
+                                                onClick={() => onNavigate('quest', s.entry)}
+                                            >
+                                                {s.title}
+                                            </a>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
+                        ) : (
+                            <div className="text-gray-600 text-sm italic">Standalone quest.</div>
                         )}
                     </div>
 
-                    <h3 style={{ color: '#FFD100', marginTop: '20px' }}>Related</h3>
-                    {detail.starters && detail.starters.length > 0 && (
-                        <div style={{ marginBottom: '15px' }}>
-                            <h4 style={{ color: '#aaa', margin: '0 0 5px 0' }}>Starts:</h4>
-                            {detail.starters.map(s => (
-                                <div key={s.entry} onClick={() => s.type==='npc' && onNavigate('npc', s.entry)} style={{cursor: s.type==='npc'?'pointer':'default', color: s.type==='npc'?'#4a9eff':'#aaa', padding: '2px 0'}}>
-                                    {s.name} ({s.type}) [{s.entry}]
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                     {detail.enders && detail.enders.length > 0 && (
+                    {/* Prerequisites */}
+                    {detail.prevQuests?.length > 0 && (
                         <div>
-                            <h4 style={{ color: '#aaa', margin: '0 0 5px 0' }}>Ends:</h4>
-                           {detail.enders.map(s => (
-                                <div key={s.entry} onClick={() => s.type==='npc' && onNavigate('npc', s.entry)} style={{cursor: s.type==='npc'?'pointer':'default', color: s.type==='npc'?'#4a9eff':'#aaa', padding: '2px 0'}}>
-                                    {s.name} ({s.type}) [{s.entry}]
-                                </div>
-                            ))}
+                            <h3 className="text-wow-gold font-bold mb-3 border-b border-wow-gold/20 pb-1">
+                                Prerequisites
+                            </h3>
+                            <div className="space-y-2">
+                                {detail.prevQuests.map(q => (
+                                    <div key={q.entry} className="text-[13px]">
+                                        <a 
+                                            className="text-wow-rare hover:underline cursor-pointer"
+                                            onClick={() => onNavigate('quest', q.entry)}
+                                        >
+                                            • {q.title}
+                                        </a>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
-                </div>
+
+                    {/* Requirements */}
+                    <div>
+                        <h3 className="text-wow-gold font-bold mb-3 border-b border-wow-gold/20 pb-1">
+                            Requirements
+                        </h3>
+                        <div className="text-[13px] space-y-2 text-gray-300">
+                            {detail.requiredRaces > 0 && (
+                                <div className="flex justify-between border-b border-white/5 pb-1">
+                                    <span>Races:</span>
+                                    <span className="text-white font-mono">{detail.requiredRaces}</span>
+                                </div>
+                            )}
+                            {detail.requiredClasses > 0 && (
+                                <div className="flex justify-between border-b border-white/5 pb-1">
+                                    <span>Classes:</span>
+                                    <span className="text-white font-mono">{detail.requiredClasses}</span>
+                                </div>
+                            )}
+                            {detail.srcItemId > 0 && (
+                                <div className="flex items-center gap-2">
+                                    <span>Starts from:</span>
+                                    <a 
+                                        className="text-wow-gold hover:underline cursor-pointer bg-wow-gold/5 px-2 py-0.5 rounded border border-wow-gold/20"
+                                        onClick={() => onNavigate('item', detail.srcItemId)}
+                                    >
+                                        [Item {detail.srcItemId}]
+                                    </a>
+                                </div>
+                            )}
+                            {!detail.requiredRaces && !detail.requiredClasses && !detail.srcItemId && (
+                                <div className="text-gray-600 italic">None</div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Relations */}
+                    <div>
+                        <h3 className="text-wow-gold font-bold mb-3 border-b border-wow-gold/20 pb-1">
+                            Relations
+                        </h3>
+                        <div className="space-y-4">
+                            {detail.starters?.length > 0 && (
+                                <div>
+                                    <h4 className="text-gray-500 text-xs font-bold uppercase mb-2 tracking-tighter">
+                                        Starts with:
+                                    </h4>
+                                    <div className="space-y-1">
+                                        {detail.starters.map(s => (
+                                            <div 
+                                                key={s.entry}
+                                                onClick={() => s.type === 'npc' && onNavigate('npc', s.entry)}
+                                                className={`text-xs px-2 py-1 rounded border ${
+                                                    s.type === 'npc'
+                                                        ? 'bg-wow-rare/5 border-wow-rare/20 text-wow-rare cursor-pointer hover:bg-wow-rare/10'
+                                                        : 'bg-white/5 border-white/10 text-gray-400'
+                                                }`}
+                                            >
+                                                {s.name} <span className="opacity-50">({s.type})</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {detail.enders?.length > 0 && (
+                                <div>
+                                    <h4 className="text-gray-500 text-xs font-bold uppercase mb-2 tracking-tighter">
+                                        Ends with:
+                                    </h4>
+                                    <div className="space-y-1">
+                                        {detail.enders.map(s => (
+                                            <div 
+                                                key={s.entry}
+                                                onClick={() => s.type === 'npc' && onNavigate('npc', s.entry)}
+                                                className={`text-xs px-2 py-1 rounded border ${
+                                                    s.type === 'npc'
+                                                        ? 'bg-wow-rare/5 border-wow-rare/20 text-wow-rare cursor-pointer hover:bg-wow-rare/10'
+                                                        : 'bg-white/5 border-white/10 text-gray-400'
+                                                }`}
+                                            >
+                                                {s.name} <span className="opacity-50">({s.type})</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </DetailSidePanel>
             </div>
-         </div>
+        </DetailPageLayout>
     )
 }
 

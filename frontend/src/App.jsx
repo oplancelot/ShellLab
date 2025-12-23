@@ -1,68 +1,46 @@
 import { useState } from 'react'
-import './App.css'
 import AtlasLootPage from './components/AtlasLootPage'
-import DatabasePage from '../pages/DatabasePage/DatabasePage'
+import DatabasePage from './pages/DatabasePage/DatabasePage'
 import SearchPage from './components/SearchPage'
+import { TabButton } from './components/ui'
 
 function App() {
     const [activeTab, setActiveTab] = useState('atlas')
 
     return (
-        <div className="app">
-            <header className="header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    <h1>ShellLootLab</h1>
-                    <nav style={{ display: 'flex', gap: '5px' }}>
-                        <button 
+        <div className="h-screen flex flex-col bg-bg-dark text-white">
+            {/* Header */}
+            <header className="bg-gradient-to-b from-[#2a2a3a] to-bg-main border-b-[3px] border-bg-dark px-5 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-5">
+                    <h1 className="text-2xl text-wow-gold font-normal drop-shadow-md flex items-center gap-2.5">
+                        <img src="/shelllab-logo.svg" alt="ShellLab" className="w-8 h-8" />
+                        ShellLab
+                    </h1>
+                    <nav className="flex gap-1">
+                        <TabButton 
+                            active={activeTab === 'atlas'} 
                             onClick={() => setActiveTab('atlas')}
-                            className={activeTab === 'atlas' ? 'active' : ''}
-                            style={{ 
-                                padding: '8px 16px', 
-                                background: activeTab === 'atlas' ? '#404040' : '#2a2a2a',
-                                border: 'none',
-                                color: activeTab === 'atlas' ? '#fff' : '#888',
-                                cursor: 'pointer',
-                                borderRadius: '3px',
-                                fontWeight: 'bold'
-                            }}
                         >
                             AtlasLoot
-                        </button>
-                        <button 
+                        </TabButton>
+                        <TabButton 
+                            active={activeTab === 'database'} 
                             onClick={() => setActiveTab('database')}
-                            className={activeTab === 'database' ? 'active' : ''}
-                            style={{ 
-                                padding: '8px 16px', 
-                                background: activeTab === 'database' ? '#404040' : '#2a2a2a',
-                                border: 'none',
-                                color: activeTab === 'database' ? '#fff' : '#888',
-                                cursor: 'pointer',
-                                borderRadius: '3px',
-                                fontWeight: 'bold'
-                            }}
                         >
                             Database
-                        </button>
-                        <button 
+                        </TabButton>
+                        <TabButton 
+                            active={activeTab === 'search'} 
                             onClick={() => setActiveTab('search')}
-                            className={activeTab === 'search' ? 'active' : ''}
-                            style={{ 
-                                padding: '8px 16px', 
-                                background: activeTab === 'search' ? '#404040' : '#2a2a2a',
-                                border: 'none',
-                                color: activeTab === 'search' ? '#fff' : '#888',
-                                cursor: 'pointer',
-                                borderRadius: '3px',
-                                fontWeight: 'bold'
-                            }}
                         >
                             Search
-                        </button>
+                        </TabButton>
                     </nav>
                 </div>
             </header>
 
-            <main style={{ flex: 1, overflow: 'hidden' }}>
+            {/* Main Content */}
+            <main className="flex-1 overflow-hidden">
                 {activeTab === 'atlas' && <AtlasLootPage />}
                 {activeTab === 'database' && <DatabasePage />}
                 {activeTab === 'search' && <SearchPage />}

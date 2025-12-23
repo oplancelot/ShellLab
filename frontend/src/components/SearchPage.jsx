@@ -1,5 +1,15 @@
 import { useState } from 'react'
 import { AdvancedSearch } from '../../wailsjs/go/main/App'
+import { getQualityColor } from '../utils/wow'
+
+const QUALITIES = [
+    { id: 0, name: 'Poor', color: '#9d9d9d' },
+    { id: 1, name: 'Common', color: '#ffffff' },
+    { id: 2, name: 'Uncommon', color: '#1eff00' },
+    { id: 3, name: 'Rare', color: '#0070dd' },
+    { id: 4, name: 'Epic', color: '#a335ee' },
+    { id: 5, name: 'Legendary', color: '#ff8000' },
+]
 
 function SearchPage({ onItemClick }) {
     const [query, setQuery] = useState('')
@@ -9,15 +19,6 @@ function SearchPage({ onItemClick }) {
     const [results, setResults] = useState([])
     const [loading, setLoading] = useState(false)
     const [totalCount, setTotalCount] = useState(0)
-
-    const qualities = [
-        { id: 0, name: 'Poor', color: '#9d9d9d' },
-        { id: 1, name: 'Common', color: '#ffffff' },
-        { id: 2, name: 'Uncommon', color: '#1eff00' },
-        { id: 3, name: 'Rare', color: '#0070dd' },
-        { id: 4, name: 'Epic', color: '#a335ee' },
-        { id: 5, name: 'Legendary', color: '#ff8000' },
-    ]
 
     const handleSearch = () => {
         setLoading(true)
@@ -52,61 +53,62 @@ function SearchPage({ onItemClick }) {
         }
     }
 
-    const getQualityColor = (quality) => {
-        return qualities.find(q => q.id === quality)?.color || '#ffffff'
-    }
-
     return (
-        <div className="search-page" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div className="search-header" style={{ marginBottom: '20px', padding: '10px', background: '#222', borderRadius: '4px' }}>
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+        <div className="h-full flex flex-col bg-bg-dark p-4">
+            {/* Search Header */}
+            <div className="mb-5 p-4 bg-bg-panel rounded-lg border border-border-dark">
+                {/* Search Input */}
+                <div className="flex gap-3 mb-4">
                     <input 
                         type="text" 
                         value={query} 
                         onChange={e => setQuery(e.target.value)}
                         placeholder="Search items..."
-                        style={{ flex: 1, padding: '8px', fontSize: '16px' }}
+                        className="flex-1 px-4 py-2 bg-bg-main border border-border-dark rounded text-white text-base outline-none focus:border-wow-rare transition-colors"
                         onKeyDown={e => e.key === 'Enter' && handleSearch()}
                     />
-                    <button onClick={handleSearch} style={{ padding: '8px 20px', background: '#0070dd', color: 'white', border: 'none', cursor: 'pointer' }}>
+                    <button 
+                        onClick={handleSearch}
+                        className="px-6 py-2 bg-wow-rare text-white rounded font-bold hover:bg-wow-rare/80 transition-colors"
+                    >
                         Search
                     </button>
                 </div>
                 
-                <div className="filters" style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+                {/* Filters */}
+                <div className="flex gap-5 items-center flex-wrap">
                     {/* Level Range */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <span>Lvl:</span>
+                    <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-400">Level:</span>
                         <input 
                             type="number" 
                             placeholder="Min" 
                             value={minLevel} 
                             onChange={e => setMinLevel(e.target.value)}
-                            style={{ width: '50px', padding: '4px' }}
+                            className="w-14 px-2 py-1 bg-bg-main border border-border-dark rounded text-white text-sm outline-none"
                         />
-                        <span>-</span>
+                        <span className="text-gray-600">-</span>
                         <input 
                             type="number" 
                             placeholder="Max" 
                             value={maxLevel} 
                             onChange={e => setMaxLevel(e.target.value)}
-                            style={{ width: '50px', padding: '4px' }}
+                            className="w-14 px-2 py-1 bg-bg-main border border-border-dark rounded text-white text-sm outline-none"
                         />
                     </div>
 
                     {/* Quality Filter */}
-                    <div style={{ display: 'flex', gap: '5px' }}>
-                        {qualities.map(q => (
+                    <div className="flex gap-1.5">
+                        {QUALITIES.map(q => (
                             <button
                                 key={q.id}
                                 onClick={() => toggleQuality(q.id)}
+                                className="px-2 py-1 text-xs font-bold rounded border transition-all"
                                 style={{
-                                    padding: '4px 8px',
-                                    background: qualityFilter.includes(q.id) ? q.color : '#333',
+                                    background: qualityFilter.includes(q.id) ? q.color : 'transparent',
                                     color: qualityFilter.includes(q.id) ? '#000' : q.color,
-                                    border: `1px solid ${q.color}`,
-                                    cursor: 'pointer',
-                                    opacity: qualityFilter.length === 0 || qualityFilter.includes(q.id) ? 1 : 0.5
+                                    borderColor: q.color,
+                                    opacity: qualityFilter.length === 0 || qualityFilter.includes(q.id) ? 1 : 0.4
                                 }}
                             >
                                 {q.name}
@@ -116,27 +118,26 @@ function SearchPage({ onItemClick }) {
                 </div>
             </div>
 
-            <div className="results-info" style={{ marginBottom: '10px' }}>
-                {loading ? 'Searching...' : `Found ${totalCount} items`}
+            {/* Results Info */}
+            <div className="mb-3 text-sm text-gray-400">
+                {loading ? (
+                    <span className="text-wow-gold animate-pulse">Searching...</span>
+                ) : (
+                    <span>Found <b className="text-white">{totalCount}</b> items</span>
+                )}
             </div>
 
-            <div className="results-grid" style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '8px', alignContent: 'start' }}>
+            {/* Results Grid */}
+            <div className="flex-1 overflow-y-auto grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-2 content-start">
                 {results.map(item => (
                     <div 
                         key={item.entry} 
-                        className="loot-item"
-                        style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            background: '#1a1a1a', 
-                            padding: '5px', 
-                            border: '1px solid #333' 
-                        }}
-                        onMouseEnter={() => onItemClick(item.entry, true)}
-                        onMouseLeave={() => onItemClick(item.entry, false)}
+                        className="flex items-center bg-bg-panel p-2 border border-border-dark rounded hover:bg-bg-hover transition-colors cursor-pointer"
+                        onMouseEnter={() => onItemClick?.(item.entry, true)}
+                        onMouseLeave={() => onItemClick?.(item.entry, false)}
                     >
                         {/* Icon */}
-                        <div style={{ width: '32px', height: '32px', marginRight: '8px', background: '#000' }}>
+                        <div className="w-8 h-8 mr-2 bg-black rounded overflow-hidden flex-shrink-0">
                             {item.iconPath && (
                                 <img 
                                     src={`/items/icons/${item.iconPath}.jpg`}
@@ -147,17 +148,21 @@ function SearchPage({ onItemClick }) {
                                             e.target.style.display = 'none'
                                         }
                                     }}
-                                    style={{ width: '100%', height: '100%' }}
+                                    className="w-full h-full object-cover"
+                                    alt=""
                                 />
                             )}
                         </div>
                         
                         {/* Name */}
-                        <div style={{ flex: 1 }}>
-                            <div style={{ color: getQualityColor(item.quality), fontWeight: 'bold' }}>
+                        <div className="flex-1 min-w-0">
+                            <div 
+                                className="font-bold truncate"
+                                style={{ color: getQualityColor(item.quality) }}
+                            >
                                 {item.name}
                             </div>
-                            <div style={{ fontSize: '0.8em', color: '#888' }}>
+                            <div className="text-xs text-gray-500">
                                 Level {item.itemLevel} {item.requiredLevel > 0 ? `(Req ${item.requiredLevel})` : ''}
                             </div>
                         </div>
