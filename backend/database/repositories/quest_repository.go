@@ -174,10 +174,11 @@ func (r *QuestRepository) GetQuestCategoryGroups() ([]*models.QuestCategoryGroup
 // GetQuestCategoriesByGroup returns all categories in a group with quest counts
 func (r *QuestRepository) GetQuestCategoriesByGroup(groupID int) ([]*models.QuestCategoryEnhanced, error) {
 	rows, err := r.db.Query(`
-		SELECT id, group_id, name, quest_count
-		FROM quest_categories_enhanced 
-		WHERE group_id = ?
-		ORDER BY quest_count DESC, name
+		SELECT qce.id, qce.group_id, qce.name, 
+			COALESCE((SELECT COUNT(*) FROM quests WHERE zone_or_sort = qce.id), 0) as quest_count
+		FROM quest_categories_enhanced qce
+		WHERE qce.group_id = ?
+		ORDER BY quest_count DESC, qce.name
 	`, groupID)
 	if err != nil {
 		return nil, err
