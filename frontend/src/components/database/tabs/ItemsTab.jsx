@@ -50,7 +50,7 @@ function ItemsTab({ tooltipHook }) {
                         setLoading(false)
                     })
             } else {
-                BrowseItemsByClass(selectedClass.class, selectedSubClass.subClass)
+                BrowseItemsByClass(selectedClass.class, selectedSubClass.subClass, '')
                     .then(res => {
                         setItems(res || [])
                         setLoading(false)

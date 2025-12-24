@@ -1,4 +1,63 @@
-export namespace database {
+export namespace main {
+	
+	export class LegacyLootItem {
+	    itemId: number;
+	    itemName: string;
+	    iconName: string;
+	    quality: number;
+	    dropChance?: string;
+	    slotType?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new LegacyLootItem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.itemId = source["itemId"];
+	        this.itemName = source["itemName"];
+	        this.iconName = source["iconName"];
+	        this.quality = source["quality"];
+	        this.dropChance = source["dropChance"];
+	        this.slotType = source["slotType"];
+	    }
+	}
+	export class LegacyBossLoot {
+	    bossName: string;
+	    items: LegacyLootItem[];
+	
+	    static createFrom(source: any = {}) {
+	        return new LegacyBossLoot(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bossName = source["bossName"];
+	        this.items = this.convertValues(source["items"], LegacyLootItem);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
+export namespace models {
 	
 	export class AtlasTable {
 	    key: string;
@@ -288,12 +347,14 @@ export namespace database {
 	    class: number;
 	    subClass: number;
 	    inventoryType: number;
-	    iconPath?: string;
+	    iconPath: string;
 	    sellPrice?: number;
+	    buyPrice?: number;
+	    allowableClass?: number;
+	    allowableRace?: number;
 	    bonding?: number;
 	    maxDurability?: number;
-	    allowableClass: number;
-	    allowableRace: number;
+	    armor?: number;
 	    statType1?: number;
 	    statValue1?: number;
 	    statType2?: number;
@@ -318,7 +379,6 @@ export namespace database {
 	    dmgMin1?: number;
 	    dmgMax1?: number;
 	    dmgType1?: number;
-	    armor?: number;
 	    holyRes?: number;
 	    fireRes?: number;
 	    natureRes?: number;
@@ -351,10 +411,12 @@ export namespace database {
 	        this.inventoryType = source["inventoryType"];
 	        this.iconPath = source["iconPath"];
 	        this.sellPrice = source["sellPrice"];
-	        this.bonding = source["bonding"];
-	        this.maxDurability = source["maxDurability"];
+	        this.buyPrice = source["buyPrice"];
 	        this.allowableClass = source["allowableClass"];
 	        this.allowableRace = source["allowableRace"];
+	        this.bonding = source["bonding"];
+	        this.maxDurability = source["maxDurability"];
+	        this.armor = source["armor"];
 	        this.statType1 = source["statType1"];
 	        this.statValue1 = source["statValue1"];
 	        this.statType2 = source["statType2"];
@@ -379,7 +441,6 @@ export namespace database {
 	        this.dmgMin1 = source["dmgMin1"];
 	        this.dmgMax1 = source["dmgMax1"];
 	        this.dmgType1 = source["dmgType1"];
-	        this.armor = source["armor"];
 	        this.holyRes = source["holyRes"];
 	        this.fireRes = source["fireRes"];
 	        this.natureRes = source["natureRes"];
@@ -494,12 +555,14 @@ export namespace database {
 	    class: number;
 	    subClass: number;
 	    inventoryType: number;
-	    iconPath?: string;
+	    iconPath: string;
 	    sellPrice?: number;
+	    buyPrice?: number;
+	    allowableClass?: number;
+	    allowableRace?: number;
 	    bonding?: number;
 	    maxDurability?: number;
-	    allowableClass: number;
-	    allowableRace: number;
+	    armor?: number;
 	    statType1?: number;
 	    statValue1?: number;
 	    statType2?: number;
@@ -524,7 +587,6 @@ export namespace database {
 	    dmgMin1?: number;
 	    dmgMax1?: number;
 	    dmgType1?: number;
-	    armor?: number;
 	    holyRes?: number;
 	    fireRes?: number;
 	    natureRes?: number;
@@ -542,7 +604,6 @@ export namespace database {
 	    displayId: number;
 	    flags: number;
 	    buyCount: number;
-	    buyPrice: number;
 	    maxCount: number;
 	    stackable: number;
 	    containerSlots: number;
@@ -570,10 +631,12 @@ export namespace database {
 	        this.inventoryType = source["inventoryType"];
 	        this.iconPath = source["iconPath"];
 	        this.sellPrice = source["sellPrice"];
-	        this.bonding = source["bonding"];
-	        this.maxDurability = source["maxDurability"];
+	        this.buyPrice = source["buyPrice"];
 	        this.allowableClass = source["allowableClass"];
 	        this.allowableRace = source["allowableRace"];
+	        this.bonding = source["bonding"];
+	        this.maxDurability = source["maxDurability"];
+	        this.armor = source["armor"];
 	        this.statType1 = source["statType1"];
 	        this.statValue1 = source["statValue1"];
 	        this.statType2 = source["statType2"];
@@ -598,7 +661,6 @@ export namespace database {
 	        this.dmgMin1 = source["dmgMin1"];
 	        this.dmgMax1 = source["dmgMax1"];
 	        this.dmgType1 = source["dmgType1"];
-	        this.armor = source["armor"];
 	        this.holyRes = source["holyRes"];
 	        this.fireRes = source["fireRes"];
 	        this.natureRes = source["natureRes"];
@@ -616,7 +678,6 @@ export namespace database {
 	        this.displayId = source["displayId"];
 	        this.flags = source["flags"];
 	        this.buyCount = source["buyCount"];
-	        this.buyPrice = source["buyPrice"];
 	        this.maxCount = source["maxCount"];
 	        this.stackable = source["stackable"];
 	        this.containerSlots = source["containerSlots"];
@@ -897,20 +958,20 @@ export namespace database {
 	    title: string;
 	    details: string;
 	    objectives: string;
-	    offerRewardText: string;
-	    endText: string;
-	    minLevel: number;
+	    offerRewardText?: string;
+	    endText?: string;
 	    questLevel: number;
+	    minLevel: number;
 	    type: number;
 	    zoneOrSort: number;
-	    requiredRaces: number;
-	    requiredClasses: number;
-	    srcItemId: number;
-	    rewMoney: number;
-	    rewMoneyMaxLevel: number;
-	    rewXp: number;
-	    rewards: QuestItem[];
-	    choiceRewards: QuestItem[];
+	    categoryName: string;
+	    requiredRaces?: number;
+	    requiredClasses?: number;
+	    rewardXp: number;
+	    rewardMoney: number;
+	    rewardSpell?: number;
+	    rewardItems: QuestItem[];
+	    choiceItems: QuestItem[];
 	    reputation: QuestReputation[];
 	    starters: QuestRelation[];
 	    enders: QuestRelation[];
@@ -930,18 +991,18 @@ export namespace database {
 	        this.objectives = source["objectives"];
 	        this.offerRewardText = source["offerRewardText"];
 	        this.endText = source["endText"];
-	        this.minLevel = source["minLevel"];
 	        this.questLevel = source["questLevel"];
+	        this.minLevel = source["minLevel"];
 	        this.type = source["type"];
 	        this.zoneOrSort = source["zoneOrSort"];
+	        this.categoryName = source["categoryName"];
 	        this.requiredRaces = source["requiredRaces"];
 	        this.requiredClasses = source["requiredClasses"];
-	        this.srcItemId = source["srcItemId"];
-	        this.rewMoney = source["rewMoney"];
-	        this.rewMoneyMaxLevel = source["rewMoneyMaxLevel"];
-	        this.rewXp = source["rewXp"];
-	        this.rewards = this.convertValues(source["rewards"], QuestItem);
-	        this.choiceRewards = this.convertValues(source["choiceRewards"], QuestItem);
+	        this.rewardXp = source["rewardXp"];
+	        this.rewardMoney = source["rewardMoney"];
+	        this.rewardSpell = source["rewardSpell"];
+	        this.rewardItems = this.convertValues(source["rewardItems"], QuestItem);
+	        this.choiceItems = this.convertValues(source["choiceItems"], QuestItem);
 	        this.reputation = this.convertValues(source["reputation"], QuestReputation);
 	        this.starters = this.convertValues(source["starters"], QuestRelation);
 	        this.enders = this.convertValues(source["enders"], QuestRelation);
@@ -1094,22 +1155,20 @@ export namespace database {
 	    entry: number;
 	    name: string;
 	    quality: number;
-	    qualityName: string;
-	    itemLevel: number;
-	    requiredLevel: number;
+	    itemLevel?: number;
 	    binding?: string;
-	    slotName?: string;
-	    typeName?: string;
+	    unique?: boolean;
+	    itemType?: string;
+	    slot?: string;
 	    armor?: number;
-	    stats?: string[];
-	    damageText?: string;
-	    speedText?: string;
+	    damageRange?: string;
+	    attackSpeed?: string;
 	    dps?: string;
+	    stats?: string[];
 	    resistances?: string[];
-	    spellEffects?: string[];
-	    description?: string;
-	    sellPrice?: string;
-	    setName?: string;
+	    effects?: string[];
+	    requiredLevel?: number;
+	    sellPrice?: number;
 	    durability?: string;
 	    classes?: string;
 	    races?: string;
@@ -1124,85 +1183,24 @@ export namespace database {
 	        this.entry = source["entry"];
 	        this.name = source["name"];
 	        this.quality = source["quality"];
-	        this.qualityName = source["qualityName"];
 	        this.itemLevel = source["itemLevel"];
-	        this.requiredLevel = source["requiredLevel"];
 	        this.binding = source["binding"];
-	        this.slotName = source["slotName"];
-	        this.typeName = source["typeName"];
+	        this.unique = source["unique"];
+	        this.itemType = source["itemType"];
+	        this.slot = source["slot"];
 	        this.armor = source["armor"];
-	        this.stats = source["stats"];
-	        this.damageText = source["damageText"];
-	        this.speedText = source["speedText"];
+	        this.damageRange = source["damageRange"];
+	        this.attackSpeed = source["attackSpeed"];
 	        this.dps = source["dps"];
+	        this.stats = source["stats"];
 	        this.resistances = source["resistances"];
-	        this.spellEffects = source["spellEffects"];
-	        this.description = source["description"];
+	        this.effects = source["effects"];
+	        this.requiredLevel = source["requiredLevel"];
 	        this.sellPrice = source["sellPrice"];
-	        this.setName = source["setName"];
 	        this.durability = source["durability"];
 	        this.classes = source["classes"];
 	        this.races = source["races"];
 	        this.setInfo = this.convertValues(source["setInfo"], ItemSetInfo);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-
-}
-
-export namespace main {
-	
-	export class LegacyLootItem {
-	    itemId: number;
-	    itemName: string;
-	    iconName: string;
-	    quality: number;
-	    dropChance?: string;
-	    slotType?: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new LegacyLootItem(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.itemId = source["itemId"];
-	        this.itemName = source["itemName"];
-	        this.iconName = source["iconName"];
-	        this.quality = source["quality"];
-	        this.dropChance = source["dropChance"];
-	        this.slotType = source["slotType"];
-	    }
-	}
-	export class LegacyBossLoot {
-	    bossName: string;
-	    items: LegacyLootItem[];
-	
-	    static createFrom(source: any = {}) {
-	        return new LegacyBossLoot(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.bossName = source["bossName"];
-	        this.items = this.convertValues(source["items"], LegacyLootItem);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

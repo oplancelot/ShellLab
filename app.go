@@ -11,9 +11,17 @@ import (
 
 // App struct
 type App struct {
-	ctx           context.Context
-	db            *database.SQLiteDB
+	ctx context.Context
+	db  *database.SQLiteDB
+
+	// Repositories
 	itemRepo      *database.ItemRepository
+	creatureRepo  *database.CreatureRepository
+	questRepo     *database.QuestRepository
+	spellRepo     *database.SpellRepository
+	lootRepo      *database.LootRepository
+	factionRepo   *database.FactionRepository
+	objectRepo    *database.GameObjectRepository
 	categoryRepo  *database.CategoryRepository
 	atlasLootRepo *database.AtlasLootRepository
 
@@ -51,7 +59,15 @@ func (a *App) startup(ctx context.Context) {
 	}
 
 	a.db = db
+
+	// Initialize all repositories
 	a.itemRepo = database.NewItemRepository(db)
+	a.creatureRepo = database.NewCreatureRepository(db)
+	a.questRepo = database.NewQuestRepository(db)
+	a.spellRepo = database.NewSpellRepository(db)
+	a.lootRepo = database.NewLootRepository(db)
+	a.factionRepo = database.NewFactionRepository(db)
+	a.objectRepo = database.NewGameObjectRepository(db)
 	a.categoryRepo = database.NewCategoryRepository(db)
 	a.atlasLootRepo = database.NewAtlasLootRepository(db)
 
@@ -65,57 +81,64 @@ func (a *App) startup(ctx context.Context) {
 	// Build category cache
 	a.buildCategoryCache()
 
-	// Import Items (if table is empty and JSON exists)
-	fmt.Println("Checking for item data...")
-	if err := a.itemRepo.CheckAndImportItems("data"); err != nil {
-		fmt.Printf("ERROR: Failed to import items: %v\n", err)
-	}
+	// Data import using importers
+	dataDir := "data"
 
 	// Import Items
 	fmt.Println("Checking item data...")
-	if err := a.itemRepo.CheckAndImportItems("data"); err != nil {
+	itemImporter := database.NewItemImporter(db)
+	if err := itemImporter.CheckAndImport(dataDir); err != nil {
 		fmt.Printf("ERROR: Failed to import items: %v\n", err)
 	}
 
 	// Import Objects
 	fmt.Println("Checking object data...")
-	if err := a.itemRepo.CheckAndImportObjects("data/objects.json", "data/locks.json"); err != nil {
+	objectImporter := database.NewGameObjectImporter(db)
+	if err := objectImporter.CheckAndImport(dataDir+"/objects.json", dataDir+"/locks.json"); err != nil {
 		fmt.Printf("ERROR: Failed to import objects: %v\n", err)
 	}
 
 	// Import Item Sets
 	fmt.Println("Checking item sets...")
-	if err := a.itemRepo.CheckAndImportItemSets("data"); err != nil {
+	itemSetImporter := database.NewItemSetImporter(db)
+	if err := itemSetImporter.CheckAndImport(dataDir); err != nil {
 		fmt.Printf("ERROR: Failed to import item sets: %v\n", err)
 	}
 
 	// Import Loot
 	fmt.Println("Checking loot data...")
-	a.itemRepo.CheckAndImportLoot("data")
+	lootImporter := database.NewLootImporter(db)
+	lootImporter.CheckAndImport(dataDir)
 
 	// Import Quests
 	fmt.Println("Checking quest data...")
-	a.itemRepo.CheckAndImportQuests("data")
+	questImporter := database.NewQuestImporter(db)
+	questImporter.CheckAndImport(dataDir)
 
 	// Import Creatures
 	fmt.Println("Checking creature data...")
-	a.itemRepo.CheckAndImportCreatures("data")
+	creatureImporter := database.NewCreatureImporter(db)
+	creatureImporter.CheckAndImport(dataDir)
 
 	// Import Factions
 	fmt.Println("Checking faction data...")
-	a.itemRepo.CheckAndImportFactions("data")
+	factionImporter := database.NewFactionImporter(db)
+	factionImporter.CheckAndImport(dataDir)
 
 	// Import Spells
 	fmt.Println("Checking spell data...")
-	a.itemRepo.CheckAndImportSpells("data")
+	spellImporter := database.NewSpellImporter(db)
+	spellImporter.CheckAndImport(dataDir)
 
 	// Import Metadata (Zones, Skills)
 	fmt.Println("Checking metadata...")
-	a.itemRepo.CheckAndImportMetadata("data")
+	metadataImporter := database.NewMetadataImporter(db)
+	metadataImporter.ImportAll(dataDir)
 
 	// Import AtlasLoot Data
 	fmt.Println("Checking AtlasLoot data...")
-	if err := a.itemRepo.CheckAndImportAtlasLoot("data"); err != nil {
+	atlasImporter := database.NewAtlasLootImporter(db)
+	if err := atlasImporter.CheckAndImport(dataDir); err != nil {
 		fmt.Printf("ERROR: Failed to import AtlasLoot: %v\n", err)
 	}
 
@@ -192,22 +215,26 @@ func (a *App) SearchItems(query string) []*database.Item {
 
 // GetItemClasses returns hierarchical item classes
 func (a *App) GetItemClasses() []*database.ItemClass {
+	fmt.Println("[API] GetItemClasses called")
 	classes, err := a.itemRepo.GetItemClasses()
 	if err != nil {
-		fmt.Printf("Error getting classes: %v\n", err)
+		fmt.Printf("[API] Error getting classes: %v\n", err)
 		return []*database.ItemClass{}
 	}
+	fmt.Printf("[API] GetItemClasses returning %d classes\n", len(classes))
 	return classes
 }
 
 // BrowseItemsByClass returns items for a specific class/subclass
 func (a *App) BrowseItemsByClass(class, subClass int, nameFilter string) []*database.Item {
+	fmt.Printf("[API] BrowseItemsByClass called: class=%d, subClass=%d, filter='%s'\n", class, subClass, nameFilter)
 	// No limit - return all matching items
 	items, _, err := a.itemRepo.GetItemsByClass(class, subClass, nameFilter, 999999, 0)
 	if err != nil {
-		fmt.Printf("Error browsing items: %v\n", err)
+		fmt.Printf("[API] Error browsing items: %v\n", err)
 		return []*database.Item{}
 	}
+	fmt.Printf("[API] BrowseItemsByClass returning %d items\n", len(items))
 	return a.enrichItemsWithIcons(items)
 }
 
@@ -266,7 +293,7 @@ func (a *App) GetItemSetDetail(itemSetID int) *database.ItemSetDetail {
 
 // GetCreatureTypes returns all creature types with counts
 func (a *App) GetCreatureTypes() []*database.CreatureType {
-	types, err := a.itemRepo.GetCreatureTypes()
+	types, err := a.creatureRepo.GetCreatureTypes()
 	if err != nil {
 		fmt.Printf("Error getting creature types: %v\n", err)
 		return []*database.CreatureType{}
@@ -277,7 +304,7 @@ func (a *App) GetCreatureTypes() []*database.CreatureType {
 // BrowseCreaturesByType returns creatures filtered by type
 func (a *App) BrowseCreaturesByType(creatureType int, nameFilter string) []*database.Creature {
 	// No limit - return all matching creatures
-	creatures, _, err := a.itemRepo.GetCreaturesByType(creatureType, nameFilter, 999999, 0)
+	creatures, _, err := a.creatureRepo.GetCreaturesByType(creatureType, nameFilter, 999999, 0)
 	if err != nil {
 		fmt.Printf("Error browsing creatures: %v\n", err)
 		return []*database.Creature{}
@@ -287,7 +314,7 @@ func (a *App) BrowseCreaturesByType(creatureType int, nameFilter string) []*data
 
 // SearchCreatures searches for creatures by name
 func (a *App) SearchCreatures(query string) []*database.Creature {
-	creatures, err := a.itemRepo.SearchCreatures(query, 50)
+	creatures, err := a.creatureRepo.SearchCreatures(query, 50)
 	if err != nil {
 		fmt.Printf("Error searching creatures: %v\n", err)
 		return []*database.Creature{}
@@ -297,7 +324,7 @@ func (a *App) SearchCreatures(query string) []*database.Creature {
 
 // GetQuestCategories returns all quest categories (zones and sorts)
 func (a *App) GetQuestCategories() []*database.QuestCategory {
-	cats, err := a.itemRepo.GetQuestCategories()
+	cats, err := a.questRepo.GetQuestCategories()
 	if err != nil {
 		fmt.Printf("Error getting quest categories: %v\n", err)
 		return []*database.QuestCategory{}
@@ -307,7 +334,7 @@ func (a *App) GetQuestCategories() []*database.QuestCategory {
 
 // GetQuestsByCategory returns quests filtered by category
 func (a *App) GetQuestsByCategory(categoryID int) ([]*database.Quest, error) {
-	quests, err := a.itemRepo.GetQuestsByCategory(categoryID)
+	quests, err := a.questRepo.GetQuestsByCategory(categoryID)
 	if err != nil {
 		fmt.Printf("Error browsing quests: %v\n", err)
 		return nil, err
@@ -317,7 +344,7 @@ func (a *App) GetQuestsByCategory(categoryID int) ([]*database.Quest, error) {
 
 // SearchQuests searches for quests by title
 func (a *App) SearchQuests(query string) ([]*database.Quest, error) {
-	quests, err := a.itemRepo.SearchQuests(query)
+	quests, err := a.questRepo.SearchQuests(query)
 	if err != nil {
 		fmt.Printf("Error searching quests: %v\n", err)
 		return nil, err
@@ -327,7 +354,7 @@ func (a *App) SearchQuests(query string) ([]*database.Quest, error) {
 
 // GetObjectTypes returns all object types
 func (a *App) GetObjectTypes() []*database.ObjectType {
-	types, err := a.itemRepo.GetObjectTypes()
+	types, err := a.objectRepo.GetObjectTypes()
 	if err != nil {
 		fmt.Printf("Error getting object types: %v\n", err)
 		return []*database.ObjectType{}
@@ -337,7 +364,7 @@ func (a *App) GetObjectTypes() []*database.ObjectType {
 
 // GetObjectsByType returns objects filtered by type
 func (a *App) GetObjectsByType(typeID int, nameFilter string) []*database.GameObject {
-	objects, err := a.itemRepo.GetObjectsByType(typeID, nameFilter)
+	objects, err := a.objectRepo.GetObjectsByType(typeID, nameFilter)
 	if err != nil {
 		fmt.Printf("Error browsing objects: %v\n", err)
 		return []*database.GameObject{}
@@ -347,7 +374,7 @@ func (a *App) GetObjectsByType(typeID int, nameFilter string) []*database.GameOb
 
 // SearchObjects searches for objects by name
 func (a *App) SearchObjects(query string) []*database.GameObject {
-	objects, err := a.itemRepo.SearchObjects(query)
+	objects, err := a.objectRepo.SearchObjects(query)
 	if err != nil {
 		fmt.Printf("Error searching objects: %v\n", err)
 		return []*database.GameObject{}
@@ -357,7 +384,7 @@ func (a *App) SearchObjects(query string) []*database.GameObject {
 
 // SearchSpells searches for spells by name
 func (a *App) SearchSpells(query string) []*database.Spell {
-	spells, err := a.itemRepo.SearchSpells(query)
+	spells, err := a.spellRepo.SearchSpells(query)
 	if err != nil {
 		fmt.Printf("Error searching spells: %v\n", err)
 		return []*database.Spell{}
@@ -367,7 +394,7 @@ func (a *App) SearchSpells(query string) []*database.Spell {
 
 // GetFactions returns all factions
 func (a *App) GetFactions() []*database.Faction {
-	factions, err := a.itemRepo.GetFactions()
+	factions, err := a.factionRepo.GetFactions()
 	if err != nil {
 		fmt.Printf("Error getting factions: %v\n", err)
 		return []*database.Faction{}
@@ -377,7 +404,7 @@ func (a *App) GetFactions() []*database.Faction {
 
 // GetCreatureLoot returns the loot for a creature
 func (a *App) GetCreatureLoot(entry int) []*database.LootItem {
-	loot, err := a.itemRepo.GetCreatureLoot(entry)
+	loot, err := a.lootRepo.GetCreatureLoot(entry)
 	if err != nil {
 		fmt.Printf("Error getting creature loot: %v\n", err)
 		return []*database.LootItem{}
@@ -395,7 +422,7 @@ type LegacyBossLoot struct {
 
 // GetCreatureDetail returns full details for a creature
 func (a *App) GetCreatureDetail(entry int) (*database.CreatureDetail, error) {
-	c, err := a.itemRepo.GetCreatureDetail(entry)
+	c, err := a.creatureRepo.GetCreatureDetail(entry)
 	if err != nil {
 		fmt.Printf("Error getting creature detail [%d]: %v\n", entry, err)
 		return nil, err
@@ -405,7 +432,7 @@ func (a *App) GetCreatureDetail(entry int) (*database.CreatureDetail, error) {
 
 // GetQuestDetail returns full details for a quest
 func (a *App) GetQuestDetail(entry int) (*database.QuestDetail, error) {
-	q, err := a.itemRepo.GetQuestDetail(entry)
+	q, err := a.questRepo.GetQuestDetail(entry)
 	if err != nil {
 		fmt.Printf("Error getting quest detail [%d]: %v\n", entry, err)
 		return nil, err
@@ -521,7 +548,7 @@ func (a *App) enrichItemIcon(item *database.Item) *database.Item {
 // GetSpellSkillCategories returns spell skill categories (Class Skills, Professions, etc.)
 func (a *App) GetSpellSkillCategories() []*database.SpellSkillCategory {
 	fmt.Println("[API] GetSpellSkillCategories called")
-	cats, err := a.itemRepo.GetSpellSkillCategories()
+	cats, err := a.spellRepo.GetSpellSkillCategories()
 	if err != nil {
 		fmt.Printf("[API] Error: %v\n", err)
 		return []*database.SpellSkillCategory{}
@@ -532,7 +559,7 @@ func (a *App) GetSpellSkillCategories() []*database.SpellSkillCategory {
 // GetSpellSkillsByCategory returns skills for a category
 func (a *App) GetSpellSkillsByCategory(categoryID int) []*database.SpellSkill {
 	fmt.Printf("[API] GetSpellSkillsByCategory called: %d\n", categoryID)
-	skills, err := a.itemRepo.GetSpellSkillsByCategory(categoryID)
+	skills, err := a.spellRepo.GetSpellSkillsByCategory(categoryID)
 	if err != nil {
 		fmt.Printf("[API] Error: %v\n", err)
 		return []*database.SpellSkill{}
@@ -543,7 +570,7 @@ func (a *App) GetSpellSkillsByCategory(categoryID int) []*database.SpellSkill {
 // GetSpellsBySkill returns spells for a skill
 func (a *App) GetSpellsBySkill(skillID int, nameFilter string) []*database.Spell {
 	fmt.Printf("[API] GetSpellsBySkill called: %d\n", skillID)
-	spells, err := a.itemRepo.GetSpellsBySkill(skillID, nameFilter)
+	spells, err := a.spellRepo.GetSpellsBySkill(skillID, nameFilter)
 	if err != nil {
 		fmt.Printf("[API] Error: %v\n", err)
 		return []*database.Spell{}
@@ -556,7 +583,7 @@ func (a *App) GetSpellsBySkill(skillID int, nameFilter string) []*database.Spell
 // GetQuestCategoryGroups returns quest category groups (Zones, Class Quests, etc.)
 func (a *App) GetQuestCategoryGroups() []*database.QuestCategoryGroup {
 	fmt.Println("[API] GetQuestCategoryGroups called")
-	groups, err := a.itemRepo.GetQuestCategoryGroups()
+	groups, err := a.questRepo.GetQuestCategoryGroups()
 	if err != nil {
 		fmt.Printf("[API] Error: %v\n", err)
 		return []*database.QuestCategoryGroup{}
@@ -567,7 +594,7 @@ func (a *App) GetQuestCategoryGroups() []*database.QuestCategoryGroup {
 // GetQuestCategoriesByGroup returns categories for a group
 func (a *App) GetQuestCategoriesByGroup(groupID int) []*database.QuestCategoryEnhanced {
 	fmt.Printf("[API] GetQuestCategoriesByGroup called: %d\n", groupID)
-	cats, err := a.itemRepo.GetQuestCategoriesByGroup(groupID)
+	cats, err := a.questRepo.GetQuestCategoriesByGroup(groupID)
 	if err != nil {
 		fmt.Printf("[API] Error: %v\n", err)
 		return []*database.QuestCategoryEnhanced{}
@@ -578,7 +605,7 @@ func (a *App) GetQuestCategoriesByGroup(groupID int) []*database.QuestCategoryEn
 // GetQuestsByEnhancedCategory returns quests for a category (ZoneOrSort value)
 func (a *App) GetQuestsByEnhancedCategory(categoryID int, nameFilter string) []*database.Quest {
 	fmt.Printf("[API] GetQuestsByEnhancedCategory called: %d\n", categoryID)
-	quests, err := a.itemRepo.GetQuestsByEnhancedCategory(categoryID, nameFilter)
+	quests, err := a.questRepo.GetQuestsByEnhancedCategory(categoryID, nameFilter)
 	if err != nil {
 		fmt.Printf("[API] Error: %v\n", err)
 		return []*database.Quest{}

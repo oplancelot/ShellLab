@@ -1,0 +1,648 @@
+// Package repositories contains database access layer implementations
+package repositories
+
+import (
+	"database/sql"
+	"fmt"
+	"sort"
+	"strings"
+
+	"shelllab/backend/database/helpers"
+	"shelllab/backend/database/models"
+)
+
+// ItemRepository handles item-related database operations
+type ItemRepository struct {
+	db *sql.DB
+}
+
+// NewItemRepository creates a new item repository
+func NewItemRepository(db *sql.DB) *ItemRepository {
+	return &ItemRepository{db: db}
+}
+
+// SearchItems searches for items by name
+func (r *ItemRepository) SearchItems(query string, limit int) ([]*models.Item, error) {
+	rows, err := r.db.Query(`
+		SELECT entry, name, quality, item_level, required_level, 
+			class, subclass, inventory_type, COALESCE(icon_path, '')
+		FROM items
+		WHERE name LIKE ?
+		ORDER BY length(name), name
+		LIMIT ?
+	`, "%"+query+"%", limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []*models.Item
+	for rows.Next() {
+		item := &models.Item{}
+		err := rows.Scan(
+			&item.Entry, &item.Name, &item.Quality, &item.ItemLevel,
+			&item.RequiredLevel, &item.Class, &item.SubClass, &item.InventoryType, &item.IconPath,
+		)
+		if err != nil {
+			continue
+		}
+		items = append(items, item)
+	}
+	return items, nil
+}
+
+// GetItemByID retrieves a single item by ID
+func (r *ItemRepository) GetItemByID(id int) (*models.Item, error) {
+	item := &models.Item{}
+	err := r.db.QueryRow(`
+		SELECT entry, name, description, quality, item_level, required_level,
+			class, subclass, inventory_type, COALESCE(icon_path, ''), sell_price,
+			allowable_class, allowable_race, bonding, max_durability, armor,
+			stat_type1, stat_value1, stat_type2, stat_value2, stat_type3, stat_value3,
+			stat_type4, stat_value4, stat_type5, stat_value5, stat_type6, stat_value6,
+			stat_type7, stat_value7, stat_type8, stat_value8, stat_type9, stat_value9,
+			stat_type10, stat_value10,
+			delay, dmg_min1, dmg_max1, dmg_type1,
+			holy_res, fire_res, nature_res, frost_res, shadow_res, arcane_res,
+			spell_id1, spell_trigger1, spell_id2, spell_trigger2, spell_id3, spell_trigger3,
+			set_id
+		FROM items WHERE entry = ?
+	`, id).Scan(
+		&item.Entry, &item.Name, &item.Description, &item.Quality, &item.ItemLevel, &item.RequiredLevel,
+		&item.Class, &item.SubClass, &item.InventoryType, &item.IconPath, &item.SellPrice,
+		&item.AllowableClass, &item.AllowableRace, &item.Bonding, &item.MaxDurability, &item.Armor,
+		&item.StatType1, &item.StatValue1, &item.StatType2, &item.StatValue2, &item.StatType3, &item.StatValue3,
+		&item.StatType4, &item.StatValue4, &item.StatType5, &item.StatValue5, &item.StatType6, &item.StatValue6,
+		&item.StatType7, &item.StatValue7, &item.StatType8, &item.StatValue8, &item.StatType9, &item.StatValue9,
+		&item.StatType10, &item.StatValue10,
+		&item.Delay, &item.DmgMin1, &item.DmgMax1, &item.DmgType1,
+		&item.HolyRes, &item.FireRes, &item.NatureRes, &item.FrostRes, &item.ShadowRes, &item.ArcaneRes,
+		&item.SpellID1, &item.SpellTrigger1, &item.SpellID2, &item.SpellTrigger2, &item.SpellID3, &item.SpellTrigger3,
+		&item.SetID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
+// GetItemCount returns the total number of items
+func (r *ItemRepository) GetItemCount() (int, error) {
+	var count int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM items").Scan(&count)
+	return count, err
+}
+
+// GetItemClasses returns all item classes with their subclasses and inventory slots
+func (r *ItemRepository) GetItemClasses() ([]*models.ItemClass, error) {
+	rows, err := r.db.Query(`
+		SELECT DISTINCT class, subclass, inventory_type
+		FROM items
+		WHERE class IN (0,1,2,4,6,7,9,11,12,13,15)
+		ORDER BY class, subclass, inventory_type
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	classMap := make(map[int]*models.ItemClass)
+	subclassMap := make(map[string]*models.ItemSubClass)
+
+	for rows.Next() {
+		var class, subclass, invType int
+		if err := rows.Scan(&class, &subclass, &invType); err != nil {
+			continue
+		}
+
+		// Ensure class exists
+		if _, exists := classMap[class]; !exists {
+			classMap[class] = &models.ItemClass{
+				Class:      class,
+				Name:       helpers.GetClassName(class),
+				SubClasses: []*models.ItemSubClass{},
+			}
+		}
+
+		// Ensure subclass exists
+		subKey := fmt.Sprintf("%d-%d", class, subclass)
+		if _, exists := subclassMap[subKey]; !exists {
+			sc := &models.ItemSubClass{
+				Class:          class,
+				SubClass:       subclass,
+				Name:           helpers.GetSubClassName(class, subclass),
+				InventorySlots: []*models.InventorySlot{},
+			}
+			subclassMap[subKey] = sc
+			classMap[class].SubClasses = append(classMap[class].SubClasses, sc)
+		}
+
+		// Add inventory slot if applicable (mainly for armor/weapons)
+		if (class == 2 || class == 4) && invType > 0 {
+			slot := &models.InventorySlot{
+				Class:         class,
+				SubClass:      subclass,
+				InventoryType: invType,
+				Name:          helpers.GetInventoryTypeName(invType),
+			}
+			subclassMap[subKey].InventorySlots = append(subclassMap[subKey].InventorySlots, slot)
+		}
+	}
+
+	// Convert map to slice and sort
+	var classes []*models.ItemClass
+	for _, c := range classMap {
+		classes = append(classes, c)
+	}
+	sort.Slice(classes, func(i, j int) bool {
+		return classes[i].Class < classes[j].Class
+	})
+
+	return classes, nil
+}
+
+// GetItemsByClass returns items filtered by class and subclass
+func (r *ItemRepository) GetItemsByClass(class, subClass int, nameFilter string, limit, offset int) ([]*models.Item, int, error) {
+	whereClause := "WHERE class = ? AND subclass = ?"
+	args := []interface{}{class, subClass}
+
+	if nameFilter != "" {
+		whereClause += " AND name LIKE ?"
+		args = append(args, "%"+nameFilter+"%")
+	}
+
+	// Count
+	var count int
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM items %s", whereClause)
+	err := r.db.QueryRow(countQuery, args...).Scan(&count)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Data
+	dataArgs := append(args, limit, offset)
+	dataQuery := fmt.Sprintf(`
+		SELECT entry, name, quality, item_level, required_level, class, subclass, inventory_type, COALESCE(icon_path, '')
+		FROM items %s
+		ORDER BY quality DESC, item_level DESC
+		LIMIT ? OFFSET ?
+	`, whereClause)
+
+	rows, err := r.db.Query(dataQuery, dataArgs...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var items []*models.Item
+	for rows.Next() {
+		item := &models.Item{}
+		err := rows.Scan(
+			&item.Entry, &item.Name, &item.Quality, &item.ItemLevel,
+			&item.RequiredLevel, &item.Class, &item.SubClass, &item.InventoryType, &item.IconPath,
+		)
+		if err != nil {
+			continue
+		}
+		items = append(items, item)
+	}
+
+	return items, count, nil
+}
+
+// GetItemsByClassAndSlot returns items filtered by class, subclass, and inventory type
+func (r *ItemRepository) GetItemsByClassAndSlot(class, subClass, inventoryType int, nameFilter string, limit, offset int) ([]*models.Item, int, error) {
+	whereClause := "WHERE class = ? AND subclass = ? AND inventory_type = ?"
+	args := []interface{}{class, subClass, inventoryType}
+
+	if nameFilter != "" {
+		whereClause += " AND name LIKE ?"
+		args = append(args, "%"+nameFilter+"%")
+	}
+
+	// Count
+	var count int
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM items %s", whereClause)
+	err := r.db.QueryRow(countQuery, args...).Scan(&count)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Data
+	dataArgs := append(args, limit, offset)
+	dataQuery := fmt.Sprintf(`
+		SELECT entry, name, quality, item_level, required_level, class, subclass, inventory_type, COALESCE(icon_path, '')
+		FROM items %s
+		ORDER BY quality DESC, item_level DESC
+		LIMIT ? OFFSET ?
+	`, whereClause)
+
+	rows, err := r.db.Query(dataQuery, dataArgs...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var items []*models.Item
+	for rows.Next() {
+		item := &models.Item{}
+		err := rows.Scan(
+			&item.Entry, &item.Name, &item.Quality, &item.ItemLevel,
+			&item.RequiredLevel, &item.Class, &item.SubClass, &item.InventoryType, &item.IconPath,
+		)
+		if err != nil {
+			continue
+		}
+		items = append(items, item)
+	}
+
+	return items, count, nil
+}
+
+// AdvancedSearch performs a multi-dimensional search on items
+func (r *ItemRepository) AdvancedSearch(filter models.SearchFilter) (*models.SearchResult, error) {
+	if filter.Limit <= 0 {
+		filter.Limit = 50
+	}
+	if filter.Limit > 200 {
+		filter.Limit = 200
+	}
+
+	var conditions []string
+	var args []interface{}
+
+	// Name filter
+	if filter.Query != "" {
+		conditions = append(conditions, "name LIKE ?")
+		args = append(args, "%"+filter.Query+"%")
+	}
+
+	// Quality filter
+	if len(filter.Quality) > 0 {
+		placeholders := make([]string, len(filter.Quality))
+		for i, q := range filter.Quality {
+			placeholders[i] = "?"
+			args = append(args, q)
+		}
+		conditions = append(conditions, fmt.Sprintf("quality IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	// Class filter
+	if len(filter.Class) > 0 {
+		placeholders := make([]string, len(filter.Class))
+		for i, c := range filter.Class {
+			placeholders[i] = "?"
+			args = append(args, c)
+		}
+		conditions = append(conditions, fmt.Sprintf("class IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	// SubClass filter
+	if len(filter.SubClass) > 0 {
+		placeholders := make([]string, len(filter.SubClass))
+		for i, sc := range filter.SubClass {
+			placeholders[i] = "?"
+			args = append(args, sc)
+		}
+		conditions = append(conditions, fmt.Sprintf("subclass IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	// InventoryType filter
+	if len(filter.InventoryType) > 0 {
+		placeholders := make([]string, len(filter.InventoryType))
+		for i, it := range filter.InventoryType {
+			placeholders[i] = "?"
+			args = append(args, it)
+		}
+		conditions = append(conditions, fmt.Sprintf("inventory_type IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	// Level Range
+	if filter.MinLevel > 0 {
+		conditions = append(conditions, "item_level >= ?")
+		args = append(args, filter.MinLevel)
+	}
+	if filter.MaxLevel > 0 {
+		conditions = append(conditions, "item_level <= ?")
+		args = append(args, filter.MaxLevel)
+	}
+
+	// Required Level Range
+	if filter.MinReqLevel > 0 {
+		conditions = append(conditions, "required_level >= ?")
+		args = append(args, filter.MinReqLevel)
+	}
+	if filter.MaxReqLevel > 0 {
+		conditions = append(conditions, "required_level <= ?")
+		args = append(args, filter.MaxReqLevel)
+	}
+
+	// Build WHERE clause
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = "WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	// Count query
+	countQuery := "SELECT COUNT(*) FROM items " + whereClause
+	var totalCount int
+	err := r.db.QueryRow(countQuery, args...).Scan(&totalCount)
+	if err != nil {
+		return nil, fmt.Errorf("search count error: %w", err)
+	}
+
+	// Data query
+	dataQuery := fmt.Sprintf(`
+		SELECT entry, name, quality, item_level, required_level, class, subclass, inventory_type, COALESCE(icon_path, '')
+		FROM items
+		%s
+		ORDER BY quality DESC, item_level DESC
+		LIMIT ? OFFSET ?
+	`, whereClause)
+
+	// Add limit/offset args
+	args = append(args, filter.Limit, filter.Offset)
+
+	rows, err := r.db.Query(dataQuery, args...)
+	if err != nil {
+		return nil, fmt.Errorf("search data error: %w", err)
+	}
+	defer rows.Close()
+
+	var items []*models.Item
+	for rows.Next() {
+		item := &models.Item{}
+		err := rows.Scan(
+			&item.Entry, &item.Name, &item.Quality, &item.ItemLevel,
+			&item.RequiredLevel, &item.Class, &item.SubClass, &item.InventoryType, &item.IconPath,
+		)
+		if err != nil {
+			continue
+		}
+		items = append(items, item)
+	}
+
+	return &models.SearchResult{
+		Items:      items,
+		TotalCount: totalCount,
+	}, nil
+}
+
+// GetItemSets returns all item sets for browsing
+func (r *ItemRepository) GetItemSets() ([]*models.ItemSetBrowse, error) {
+	rows, err := r.db.Query(`
+		SELECT 
+			itemset_id, name,
+			item1, item2, item3, item4, item5, item6, item7, item8, item9, item10,
+			skill_id, skill_level
+		FROM itemsets
+		ORDER BY name
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var sets []*models.ItemSetBrowse
+	for rows.Next() {
+		set := &models.ItemSetBrowse{}
+		var items [10]int
+		err := rows.Scan(
+			&set.ItemSetID, &set.Name,
+			&items[0], &items[1], &items[2], &items[3], &items[4],
+			&items[5], &items[6], &items[7], &items[8], &items[9],
+			&set.SkillID, &set.SkillLevel,
+		)
+		if err != nil {
+			continue
+		}
+
+		// Filter out zero item IDs
+		for _, itemID := range items {
+			if itemID > 0 {
+				set.ItemIDs = append(set.ItemIDs, itemID)
+			}
+		}
+		set.ItemCount = len(set.ItemIDs)
+
+		sets = append(sets, set)
+	}
+
+	return sets, nil
+}
+
+// GetItemSetDetail returns detailed information about an item set
+func (r *ItemRepository) GetItemSetDetail(itemSetID int) (*models.ItemSetDetail, error) {
+	row := r.db.QueryRow(`
+		SELECT 
+			itemset_id, name,
+			item1, item2, item3, item4, item5, item6, item7, item8, item9, item10,
+			spell1, spell2, spell3, spell4, spell5, spell6, spell7, spell8,
+			bonus1, bonus2, bonus3, bonus4, bonus5, bonus6, bonus7, bonus8
+		FROM itemsets
+		WHERE itemset_id = ?
+	`, itemSetID)
+
+	var name string
+	var items [10]int
+	var spells [8]int
+	var bonuses [8]int
+	var setID int
+
+	err := row.Scan(
+		&setID, &name,
+		&items[0], &items[1], &items[2], &items[3], &items[4],
+		&items[5], &items[6], &items[7], &items[8], &items[9],
+		&spells[0], &spells[1], &spells[2], &spells[3],
+		&spells[4], &spells[5], &spells[6], &spells[7],
+		&bonuses[0], &bonuses[1], &bonuses[2], &bonuses[3],
+		&bonuses[4], &bonuses[5], &bonuses[6], &bonuses[7],
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	detail := &models.ItemSetDetail{
+		ItemSetID: setID,
+		Name:      name,
+	}
+
+	// Get item details for each item in the set
+	for _, itemID := range items {
+		if itemID > 0 {
+			item, err := r.GetItemByID(itemID)
+			if err == nil && item != nil {
+				detail.Items = append(detail.Items, item)
+			}
+		}
+	}
+
+	// Build bonuses list
+	for i := 0; i < 8; i++ {
+		if spells[i] > 0 && bonuses[i] > 0 {
+			detail.Bonuses = append(detail.Bonuses, models.SetBonus{
+				Threshold: bonuses[i],
+				SpellID:   spells[i],
+			})
+		}
+	}
+
+	return detail, nil
+}
+
+// GetTooltipData generates tooltip information for an item
+func (r *ItemRepository) GetTooltipData(itemID int) (*models.TooltipData, error) {
+	item, err := r.GetItemByID(itemID)
+	if err != nil {
+		return nil, err
+	}
+
+	tooltip := &models.TooltipData{
+		Entry:         item.Entry,
+		Name:          item.Name,
+		Quality:       item.Quality,
+		ItemLevel:     item.ItemLevel,
+		RequiredLevel: item.RequiredLevel,
+		SellPrice:     item.SellPrice,
+	}
+
+	// Binding
+	tooltip.Binding = helpers.GetBondingName(item.Bonding)
+
+	// Item Type and Slot
+	tooltip.ItemType = helpers.GetSubClassName(item.Class, item.SubClass)
+	tooltip.Slot = helpers.GetInventoryTypeName(item.InventoryType)
+
+	// Armor
+	if item.Armor > 0 {
+		tooltip.Armor = item.Armor
+	}
+
+	// Weapon damage
+	if item.DmgMin1 > 0 || item.DmgMax1 > 0 {
+		tooltip.DamageRange = fmt.Sprintf("%.0f - %.0f Damage", item.DmgMin1, item.DmgMax1)
+		if item.Delay > 0 {
+			speed := float64(item.Delay) / 1000.0
+			tooltip.AttackSpeed = fmt.Sprintf("Speed %.2f", speed)
+			dps := (item.DmgMin1 + item.DmgMax1) / 2.0 / speed
+			tooltip.DPS = fmt.Sprintf("(%.1f damage per second)", dps)
+		}
+	}
+
+	// Stats
+	statPairs := []struct{ t, v int }{
+		{item.StatType1, item.StatValue1}, {item.StatType2, item.StatValue2},
+		{item.StatType3, item.StatValue3}, {item.StatType4, item.StatValue4},
+		{item.StatType5, item.StatValue5}, {item.StatType6, item.StatValue6},
+		{item.StatType7, item.StatValue7}, {item.StatType8, item.StatValue8},
+		{item.StatType9, item.StatValue9}, {item.StatType10, item.StatValue10},
+	}
+	for _, sp := range statPairs {
+		if sp.t > 0 && sp.v != 0 {
+			tooltip.Stats = append(tooltip.Stats, r.formatStat(sp.t, sp.v))
+		}
+	}
+
+	// Resistances
+	if item.HolyRes > 0 {
+		tooltip.Resistances = append(tooltip.Resistances, fmt.Sprintf("+%d Holy Resistance", item.HolyRes))
+	}
+	if item.FireRes > 0 {
+		tooltip.Resistances = append(tooltip.Resistances, fmt.Sprintf("+%d Fire Resistance", item.FireRes))
+	}
+	if item.NatureRes > 0 {
+		tooltip.Resistances = append(tooltip.Resistances, fmt.Sprintf("+%d Nature Resistance", item.NatureRes))
+	}
+	if item.FrostRes > 0 {
+		tooltip.Resistances = append(tooltip.Resistances, fmt.Sprintf("+%d Frost Resistance", item.FrostRes))
+	}
+	if item.ShadowRes > 0 {
+		tooltip.Resistances = append(tooltip.Resistances, fmt.Sprintf("+%d Shadow Resistance", item.ShadowRes))
+	}
+	if item.ArcaneRes > 0 {
+		tooltip.Resistances = append(tooltip.Resistances, fmt.Sprintf("+%d Arcane Resistance", item.ArcaneRes))
+	}
+
+	// Durability
+	if item.MaxDurability > 0 {
+		tooltip.Durability = fmt.Sprintf("Durability %d / %d", item.MaxDurability, item.MaxDurability)
+	}
+
+	return tooltip, nil
+}
+
+// GetItemDetail returns full item information with drop sources
+func (r *ItemRepository) GetItemDetail(entry int) (*models.ItemDetail, error) {
+	item, err := r.GetItemByID(entry)
+	if err != nil {
+		return nil, err
+	}
+
+	detail := &models.ItemDetail{Item: item}
+
+	// Get dropped by creatures
+	rows, err := r.db.Query(`
+		SELECT c.entry, c.name, c.level_min, c.level_max, cl.chance
+		FROM creature_loot cl
+		JOIN creatures c ON cl.entry = c.loot_id
+		WHERE cl.item = ?
+		ORDER BY cl.chance DESC
+		LIMIT 20
+	`, entry)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			drop := &models.CreatureDrop{}
+			rows.Scan(&drop.Entry, &drop.Name, &drop.LevelMin, &drop.LevelMax, &drop.Chance)
+			detail.DroppedBy = append(detail.DroppedBy, drop)
+		}
+	}
+
+	// Get quest rewards
+	rows2, err := r.db.Query(`
+		SELECT entry, title, quest_level, 0 as is_choice
+		FROM quests
+		WHERE rew_item1 = ? OR rew_item2 = ? OR rew_item3 = ? OR rew_item4 = ?
+		UNION
+		SELECT entry, title, quest_level, 1 as is_choice
+		FROM quests
+		WHERE rew_choice_item1 = ? OR rew_choice_item2 = ? OR rew_choice_item3 = ? 
+		   OR rew_choice_item4 = ? OR rew_choice_item5 = ? OR rew_choice_item6 = ?
+		LIMIT 20
+	`, entry, entry, entry, entry, entry, entry, entry, entry, entry, entry)
+	if err == nil {
+		defer rows2.Close()
+		for rows2.Next() {
+			reward := &models.QuestReward{}
+			var isChoice int
+			rows2.Scan(&reward.Entry, &reward.Title, &reward.Level, &isChoice)
+			reward.IsChoice = isChoice == 1
+			detail.RewardFrom = append(detail.RewardFrom, reward)
+		}
+	}
+
+	return detail, nil
+}
+
+// formatStat returns a formatted stat string
+func (r *ItemRepository) formatStat(statType, value int) string {
+	statNames := map[int]string{
+		0: "Mana", 1: "Health", 3: "Agility", 4: "Strength",
+		5: "Intellect", 6: "Spirit", 7: "Stamina",
+		12: "Defense Rating", 13: "Dodge Rating", 14: "Parry Rating",
+		15: "Shield Block Rating", 16: "Melee Hit Rating", 17: "Ranged Hit Rating",
+		18: "Spell Hit Rating", 19: "Melee Critical Rating", 20: "Ranged Critical Rating",
+		21: "Spell Critical Rating", 35: "Resilience Rating", 36: "Haste Rating",
+		37: "Expertise Rating", 38: "Attack Power", 39: "Ranged Attack Power",
+		41: "Spell Healing", 42: "Spell Damage", 43: "Mana Regeneration",
+		44: "Armor Penetration Rating", 45: "Spell Power",
+	}
+	name := statNames[statType]
+	if name == "" {
+		name = fmt.Sprintf("Unknown Stat %d", statType)
+	}
+	if value > 0 {
+		return fmt.Sprintf("+%d %s", value, name)
+	}
+	return fmt.Sprintf("%d %s", value, name)
+}
