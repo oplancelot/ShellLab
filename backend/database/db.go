@@ -19,16 +19,17 @@ type SQLiteDB struct {
 
 // NewSQLiteDB creates a new SQLite database connection
 func NewSQLiteDB(dbPath string) (*SQLiteDB, error) {
-	db, err := sql.Open("sqlite", dbPath)
+	// Add busy_timeout to prevent lock issues
+	db, err := sql.Open("sqlite", dbPath+"?_busy_timeout=5000")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	// Set connection pool settings
-	db.SetMaxOpenConns(1)
-	db.SetMaxIdleConns(1)
+	// Set connection pool settings - allow multiple concurrent reads
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(5)
 
-	// Enable WAL mode for better performance
+	// Enable WAL mode for better concurrency
 	if _, err := db.Exec("PRAGMA journal_mode=WAL"); err != nil {
 		return nil, fmt.Errorf("failed to set WAL mode: %w", err)
 	}
