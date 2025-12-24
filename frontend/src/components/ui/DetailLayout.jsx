@@ -6,20 +6,9 @@ import { WowButton } from '../ui/Button'
  */
 export const DetailPageLayout = ({ 
     children, 
-    onBack,
     className = '' 
 }) => (
     <div className={`flex-1 overflow-y-auto p-5 bg-bg-dark text-gray-200 ${className}`}>
-        {onBack && (
-            <WowButton 
-                variant="back" 
-                onClick={onBack}
-                className="mb-6 group"
-            >
-                <span className="group-hover:-translate-x-1 transition-transform inline-block mr-2">←</span>
-                Back to List
-            </WowButton>
-        )}
         {children}
     </div>
 )
