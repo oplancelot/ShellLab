@@ -41,9 +41,10 @@ data/shelllab.db-shm
 data/shelllab.db-wal
 
 # Python scripts (may contain database credentials)
-scripts/*.py
+# scripts/*.py
 tmp/
 .env
 data/shelllab_back.db
 data/shelllab.db
 .agent/
+__pycache__/

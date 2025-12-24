@@ -20,7 +20,7 @@ func NewSpellRepository(db *sql.DB) *SpellRepository {
 // SearchSpells searches for spells by name
 func (r *SpellRepository) SearchSpells(query string) ([]*models.Spell, error) {
 	rows, err := r.db.Query(`
-		SELECT entry, name, description
+		SELECT entry, name, description, COALESCE(icon_name, '')
 		FROM spells
 		WHERE name LIKE ?
 		ORDER BY length(name), name
@@ -35,13 +35,15 @@ func (r *SpellRepository) SearchSpells(query string) ([]*models.Spell, error) {
 	for rows.Next() {
 		s := &models.Spell{}
 		var desc *string
-		if err := rows.Scan(&s.Entry, &s.Name, &desc); err != nil {
+		var icon string
+		if err := rows.Scan(&s.Entry, &s.Name, &desc, &icon); err != nil {
 			fmt.Printf("Scan error: %v\n", err)
 			continue
 		}
 		if desc != nil {
 			s.Description = *desc
 		}
+		s.Icon = icon
 		spells = append(spells, s)
 	}
 	return spells, nil
@@ -104,7 +106,7 @@ func (r *SpellRepository) GetSpellsBySkill(skillID int, nameFilter string) ([]*m
 	}
 
 	query := fmt.Sprintf(`
-		SELECT sp.entry, sp.name, sp.description
+		SELECT sp.entry, sp.name, sp.description, COALESCE(sp.icon_name, '')
 		FROM spells sp
 		INNER JOIN spell_skill_spells ss ON ss.spell_id = sp.entry
 		%s
@@ -122,12 +124,14 @@ func (r *SpellRepository) GetSpellsBySkill(skillID int, nameFilter string) ([]*m
 	for rows.Next() {
 		s := &models.Spell{}
 		var desc *string
-		if err := rows.Scan(&s.Entry, &s.Name, &desc); err != nil {
+		var icon string
+		if err := rows.Scan(&s.Entry, &s.Name, &desc, &icon); err != nil {
 			continue
 		}
 		if desc != nil {
 			s.Description = *desc
 		}
+		s.Icon = icon
 		spells = append(spells, s)
 	}
 	return spells, nil
@@ -137,16 +141,18 @@ func (r *SpellRepository) GetSpellsBySkill(skillID int, nameFilter string) ([]*m
 func (r *SpellRepository) GetSpellByID(entry int) (*models.Spell, error) {
 	s := &models.Spell{}
 	var desc *string
+	var icon string
 	err := r.db.QueryRow(`
-		SELECT entry, name, description
+		SELECT entry, name, description, COALESCE(icon_name, '')
 		FROM spells WHERE entry = ?
-	`, entry).Scan(&s.Entry, &s.Name, &desc)
+	`, entry).Scan(&s.Entry, &s.Name, &desc, &icon)
 	if err != nil {
 		return nil, err
 	}
 	if desc != nil {
 		s.Description = *desc
 	}
+	s.Icon = icon
 	return s, nil
 }
 

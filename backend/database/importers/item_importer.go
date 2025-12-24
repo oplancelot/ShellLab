@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strconv"
 
 	"shelllab/backend/database/models"
 )
@@ -21,7 +23,23 @@ func NewItemImporter(db *sql.DB) *ItemImporter {
 }
 
 // ImportFromJSON imports items from JSON into SQLite
-func (i *ItemImporter) ImportFromJSON(jsonPath string) error {
+func (i *ItemImporter) ImportFromJSON(jsonPath, iconsPath string) error {
+	// Load Icon IDs
+	iconMap := make(map[int]string)
+	if iconsPath != "" {
+		if data, err := os.ReadFile(iconsPath); err == nil {
+			var tempMap map[string]string
+			if err := json.Unmarshal(data, &tempMap); err == nil {
+				for k, v := range tempMap {
+					if id, err := strconv.Atoi(k); err == nil {
+						iconMap[id] = v
+					}
+				}
+				fmt.Printf("Loaded %d item icons.\n", len(iconMap))
+			}
+		}
+	}
+
 	file, err := os.Open(jsonPath)
 	if err != nil {
 		return fmt.Errorf("failed to open JSON file: %w", err)
@@ -54,7 +72,8 @@ func (i *ItemImporter) ImportFromJSON(jsonPath string) error {
 			dmg_min2, dmg_max2, dmg_type2,
 			armor, holy_res, fire_res, nature_res, frost_res, shadow_res, arcane_res,
 			spell_id1, spell_trigger1, spell_id2, spell_trigger2,
-			spell_id3, spell_trigger3, set_id
+			spell_id3, spell_trigger3, set_id,
+			icon_path
 		) VALUES (
 			?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
 			?, ?, ?, ?, ?, ?, ?,
@@ -65,7 +84,8 @@ func (i *ItemImporter) ImportFromJSON(jsonPath string) error {
 			?, ?, ?,
 			?, ?, ?, ?, ?, ?, ?,
 			?, ?, ?, ?,
-			?, ?, ?
+			?, ?, ?,
+			?
 		)
 	`)
 	if err != nil {
@@ -79,6 +99,9 @@ func (i *ItemImporter) ImportFromJSON(jsonPath string) error {
 		if err := decoder.Decode(&item); err != nil {
 			continue
 		}
+
+		iconPath := iconMap[item.DisplayID]
+
 		_, err := stmt.Exec(
 			item.Entry, item.Name, item.Description, item.Quality, item.ItemLevel, item.RequiredLevel,
 			item.Class, item.Subclass, item.InventoryType, item.DisplayID,
@@ -94,6 +117,7 @@ func (i *ItemImporter) ImportFromJSON(jsonPath string) error {
 			item.Armor, item.HolyRes, item.FireRes, item.NatureRes, item.FrostRes, item.ShadowRes, item.ArcaneRes,
 			item.SpellID1, item.SpellTrigger1, item.SpellID2, item.SpellTrigger2,
 			item.SpellID3, item.SpellTrigger3, item.ItemSet,
+			iconPath,
 		)
 		if err != nil {
 			continue
@@ -113,10 +137,12 @@ func (i *ItemImporter) CheckAndImport(dataDir string) error {
 		return err
 	}
 	if count == 0 {
-		path := fmt.Sprintf("%s/item_template.json", dataDir)
-		if _, err := os.Stat(path); err == nil {
+		itemPath := filepath.Join(dataDir, "item_template.json")
+		iconPath := filepath.Join(dataDir, "item_icons.json")
+
+		if _, err := os.Stat(itemPath); err == nil {
 			fmt.Println("Items table is empty. Importing from item_template.json...")
-			return i.ImportFromJSON(path)
+			return i.ImportFromJSON(itemPath, iconPath)
 		}
 	}
 	return nil

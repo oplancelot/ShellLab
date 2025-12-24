@@ -6,7 +6,7 @@ type Spell struct {
 	Name        string `json:"name"`
 	SubName     string `json:"subname"` // Rank or subtext
 	Description string `json:"description"`
-	IconID      int    `json:"iconId"`
+	Icon        string `json:"icon"`
 }
 
 // SpellSkillCategory represents a top-level category for spells
@@ -34,4 +34,14 @@ type SpellEntry struct {
 	EffectDieSides1   int    `json:"effectDieSides1"`
 	EffectDieSides2   int    `json:"effectDieSides2"`
 	EffectDieSides3   int    `json:"effectDieSides3"`
+	DurationIndex     int    `json:"durationIndex"`
+	IconName          string `json:"iconName"`
+}
+
+// SpellDurationEntry represents a spell duration record for JSON import
+type SpellDurationEntry struct {
+	ID               int `json:"id"`
+	DurationBase     int `json:"durationBase"`
+	DurationPerLevel int `json:"durationPerLevel"`
+	MaxDuration      int `json:"maxDuration"`
 }

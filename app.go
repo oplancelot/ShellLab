@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"shelllab/backend/database"
+	"shelllab/backend/services"
 )
 
 // App struct
@@ -28,6 +29,9 @@ type App struct {
 	// Cache for category lookups
 	categoryCache      map[int]*database.Category
 	rootCategoryByName map[string]int
+
+	// Services
+	iconService *services.IconService
 }
 
 // NewApp creates a new App application struct
@@ -141,6 +145,10 @@ func (a *App) startup(ctx context.Context) {
 	if err := atlasImporter.CheckAndImport(dataDir); err != nil {
 		fmt.Printf("ERROR: Failed to import AtlasLoot: %v\n", err)
 	}
+
+	// Initialize services
+	a.iconService = services.NewIconService(db)
+	a.iconService.StartDownload()
 
 	fmt.Println("✓ ShellLab ready!")
 }

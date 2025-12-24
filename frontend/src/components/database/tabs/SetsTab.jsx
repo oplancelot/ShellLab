@@ -138,7 +138,7 @@ function SetsTab({ tooltipHook }) {
                                             <span className="bg-wow-uncommon/10 text-wow-uncommon px-2 py-0.5 rounded text-xs font-mono">
                                                 {bonus.threshold}pc
                                             </span>
-                                            <span>Spell ID: {bonus.spellId}</span>
+                                            <span>{bonus.description || `Spell ID: ${bonus.spellId}`}</span>
                                         </div>
                                     ))}
                                 </div>

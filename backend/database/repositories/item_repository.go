@@ -478,14 +478,27 @@ func (r *ItemRepository) GetItemSetDetail(itemSetID int) (*models.ItemSetDetail,
 	}
 
 	// Build bonuses list
+	var setBonuses []models.SetBonus
 	for i := 0; i < 8; i++ {
 		if spells[i] > 0 && bonuses[i] > 0 {
-			detail.Bonuses = append(detail.Bonuses, models.SetBonus{
+			setBonuses = append(setBonuses, models.SetBonus{
 				Threshold: bonuses[i],
 				SpellID:   spells[i],
 			})
 		}
 	}
+
+	// Sort bonuses by threshold (asc)
+	sort.Slice(setBonuses, func(i, j int) bool {
+		return setBonuses[i].Threshold < setBonuses[j].Threshold
+	})
+
+	// Resolve descriptions
+	for i := range setBonuses {
+		setBonuses[i].Description = r.resolveSpellText(setBonuses[i].SpellID)
+	}
+
+	detail.Bonuses = setBonuses
 
 	return detail, nil
 }
@@ -568,7 +581,200 @@ func (r *ItemRepository) GetTooltipData(itemID int) (*models.TooltipData, error)
 		tooltip.Durability = fmt.Sprintf("Durability %d / %d", item.MaxDurability, item.MaxDurability)
 	}
 
+	// Spell Effects
+	spellPairs := []struct{ id, trigger int }{
+		{item.SpellID1, item.SpellTrigger1},
+		{item.SpellID2, item.SpellTrigger2},
+		{item.SpellID3, item.SpellTrigger3},
+	}
+	for _, sp := range spellPairs {
+		if sp.id > 0 {
+			effect := r.formatSpellEffect(sp.id, sp.trigger)
+			if effect != "" {
+				tooltip.Effects = append(tooltip.Effects, effect)
+			}
+		}
+	}
+
+	// Set Info
+	if item.SetID > 0 {
+		var setInfo models.ItemSetInfo
+
+		var setID, skillID, skillLevel int
+		var item1, item2, item3, item4, item5, item6, item7, item8, item9, item10 int
+		var spell1, spell2, spell3, spell4, spell5, spell6, spell7, spell8 int
+		var bonus1, bonus2, bonus3, bonus4, bonus5, bonus6, bonus7, bonus8 int
+
+		err := r.db.QueryRow(`
+			SELECT itemset_id, COALESCE(name, ''),
+				item1, item2, item3, item4, item5, item6, item7, item8, item9, item10,
+				spell1, spell2, spell3, spell4, spell5, spell6, spell7, spell8,
+				bonus1, bonus2, bonus3, bonus4, bonus5, bonus6, bonus7, bonus8,
+				skill_id, skill_level
+			FROM itemsets WHERE itemset_id = ?
+		`, item.SetID).Scan(
+			&setID, &setInfo.Name,
+			&item1, &item2, &item3, &item4, &item5, &item6, &item7, &item8, &item9, &item10,
+			&spell1, &spell2, &spell3, &spell4, &spell5, &spell6, &spell7, &spell8,
+			&bonus1, &bonus2, &bonus3, &bonus4, &bonus5, &bonus6, &bonus7, &bonus8,
+			&skillID, &skillLevel,
+		)
+
+		if err == nil {
+			// Process items
+			itemIDs := []int{item1, item2, item3, item4, item5, item6, item7, item8, item9, item10}
+			for _, id := range itemIDs {
+				if id > 0 {
+					var itemName string
+					r.db.QueryRow("SELECT name FROM items WHERE entry = ?", id).Scan(&itemName)
+					setInfo.Items = append(setInfo.Items, itemName)
+				}
+			}
+
+			// Process bonuses
+			bonuses := []struct{ spell, threshold int }{
+				{spell1, bonus1}, {spell2, bonus2}, {spell3, bonus3}, {spell4, bonus4},
+				{spell5, bonus5}, {spell6, bonus6}, {spell7, bonus7}, {spell8, bonus8},
+			}
+			// Sort bonuses by threshold (asc)
+			sort.Slice(bonuses, func(i, j int) bool {
+				return bonuses[i].threshold < bonuses[j].threshold
+			})
+
+			for _, b := range bonuses {
+				if b.spell > 0 && b.threshold > 0 {
+					description := r.resolveSpellText(b.spell)
+					if description != "" {
+						setInfo.Bonuses = append(setInfo.Bonuses, fmt.Sprintf("(%d) Set: %s", b.threshold, description))
+					}
+				}
+			}
+
+			tooltip.SetInfo = &setInfo
+		}
+	}
+
 	return tooltip, nil
+}
+
+// resolveSpellText fetches and formats spell description with parameters
+func (r *ItemRepository) resolveSpellText(spellID int) string {
+	// Get spell data including effect values and duration index
+	var name, description string
+	var bp1, bp2, bp3, ds1, ds2, ds3 int
+	var durationIndex int
+
+	// Try to query with duration_index, fallback if column doesn't exist yet
+	err := r.db.QueryRow(`
+		SELECT COALESCE(name, ''), COALESCE(description, ''),
+			effect_base_points1, effect_base_points2, effect_base_points3,
+			effect_die_sides1, effect_die_sides2, effect_die_sides3,
+			duration_index
+		FROM spells WHERE entry = ?
+	`, spellID).Scan(&name, &description, &bp1, &bp2, &bp3, &ds1, &ds2, &ds3, &durationIndex)
+
+	if err != nil {
+		// Fallback for old schema (without duration_index)
+		err = r.db.QueryRow(`
+			SELECT COALESCE(name, ''), COALESCE(description, ''),
+				effect_base_points1, effect_base_points2, effect_base_points3,
+				effect_die_sides1, effect_die_sides2, effect_die_sides3
+			FROM spells WHERE entry = ?
+		`, spellID).Scan(&name, &description, &bp1, &bp2, &bp3, &ds1, &ds2, &ds3)
+
+		if err != nil {
+			return ""
+		}
+		durationIndex = 0
+	}
+
+	// Use description if available, otherwise use name
+	text := description
+	if text == "" {
+		text = name
+	}
+	if text == "" {
+		return ""
+	}
+
+	// Calculate actual values (base_points + 1 for typical spells, or base_points + die_sides for ranges)
+	v1 := bp1 + 1
+	v2 := bp2 + 1
+	v3 := bp3 + 1
+	if ds1 > 1 {
+		v1 = bp1 + ds1
+	}
+	if ds2 > 1 {
+		v2 = bp2 + ds2
+	}
+	if ds3 > 1 {
+		v3 = bp3 + ds3
+	}
+
+	// Get Duration
+	var durationText string
+	if durationIndex > 0 {
+		var durationBase int
+		r.db.QueryRow("SELECT duration_base FROM spell_durations WHERE id = ?", durationIndex).Scan(&durationBase)
+		if durationBase > 0 {
+			if durationBase < 0 {
+				durationBase = -durationBase
+			}
+			// Duration is usually in ms
+			seconds := durationBase / 1000
+			if seconds < 60 {
+				durationText = fmt.Sprintf("%d sec", seconds)
+			} else if seconds < 3600 {
+				durationText = fmt.Sprintf("%d min", seconds/60)
+			} else {
+				durationText = fmt.Sprintf("%d hr", seconds/3600)
+			}
+		}
+	}
+	if durationText == "" {
+		durationText = "duration" // fallback
+	}
+
+	// Replace placeholders
+	text = strings.ReplaceAll(text, "$d", durationText)
+	text = strings.ReplaceAll(text, "$s1", fmt.Sprintf("%d", v1))
+	text = strings.ReplaceAll(text, "$s2", fmt.Sprintf("%d", v2))
+	text = strings.ReplaceAll(text, "$s3", fmt.Sprintf("%d", v3))
+	// Also handle ${} format
+	text = strings.ReplaceAll(text, "${s1}", fmt.Sprintf("%d", v1))
+	text = strings.ReplaceAll(text, "${s2}", fmt.Sprintf("%d", v2))
+	text = strings.ReplaceAll(text, "${s3}", fmt.Sprintf("%d", v3))
+
+	return text
+}
+
+// formatSpellEffect returns a formatted spell effect string with trigger prefix
+func (r *ItemRepository) formatSpellEffect(spellID, trigger int) string {
+	text := r.resolveSpellText(spellID)
+	if text == "" {
+		return ""
+	}
+
+	// Format based on trigger type
+	var prefix string
+	switch trigger {
+	case 0: // Use
+		prefix = "Use:"
+	case 1: // On Equip
+		prefix = "Equip:"
+	case 2: // Chance on Hit
+		prefix = "Chance on hit:"
+	case 4: // Soulstone
+		prefix = "Use:"
+	case 5: // Use with no delay
+		prefix = "Use:"
+	case 6: // Learn spell
+		prefix = "Use:"
+	default:
+		prefix = "Equip:"
+	}
+
+	return fmt.Sprintf("%s %s", prefix, text)
 }
 
 // GetItemDetail returns full item information with drop sources

@@ -102,15 +102,6 @@ const ItemTooltip = ({
                 </div>
             )}
             
-            {/* Spell Effects (green) */}
-            {tooltip.spellEffects?.length > 0 && (
-                <div className="flex flex-col gap-0.5 mt-0.5">
-                    {tooltip.spellEffects.map((effect, i) => (
-                        <div key={i} className="text-wow-uncommon leading-tight">{effect}</div>
-                    ))}
-                </div>
-            )}
-            
             {/* Durability */}
             {tooltip.durability && (
                 <div className="text-white leading-tight text-[11px]">{tooltip.durability}</div>
@@ -119,6 +110,15 @@ const ItemTooltip = ({
             {/* Required Level */}
             {tooltip.requiredLevel > 1 && (
                 <div className="text-white leading-tight">Requires Level {tooltip.requiredLevel}</div>
+            )}
+            
+            {/* Spell Effects (green) - WoW style: after stats/durability */}
+            {tooltip.effects?.length > 0 && (
+                <div className="flex flex-col gap-0.5 mt-1">
+                    {tooltip.effects.map((effect, i) => (
+                        <div key={i} className="text-wow-uncommon leading-tight">{effect}</div>
+                    ))}
+                </div>
             )}
             
             {/* Set Info */}
@@ -142,9 +142,20 @@ const ItemTooltip = ({
             )}
             
             {/* Sell Price */}
-            {tooltip.sellPrice && (
+            {tooltip.sellPrice > 0 && (
                 <div className="text-white leading-tight flex items-center gap-1 mt-1 text-[11px]">
-                    <span className="text-gray-500">Sell Price:</span> {tooltip.sellPrice}
+                    <span className="text-gray-500">Sell Price:</span> 
+                    <span className="flex items-center gap-1">
+                        {Math.floor(tooltip.sellPrice / 10000) > 0 && (
+                            <span style={{ color: '#FFD700' }} className="drop-shadow-sm">{Math.floor(tooltip.sellPrice / 10000)}g</span>
+                        )}
+                        {Math.floor((tooltip.sellPrice % 10000) / 100) > 0 && (
+                            <span style={{ color: '#C0C0C0' }} className="drop-shadow-sm">{Math.floor((tooltip.sellPrice % 10000) / 100)}s</span>
+                        )}
+                        {(tooltip.sellPrice % 100) > 0 && (
+                            <span style={{ color: '#B87333' }} className="drop-shadow-sm">{tooltip.sellPrice % 100}c</span>
+                        )}
+                    </span>
                 </div>
             )}
         </div>

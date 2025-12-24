@@ -151,11 +151,28 @@ function SpellsTab() {
                                 className="flex items-center gap-3 p-2 bg-white/[0.02] hover:bg-white/5 border-l-[3px] transition-colors rounded-r"
                                 style={{ borderLeftColor: SPELL_COLOR }}
                             >
-                                <EntityIcon 
-                                    label="SPL"
-                                    color={SPELL_COLOR}
-                                    size="md"
-                                />
+                                {spell.icon ? (
+                                    <div 
+                                        className="w-8 h-8 rounded border flex-shrink-0 bg-black/40 flex items-center justify-center overflow-hidden"
+                                        style={{ borderColor: SPELL_COLOR }}
+                                    >
+                                        <img 
+                                            src={`/items/icons/${spell.icon.toLowerCase()}.jpg`}
+                                            alt=""
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.target.style.display = 'none'
+                                                e.target.parentNode.innerHTML = `<div style="width:100%;height:100%;background-color:${SPELL_COLOR};display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:11px">SPL</div>`
+                                            }}
+                                        />
+                                    </div>
+                                ) : (
+                                    <EntityIcon 
+                                        label="SPL"
+                                        color={SPELL_COLOR}
+                                        size="md"
+                                    />
+                                )}
                                 
                                 <span className="text-gray-600 text-[11px] font-mono min-w-[50px]">
                                     [{spell.entry}]

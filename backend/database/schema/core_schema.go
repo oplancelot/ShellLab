@@ -198,7 +198,17 @@ func CoreSchema() string {
 		effect_base_points3 INTEGER DEFAULT 0,
 		effect_die_sides1 INTEGER DEFAULT 0,
 		effect_die_sides2 INTEGER DEFAULT 0,
-		effect_die_sides3 INTEGER DEFAULT 0
+		effect_die_sides3 INTEGER DEFAULT 0,
+		duration_index INTEGER DEFAULT 0,
+		icon_name TEXT
+	);
+
+	-- Spell Durations
+	CREATE TABLE IF NOT EXISTS spell_durations (
+		id INTEGER PRIMARY KEY,
+		duration_base INTEGER DEFAULT 0,
+		duration_per_level INTEGER DEFAULT 0,
+		max_duration INTEGER DEFAULT 0
 	);
 
 	CREATE INDEX IF NOT EXISTS idx_spells_name ON spells(name);

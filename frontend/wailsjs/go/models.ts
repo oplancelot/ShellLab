@@ -766,6 +766,7 @@ export namespace models {
 	export class SetBonus {
 	    threshold: number;
 	    spellId: number;
+	    description: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new SetBonus(source);
@@ -775,6 +776,7 @@ export namespace models {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.threshold = source["threshold"];
 	        this.spellId = source["spellId"];
+	        this.description = source["description"];
 	    }
 	}
 	export class ItemSetDetail {
@@ -1138,7 +1140,7 @@ export namespace models {
 	    name: string;
 	    subname: string;
 	    description: string;
-	    iconId: number;
+	    icon: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Spell(source);
@@ -1150,7 +1152,7 @@ export namespace models {
 	        this.name = source["name"];
 	        this.subname = source["subname"];
 	        this.description = source["description"];
-	        this.iconId = source["iconId"];
+	        this.icon = source["icon"];
 	    }
 	}
 	export class SpellSkill {

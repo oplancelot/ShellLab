@@ -154,8 +154,9 @@ type ItemDef struct {
 
 // SetBonus represents a set bonus
 type SetBonus struct {
-	Threshold int `json:"threshold"`
-	SpellID   int `json:"spellId"`
+	Threshold   int    `json:"threshold"`
+	SpellID     int    `json:"spellId"`
+	Description string `json:"description"`
 }
 
 // ItemSet represents an item set

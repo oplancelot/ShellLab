@@ -4,12 +4,13 @@ import sys
 
 SCRIPTS = [
     'export_items.py',
+    'export_item_icons.py',
     'export_item_sets.py',
     'export_objects_mysql.py',
     'export_quests.py',
     'export_creatures.py',
     'export_factions.py',
-    'export_spells.py',
+    'export_spells_enhanced.py',
     'export_loot.py',
     'export_metadata.py',
     'extract_atlasloot.py',
