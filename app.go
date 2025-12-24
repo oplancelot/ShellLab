@@ -312,6 +312,33 @@ func (a *App) BrowseCreaturesByType(creatureType int, nameFilter string) []*data
 	return creatures
 }
 
+// CreaturePageResult is the result of paginated creature query
+type CreaturePageResult struct {
+	Creatures []*database.Creature `json:"creatures"`
+	Total     int                  `json:"total"`
+	HasMore   bool                 `json:"hasMore"`
+}
+
+// BrowseCreaturesByTypePaged returns creatures with pagination support
+func (a *App) BrowseCreaturesByTypePaged(creatureType int, nameFilter string, limit, offset int) *CreaturePageResult {
+	if limit <= 0 {
+		limit = 100
+	}
+	if limit > 500 {
+		limit = 500
+	}
+	creatures, total, err := a.creatureRepo.GetCreaturesByType(creatureType, nameFilter, limit, offset)
+	if err != nil {
+		fmt.Printf("Error browsing creatures: %v\n", err)
+		return &CreaturePageResult{Creatures: []*database.Creature{}, Total: 0, HasMore: false}
+	}
+	return &CreaturePageResult{
+		Creatures: creatures,
+		Total:     total,
+		HasMore:   offset+len(creatures) < total,
+	}
+}
+
 // SearchCreatures searches for creatures by name
 func (a *App) SearchCreatures(query string) []*database.Creature {
 	creatures, err := a.creatureRepo.SearchCreatures(query, 50)

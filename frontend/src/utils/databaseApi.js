@@ -38,6 +38,14 @@ export const BrowseCreaturesByType = (creatureType, nameFilter = '') => {
     return Promise.resolve([])
 }
 
+// Paginated version of BrowseCreaturesByType
+export const BrowseCreaturesByTypePaged = (creatureType, nameFilter = '', limit = 100, offset = 0) => {
+    if (window?.go?.main?.App?.BrowseCreaturesByTypePaged) {
+        return window.go.main.App.BrowseCreaturesByTypePaged(creatureType, nameFilter, limit, offset)
+    }
+    return Promise.resolve({ creatures: [], total: 0, hasMore: false })
+}
+
 export const GetCreatureLoot = (entry) => {
     if (window?.go?.main?.App?.GetCreatureLoot) {
         return window.go.main.App.GetCreatureLoot(entry)

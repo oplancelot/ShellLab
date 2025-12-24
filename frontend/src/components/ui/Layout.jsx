@@ -43,10 +43,16 @@ export const ContentPanel = ({ children, className = '' }) => (
 /**
  * Scrollable list container inside panels
  */
-export const ScrollList = ({ children, className = '' }) => (
-    <div className={`flex-1 overflow-y-auto p-1 space-y-px ${className}`}>
+export const ScrollList = React.forwardRef(({ children, className = '', ...props }, ref) => (
+    <div 
+        ref={ref}
+        className={`flex-1 overflow-y-auto p-1 space-y-px ${className}`}
+        {...props}
+    >
         {children}
     </div>
-)
+))
+
+ScrollList.displayName = 'ScrollList'
 
 export default { PageLayout, ContentGrid, SidebarPanel, ContentPanel, ScrollList }

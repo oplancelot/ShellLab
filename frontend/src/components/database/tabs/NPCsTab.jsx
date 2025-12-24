@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { SidebarPanel, ContentPanel, ScrollList, SectionHeader, ListItem, EntityIcon } from '../../ui'
-import { GetCreatureTypes, BrowseCreaturesByType, filterItems } from '../../../utils/databaseApi'
+import { GetCreatureTypes, BrowseCreaturesByTypePaged, filterItems } from '../../../utils/databaseApi'
 
 // NPC rank colors
 const getRankColor = (rank) => {
@@ -9,14 +9,22 @@ const getRankColor = (rank) => {
     return '#1eff00' // Normal - Uncommon green
 }
 
+const PAGE_SIZE = 100
+
 function NPCsTab({ onNavigate, tooltipHook }) {
     const [creatureTypes, setCreatureTypes] = useState([])
     const [selectedCreatureType, setSelectedCreatureType] = useState(null)
     const [creatures, setCreatures] = useState([])
     const [loading, setLoading] = useState(false)
+    const [loadingMore, setLoadingMore] = useState(false)
+    const [total, setTotal] = useState(0)
+    const [hasMore, setHasMore] = useState(false)
+    const [offset, setOffset] = useState(0)
 
     const [typeFilter, setTypeFilter] = useState('')
     const [creatureFilter, setCreatureFilter] = useState('')
+
+    const scrollRef = useRef(null)
 
     // Load creature types on mount
     useEffect(() => {
@@ -32,14 +40,20 @@ function NPCsTab({ onNavigate, tooltipHook }) {
             })
     }, [])
 
-    // Load creatures when a type is selected
+    // Load initial creatures when a type is selected
     useEffect(() => {
         if (selectedCreatureType !== null) {
             setLoading(true)
             setCreatures([])
-            BrowseCreaturesByType(selectedCreatureType.type, '')
+            setOffset(0)
+            setHasMore(false)
+            
+            BrowseCreaturesByTypePaged(selectedCreatureType.type, '', PAGE_SIZE, 0)
                 .then(res => {
-                    setCreatures(res || [])
+                    setCreatures(res.creatures || [])
+                    setTotal(res.total || 0)
+                    setHasMore(res.hasMore || false)
+                    setOffset(PAGE_SIZE)
                     setLoading(false)
                 })
                 .catch(err => {
@@ -48,6 +62,33 @@ function NPCsTab({ onNavigate, tooltipHook }) {
                 })
         }
     }, [selectedCreatureType])
+
+    // Load more creatures function
+    const loadMore = useCallback(() => {
+        if (!hasMore || loadingMore || !selectedCreatureType) return
+        
+        setLoadingMore(true)
+        BrowseCreaturesByTypePaged(selectedCreatureType.type, '', PAGE_SIZE, offset)
+            .then(res => {
+                setCreatures(prev => [...prev, ...(res.creatures || [])])
+                setHasMore(res.hasMore || false)
+                setOffset(prev => prev + PAGE_SIZE)
+                setLoadingMore(false)
+            })
+            .catch(err => {
+                console.error("Failed to load more creatures:", err)
+                setLoadingMore(false)
+            })
+    }, [hasMore, loadingMore, selectedCreatureType, offset])
+
+    // Infinite scroll handler
+    const handleScroll = useCallback((e) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.target
+        // Load more when user scrolls to bottom (with 200px threshold)
+        if (scrollHeight - scrollTop - clientHeight < 200) {
+            loadMore()
+        }
+    }, [loadMore])
 
     const filteredTypes = useMemo(() => filterItems(creatureTypes, typeFilter), [creatureTypes, typeFilter])
     const filteredCreatures = useMemo(() => filterItems(creatures, creatureFilter), [creatures, creatureFilter])
@@ -86,7 +127,10 @@ function NPCsTab({ onNavigate, tooltipHook }) {
             {/* Creatures List (spans remaining columns) */}
             <ContentPanel className="col-span-3">
                 <SectionHeader 
-                    title={selectedCreatureType ? `${selectedCreatureType.name} (${filteredCreatures.length})` : 'Select a Type'}
+                    title={selectedCreatureType 
+                        ? `${selectedCreatureType.name} (${filteredCreatures.length}${total > creatures.length ? ` of ${total}` : ''})` 
+                        : 'Select a Type'
+                    }
                     placeholder="Filter NPCs..."
                     onFilterChange={setCreatureFilter}
                 />
@@ -98,7 +142,11 @@ function NPCsTab({ onNavigate, tooltipHook }) {
                 )}
                 
                 {!loading && creatures.length > 0 && (
-                    <ScrollList className="p-2 space-y-1">
+                    <ScrollList 
+                        ref={scrollRef}
+                        className="p-2 space-y-1"
+                        onScroll={handleScroll}
+                    >
                         {filteredCreatures.map(creature => {
                             const rankColor = getRankColor(creature.rank)
                             const levelText = creature.levelMin === creature.levelMax 
@@ -156,6 +204,20 @@ function NPCsTab({ onNavigate, tooltipHook }) {
                                 </div>
                             )
                         })}
+                        
+                        {/* Loading more indicator */}
+                        {loadingMore && (
+                            <div className="p-4 text-center text-wow-gold italic animate-pulse">
+                                Loading more...
+                            </div>
+                        )}
+                        
+                        {/* Has more indicator */}
+                        {hasMore && !loadingMore && (
+                            <div className="p-2 text-center text-gray-600 text-sm">
+                                Scroll for more ({creatures.length} of {total})
+                            </div>
+                        )}
                     </ScrollList>
                 )}
                 
