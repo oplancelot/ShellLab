@@ -299,7 +299,7 @@ func (r *QuestRepository) GetQuestDetail(entry int) (*models.QuestDetail, error)
 			item := &models.QuestItem{Entry: rewItems[i], Count: rewItemCounts[i]}
 			var name, icon string
 			var quality int
-			r.db.QueryRow("SELECT name, icon_path, quality FROM items WHERE entry = ?", rewItems[i]).Scan(&name, &icon, &quality)
+			r.db.QueryRow("SELECT name, COALESCE(icon_path, ''), quality FROM items WHERE entry = ?", rewItems[i]).Scan(&name, &icon, &quality)
 			item.Name = name
 			item.Icon = icon
 			item.Quality = quality
@@ -313,7 +313,7 @@ func (r *QuestRepository) GetQuestDetail(entry int) (*models.QuestDetail, error)
 			item := &models.QuestItem{Entry: rewChoiceItems[i], Count: rewChoiceItemCounts[i]}
 			var name, icon string
 			var quality int
-			r.db.QueryRow("SELECT name, icon_path, quality FROM items WHERE entry = ?", rewChoiceItems[i]).Scan(&name, &icon, &quality)
+			r.db.QueryRow("SELECT name, COALESCE(icon_path, ''), quality FROM items WHERE entry = ?", rewChoiceItems[i]).Scan(&name, &icon, &quality)
 			item.Name = name
 			item.Icon = icon
 			item.Quality = quality
