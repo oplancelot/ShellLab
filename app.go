@@ -271,11 +271,13 @@ func (a *App) GetTooltipData(itemID int) *database.TooltipData {
 
 // GetItemSets returns all item sets for browsing
 func (a *App) GetItemSets() []*database.ItemSetBrowse {
+	fmt.Println("[API] GetItemSets called")
 	sets, err := a.itemRepo.GetItemSets()
 	if err != nil {
-		fmt.Printf("Error getting item sets: %v\n", err)
+		fmt.Printf("[API] Error getting item sets: %v\n", err)
 		return []*database.ItemSetBrowse{}
 	}
+	fmt.Printf("[API] GetItemSets returning %d sets\n", len(sets))
 	return sets
 }
 
@@ -293,20 +295,23 @@ func (a *App) GetItemSetDetail(itemSetID int) *database.ItemSetDetail {
 
 // GetCreatureTypes returns all creature types with counts
 func (a *App) GetCreatureTypes() []*database.CreatureType {
+	fmt.Println("[API] GetCreatureTypes called")
 	types, err := a.creatureRepo.GetCreatureTypes()
 	if err != nil {
-		fmt.Printf("Error getting creature types: %v\n", err)
+		fmt.Printf("[API] Error getting creature types: %v\n", err)
 		return []*database.CreatureType{}
 	}
+	fmt.Printf("[API] GetCreatureTypes returning %d types\n", len(types))
 	return types
 }
 
 // BrowseCreaturesByType returns creatures filtered by type
 func (a *App) BrowseCreaturesByType(creatureType int, nameFilter string) []*database.Creature {
+	fmt.Printf("[API] BrowseCreaturesByType called: type=%d, filter='%s'\n", creatureType, nameFilter)
 	// No limit - return all matching creatures
 	creatures, _, err := a.creatureRepo.GetCreaturesByType(creatureType, nameFilter, 999999, 0)
 	if err != nil {
-		fmt.Printf("Error browsing creatures: %v\n", err)
+		fmt.Printf("[API] Error browsing creatures: %v\n", err)
 		return []*database.Creature{}
 	}
 	return creatures
@@ -321,6 +326,7 @@ type CreaturePageResult struct {
 
 // BrowseCreaturesByTypePaged returns creatures with pagination support
 func (a *App) BrowseCreaturesByTypePaged(creatureType int, nameFilter string, limit, offset int) *CreaturePageResult {
+	fmt.Printf("[API] BrowseCreaturesByTypePaged called: type=%d, limit=%d, offset=%d\n", creatureType, limit, offset)
 	if limit <= 0 {
 		limit = 100
 	}
@@ -329,7 +335,7 @@ func (a *App) BrowseCreaturesByTypePaged(creatureType int, nameFilter string, li
 	}
 	creatures, total, err := a.creatureRepo.GetCreaturesByType(creatureType, nameFilter, limit, offset)
 	if err != nil {
-		fmt.Printf("Error browsing creatures: %v\n", err)
+		fmt.Printf("[API] Error browsing creatures: %v\n", err)
 		return &CreaturePageResult{Creatures: []*database.Creature{}, Total: 0, HasMore: false}
 	}
 	return &CreaturePageResult{
@@ -381,21 +387,25 @@ func (a *App) SearchQuests(query string) ([]*database.Quest, error) {
 
 // GetObjectTypes returns all object types
 func (a *App) GetObjectTypes() []*database.ObjectType {
+	fmt.Println("[API] GetObjectTypes called")
 	types, err := a.objectRepo.GetObjectTypes()
 	if err != nil {
-		fmt.Printf("Error getting object types: %v\n", err)
+		fmt.Printf("[API] Error getting object types: %v\n", err)
 		return []*database.ObjectType{}
 	}
+	fmt.Printf("[API] GetObjectTypes returning %d types\n", len(types))
 	return types
 }
 
 // GetObjectsByType returns objects filtered by type
 func (a *App) GetObjectsByType(typeID int, nameFilter string) []*database.GameObject {
+	fmt.Printf("[API] GetObjectsByType called: type=%d, filter='%s'\n", typeID, nameFilter)
 	objects, err := a.objectRepo.GetObjectsByType(typeID, nameFilter)
 	if err != nil {
-		fmt.Printf("Error browsing objects: %v\n", err)
+		fmt.Printf("[API] Error browsing objects: %v\n", err)
 		return []*database.GameObject{}
 	}
+	fmt.Printf("[API] GetObjectsByType returning %d objects\n", len(objects))
 	return objects
 }
 
@@ -421,11 +431,13 @@ func (a *App) SearchSpells(query string) []*database.Spell {
 
 // GetFactions returns all factions
 func (a *App) GetFactions() []*database.Faction {
+	fmt.Println("[API] GetFactions called")
 	factions, err := a.factionRepo.GetFactions()
 	if err != nil {
-		fmt.Printf("Error getting factions: %v\n", err)
+		fmt.Printf("[API] Error getting factions: %v\n", err)
 		return []*database.Faction{}
 	}
+	fmt.Printf("[API] GetFactions returning %d factions\n", len(factions))
 	return factions
 }
 
