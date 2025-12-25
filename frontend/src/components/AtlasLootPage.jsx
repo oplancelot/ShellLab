@@ -16,7 +16,7 @@ import {
   LootItem,
   ItemTooltip,
 } from "./ui";
-import { ItemDetailView } from "./database/detailview";
+import { ItemDetailView, QuestDetailView, NPCDetailView } from "./database/detailview";
 import { filterItems } from "../utils/databaseApi";
 import { GRID_LAYOUT } from "./common/layout";
 import { getQualityColor } from "../utils/wow";
@@ -387,6 +387,40 @@ function AtlasLootPage() {
                   handleItemEnter,
                   getTooltipStyle,
                   renderTooltip: () => null, // This is the specific change for tooltipHook
+                }}
+              />
+            )}
+            {currentDetail.type === 'quest' && (
+              <QuestDetailView 
+                entry={currentDetail.entry} 
+                onNavigate={navigateTo}
+                onBack={goBack}
+                tooltipHook={{
+                  hoveredItem,
+                  setHoveredItem,
+                  tooltipCache,
+                  loadTooltipData,
+                  handleMouseMove,
+                  handleItemEnter,
+                  getTooltipStyle,
+                  renderTooltip: () => null,
+                }}
+              />
+            )}
+            {currentDetail.type === 'npc' && (
+              <NPCDetailView 
+                entry={currentDetail.entry} 
+                onNavigate={navigateTo}
+                onBack={goBack}
+                tooltipHook={{
+                  hoveredItem,
+                  setHoveredItem,
+                  tooltipCache,
+                  loadTooltipData,
+                  handleMouseMove,
+                  handleItemEnter,
+                  getTooltipStyle,
+                  renderTooltip: () => null,
                 }}
               />
             )}
