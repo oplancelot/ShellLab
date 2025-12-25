@@ -1015,7 +1015,7 @@ export namespace models {
 	export class QuestItem {
 	    entry: number;
 	    name: string;
-	    icon: string;
+	    iconPath: string;
 	    count: number;
 	    quality: number;
 	
@@ -1027,7 +1027,7 @@ export namespace models {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.entry = source["entry"];
 	        this.name = source["name"];
-	        this.icon = source["icon"];
+	        this.iconPath = source["iconPath"];
 	        this.count = source["count"];
 	        this.quality = source["quality"];
 	    }

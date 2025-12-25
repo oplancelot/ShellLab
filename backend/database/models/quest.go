@@ -65,7 +65,7 @@ type QuestSeriesItem struct {
 type QuestItem struct {
 	Entry   int    `json:"entry"`
 	Name    string `json:"name"`
-	Icon    string `json:"icon"`
+	Icon    string `json:"iconPath"` // Frontend expects iconPath
 	Count   int    `json:"count"`
 	Quality int    `json:"quality"`
 }

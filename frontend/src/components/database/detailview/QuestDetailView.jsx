@@ -82,38 +82,38 @@ const QuestDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
                     {/* Rewards */}
                     <DetailSection title="Rewards">
                         <div className="space-y-4">
-                            {detail.rewMoney > 0 && (
+                            {detail.rewardMoney > 0 && (
                                 <div className="flex items-center gap-2 text-wow-gold bg-wow-gold/5 px-3 py-1.5 rounded border border-wow-gold/10 w-fit">
                                     <span className="text-xs uppercase font-bold text-gray-500">Money:</span>
-                                    <span>{Math.floor(detail.rewMoney/10000)}g {Math.floor((detail.rewMoney%10000)/100)}s</span>
+                                    <span>{Math.floor(detail.rewardMoney/10000)}g {Math.floor((detail.rewardMoney%10000)/100)}s</span>
                                 </div>
                             )}
-                            {detail.rewXp > 0 && (
+                            {detail.rewardXp > 0 && (
                                 <div className="flex items-center gap-2 text-wow-rare bg-wow-rare/5 px-3 py-1.5 rounded border border-wow-rare/10 w-fit">
                                     <span className="text-xs uppercase font-bold text-gray-500">Experience:</span>
-                                    <span>{detail.rewXp} XP</span>
+                                    <span>{detail.rewardXp} XP</span>
                                 </div>
                             )}
                         </div>
                         
-                        {detail.rewards?.length > 0 && (
+                        {detail.rewardItems?.length > 0 && (
                             <div className="mt-6">
                                 <h4 className="text-gray-400 text-sm font-semibold mb-3 uppercase tracking-wider">
                                     You will receive:
                                 </h4>
                                 <LootGrid>
-                                    {detail.rewards.map(i => renderRewardItem(i))}
+                                    {detail.rewardItems.map(i => renderRewardItem(i))}
                                 </LootGrid>
                             </div>
                         )}
                         
-                        {detail.choiceRewards?.length > 0 && (
+                        {detail.choiceItems?.length > 0 && (
                             <div className="mt-6">
                                 <h4 className="text-gray-400 text-sm font-semibold mb-3 uppercase tracking-wider">
                                     Choose one of:
                                 </h4>
                                 <LootGrid>
-                                    {detail.choiceRewards.map(i => renderRewardItem(i))}
+                                    {detail.choiceItems.map(i => renderRewardItem(i))}
                                 </LootGrid>
                             </div>
                         )}
