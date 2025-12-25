@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { GetItemDetail } from '../../../services/api'
+import { FixSingleItemIcon } from '../../../../wailsjs/go/main/App'
 import { getQualityColor } from '../../../utils/wow'
 import { 
     DetailPageLayout, 
@@ -14,9 +15,12 @@ const ItemDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
     const { tooltipCache, loadTooltipData } = tooltipHook
     const [detail, setDetail] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [imgError, setImgError] = useState(false)
+    const [fixing, setFixing] = useState(false)
 
     useEffect(() => {
         setLoading(true)
+        setImgError(false) // Reset error state
         GetItemDetail(entry).then(res => {
             setDetail(res)
             setLoading(false)
@@ -28,6 +32,47 @@ const ItemDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
             loadTooltipData(entry)
         }
     }, [entry, tooltipCache, loadTooltipData])
+
+    const handleFixIcon = async () => {
+        setFixing(true)
+        try {
+            const result = await FixSingleItemIcon(entry)
+            if (result.fixed > 0) {
+                // Success - reload item detail without page refresh
+                setImgError(false)
+                setFixing(false)
+                
+                // Reload detail data
+                const updatedDetail = await GetItemDetail(entry)
+                setDetail(updatedDetail)
+                
+                // Reload tooltip
+                if (loadTooltipData) {
+                    loadTooltipData(entry)
+                }
+                // Success - no alert needed, icon will appear automatically
+            } else {
+                // Auto-fetch failed
+                alert(
+                    `Auto-fetch failed: ${result.message}\n\n` +
+                    `This item's icon data could not be automatically retrieved.\n` +
+                    `Visit https://database.turtlecraft.gg/?item=${entry} to check if the item exists.`
+                )
+            }
+        } catch (error) {
+            alert(`Error: ${error}`)
+        } finally {
+            setFixing(false)
+        }
+    }
+
+    const handleImgError = (e) => {
+        if (!e.target.src.includes('zamimg.com')) {
+            e.target.src = `https://wow.zamimg.com/images/wow/icons/medium/${detail.iconPath.toLowerCase()}.jpg`
+        } else {
+            setImgError(true)
+        }
+    }
 
     const renderTooltipBlock = () => {
         if (!detail) return null
@@ -58,20 +103,24 @@ const ItemDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
         <DetailPageLayout onBack={onBack}>
             <DetailHeader
                 icon={
-                    detail.iconPath ? (
+                    !detail.iconPath || imgError ? (
+                        <button
+                            onClick={handleFixIcon}
+                            disabled={fixing}
+                            className="w-full h-full flex flex-col items-center justify-center bg-red-900/30 hover:bg-red-800/50 text-red-400 transition-colors gap-1"
+                            title={!detail.iconPath ? "No icon data - Click to fetch" : "Icon failed to load - Click to fix"}
+                        >
+                            <span className="text-2xl">{fixing ? '⏳' : '🔧'}</span>
+                            <span className="text-[10px]">{fixing ? 'Fixing...' : 'Fix Icon'}</span>
+                        </button>
+                    ) : (
                         <img 
                             src={`/items/icons/${detail.iconPath.toLowerCase()}.jpg`} 
                             className="w-full h-full object-cover" 
                             alt="" 
-                            onError={(e) => {
-                                if (!e.target.src.includes('zamimg.com')) {
-                                    e.target.src = `https://wow.zamimg.com/images/wow/icons/medium/${detail.iconPath.toLowerCase()}.jpg`
-                                } else {
-                                    e.target.style.display = 'none'
-                                }
-                            }}
+                            onError={handleImgError}
                         />
-                    ) : '?'
+                    )
                 }
                 iconBorderColor={qualityColor}
                 title={detail.name}
