@@ -32,6 +32,8 @@ function DatabasePage() {
     // Detail View Logic
     const navigateTo = (type, entry) => {
         console.log(`[DatabasePage] Navigating to ${type} with entry: ${entry}`);
+        // Clear tooltip before navigation to prevent it from persisting
+        tooltipHook.setHoveredItem(null)
         setDetailStack(prev => [...prev, { type, entry }])
     }
     const goBack = () => {
