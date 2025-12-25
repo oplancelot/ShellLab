@@ -757,10 +757,17 @@ func (r *ItemRepository) resolveSpellText(spellID int) string {
 	text = strings.ReplaceAll(text, "$s1", fmt.Sprintf("%d", v1))
 	text = strings.ReplaceAll(text, "$s2", fmt.Sprintf("%d", v2))
 	text = strings.ReplaceAll(text, "$s3", fmt.Sprintf("%d", v3))
+	// Over-time effects (damage/healing over duration)
+	text = strings.ReplaceAll(text, "$o1", fmt.Sprintf("%d", v1))
+	text = strings.ReplaceAll(text, "$o2", fmt.Sprintf("%d", v2))
+	text = strings.ReplaceAll(text, "$o3", fmt.Sprintf("%d", v3))
 	// Also handle ${} format
 	text = strings.ReplaceAll(text, "${s1}", fmt.Sprintf("%d", v1))
 	text = strings.ReplaceAll(text, "${s2}", fmt.Sprintf("%d", v2))
 	text = strings.ReplaceAll(text, "${s3}", fmt.Sprintf("%d", v3))
+	text = strings.ReplaceAll(text, "${o1}", fmt.Sprintf("%d", v1))
+	text = strings.ReplaceAll(text, "${o2}", fmt.Sprintf("%d", v2))
+	text = strings.ReplaceAll(text, "${o3}", fmt.Sprintf("%d", v3))
 
 	return text
 }
