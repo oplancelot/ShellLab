@@ -29,9 +29,6 @@ type App struct {
 	// Cache for category lookups
 	categoryCache      map[int]*database.Category
 	rootCategoryByName map[string]int
-
-	// Services
-	iconService *services.IconService
 }
 
 // NewApp creates a new App application struct
@@ -129,20 +126,8 @@ func (a *App) startup(ctx context.Context) {
 	genImporter := database.NewGeneratedImporter(db)
 	a.importFullTables(genImporter, dataDir)
 
-	// Initialize services
-	a.iconService = services.NewIconService(db)
-	a.iconService.StartDownload()
-
-	// Fix missing icons (limit to 50 per startup to avoid delays)
-	fmt.Println("Checking for missing item icons...")
-	iconFixService := services.NewIconFixService(db.DB(), filepath.Join("frontend", "public", "items", "icons"))
-	successCount, downloadCount, err := iconFixService.FixMissingIcons(50)
-	if err != nil {
-		fmt.Printf("  Warning: Icon fix encountered errors: %v\n", err)
-	}
-	if successCount > 0 {
-		fmt.Printf("  ✓ Fixed %d icons, downloaded %d images\n", successCount, downloadCount)
-	}
+	// Icon downloading is now on-demand via fix button
+	// No need to auto-download on startup
 
 	fmt.Println("✓ ShellLab ready!")
 }
@@ -702,4 +687,121 @@ func (a *App) GetQuestsByEnhancedCategory(categoryID int, nameFilter string) []*
 		return []*database.Quest{}
 	}
 	return quests
+}
+
+// ============================================================================
+// Icon Fix APIs
+// ============================================================================
+
+// FixMissingIconsResult holds the result of icon fixing operation
+type FixMissingIconsResult struct {
+	TotalMissing int    `json:"totalMissing"`
+	Fixed        int    `json:"fixed"`
+	Failed       int    `json:"failed"`
+	Message      string `json:"message"`
+}
+
+// FixSingleItemIcon fixes icon for a single item
+func (a *App) FixSingleItemIcon(itemID int) *FixMissingIconsResult {
+	fmt.Printf("[API] FixSingleItemIcon called for item %d\n", itemID)
+
+	iconFixService := services.NewIconFixService(a.db.DB(), filepath.Join("frontend", "public", "items", "icons"))
+
+	success, iconName, err := iconFixService.FixSingleItem(a.db.DB(), itemID)
+	if err != nil {
+		return &FixMissingIconsResult{
+			TotalMissing: 1,
+			Fixed:        0,
+			Failed:       1,
+			Message:      err.Error(),
+		}
+	}
+
+	if success {
+		fmt.Printf("[API] Successfully fixed icon for item %d: %s\n", itemID, iconName)
+		return &FixMissingIconsResult{
+			TotalMissing: 1,
+			Fixed:        1,
+			Failed:       0,
+			Message:      fmt.Sprintf("Successfully updated icon to: %s", iconName),
+		}
+	}
+
+	return &FixMissingIconsResult{
+		TotalMissing: 1,
+		Fixed:        0,
+		Failed:       1,
+		Message:      "Unknown error",
+	}
+}
+
+// FixMissingIcons manually triggers the icon fix process
+func (a *App) FixMissingIcons(iconType string, maxItems int) *FixMissingIconsResult {
+	fmt.Printf("[API] FixMissingIcons called with type=%s, maxItems=%d\n", iconType, maxItems)
+
+	iconFixService := services.NewIconFixService(a.db.DB(), filepath.Join("frontend", "public", "items", "icons"))
+
+	var allMissing []services.MissingIconItem
+	var err error
+
+	if iconType == "spell" {
+		allMissing, err = iconFixService.GetMissingSpellIcons()
+	} else {
+		allMissing, err = iconFixService.GetMissingIcons()
+	}
+
+	if err != nil {
+		return &FixMissingIconsResult{
+			Message: fmt.Sprintf("Error: %v", err),
+		}
+	}
+
+	totalMissing := len(allMissing)
+	if totalMissing == 0 {
+		return &FixMissingIconsResult{
+			TotalMissing: 0,
+			Fixed:        0,
+			Failed:       0,
+			Message:      fmt.Sprintf("All %s icons are already fixed!", iconType),
+		}
+	}
+
+	itemsToFix := allMissing
+	if maxItems > 0 && maxItems < totalMissing {
+		itemsToFix = allMissing[:maxItems]
+	}
+
+	successCount := 0
+	failedCount := 0
+
+	fmt.Printf("Fixing %d %s icons...\n", len(itemsToFix), iconType)
+
+	for _, item := range itemsToFix {
+		var success bool
+		var iconName string
+
+		if iconType == "spell" {
+			success, iconName, err = iconFixService.FixSingleSpell(a.db.DB(), item.Entry)
+		} else {
+			success, iconName, err = iconFixService.FixSingleItem(a.db.DB(), item.Entry)
+		}
+
+		if err != nil || !success {
+			failedCount++
+			fmt.Printf("  Failed %s %d: %v\n", iconType, item.Entry, err)
+		} else {
+			successCount++
+			fmt.Printf("  Fixed %s %d: %s\n", iconType, item.Entry, iconName)
+		}
+	}
+
+	result := &FixMissingIconsResult{
+		TotalMissing: totalMissing,
+		Fixed:        successCount,
+		Failed:       failedCount,
+		Message:      fmt.Sprintf("Fixed %d %s icons, %d failed, %d remaining", successCount, iconType, failedCount, totalMissing-successCount),
+	}
+
+	fmt.Printf("[API] FixMissingIcons result: %+v\n", result)
+	return result
 }
