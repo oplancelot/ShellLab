@@ -327,22 +327,23 @@
 
 ### SQLite 表结构定义
 
-以下是 ShellLab 本地 SQLite (`data/shelllab.db`) 的主要表结构。
+以下是 ShellLab 本地 SQLite (`data/shelllab.db`) 的主要表结构。请注意，大多数核心表现在遵循与 MySQL `_template` 表的 1:1 映射。
 
-#### 1. Objects (游戏对象)
+#### 1. Objects (`gameobject_template`)
 
 ```sql
-CREATE TABLE objects (
+CREATE TABLE gameobject_template (
     entry INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    type INTEGER NOT NULL,
-    display_id INTEGER,
+    type INTEGER,
+    displayId INTEGER,
+    name TEXT,
     size REAL,
-    data0-7 INTEGER  -- 包含锁ID等关键数据
+    data0-23 INTEGER -- 包含锁ID等关键数据
+    -- ... 以及其他匹配 MySQL 结构的字段
 );
 ```
 
-#### 2. Locks (锁数据)
+#### 2. Locks (`locks`)
 
 用于推导 Objects 的特殊分类（如草药、矿脉）。
 
@@ -355,33 +356,33 @@ CREATE TABLE locks (
 );
 ```
 
-#### 3. Quests (任务)
+#### 3. Quests (`quest_template`)
 
 ```sql
-CREATE TABLE quests (
+CREATE TABLE quest_template (
     entry INTEGER PRIMARY KEY,
-    title TEXT,
-    min_level INTEGER,
-    quest_level INTEGER,
-    ... -- 包含详细的任务文本、奖励、目标等
+    Title TEXT,
+    MinLevel INTEGER,
+    QuestLevel INTEGER,
+    -- ... 任务字段的全量 1:1 映射
 );
 ```
 
-#### 4. Creatures (生物)
+#### 4. Creatures (`creature_template`)
 
 ```sql
-CREATE TABLE creatures (
+CREATE TABLE creature_template (
     entry INTEGER PRIMARY KEY,
     name TEXT,
     subname TEXT,
-    level_min/max INTEGER,
-    health_min/max INTEGER,
-    creature_type INTEGER,
-    creature_rank INTEGER,
-    loot_id INTEGER,
-    skin_loot_id INTEGER,
-    pickpocket_loot_id INTEGER
-    ...
+    MinLevel INTEGER,
+    MaxLevel INTEGER,
+    CreatureType INTEGER,
+    Rank INTEGER,
+    LootId INTEGER,
+    SkinningLootId INTEGER,
+    PickpocketLootId INTEGER
+    -- ... 全量 1:1 映射
 );
 ```
 
@@ -390,31 +391,34 @@ CREATE TABLE creatures (
 所有掉落表结构相同：
 
 ```sql
-CREATE TABLE *_loot (
-    entry INTEGER,          -- 关联 ID (如 creature.loot_id)
-    item INTEGER,           -- 物品 ID (关联 items.entry)
-    chance REAL,            -- 掉率
-    groupid INTEGER,
-    mincount_or_ref INTEGER, -- 正数=数量, 负数=引用其他 loot 表
-    maxcount INTEGER
+CREATE TABLE *_loot_template (
+    Entry INTEGER,          -- 关联 ID (如 creature.LootId)
+    Item INTEGER,           -- 物品 ID (关联 item_template.entry)
+    Chance REAL,            -- 掉率
+    GroupId INTEGER,
+    MinCountOrRef INTEGER, -- 正数=数量, 负数=引用其他 loot 表
+    MaxCount INTEGER
 );
 ```
 
-#### 6. Spells (法术)
+#### 6. Spells (`spell_template`)
 
 用于显示法术详情和计算套装/物品效果。
 
 ```sql
-CREATE TABLE spells (
+CREATE TABLE spell_template (
     entry INTEGER PRIMARY KEY,
     name TEXT,
     description TEXT,
-    effect_base_points1-3 INTEGER,
-    effect_die_sides1-3 INTEGER
+    effectBasePoints1-3 INTEGER,
+    effectDieSides1-3 INTEGER,
+    spellIconId INTEGER,
+    iconName TEXT -- 注意：此字段在 SQLite schema 中可用
+    -- ... 全量 1:1 映射
 );
 ```
 
-#### 7. Factions (阵营)
+#### 7. Factions (`factions`)
 
 ```sql
 CREATE TABLE factions (

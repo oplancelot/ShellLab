@@ -310,39 +310,40 @@ This project uses an ETL (Extract-Transform-Load) pipeline to export data from t
 
 ### ETL Process Status
 
-| Module        | Source Table (MySQL)       | Intermediate File (JSON) | Target Table (SQLite) | Status  | Import Script             |
-| ------------- | -------------------------- | ------------------------ | --------------------- | ------- | ------------------------- |
-| **Items**     | `item_template`            | `item_template.json`     | `items`               | ✅ Done | `db_import/main.go`       |
-| **Objects**   | `gameobject_template`      | `objects.json`           | `objects`             | ✅ Done | `export_objects_mysql.py` |
-| **Locks**     | `aowow_lock`               | `locks.json`             | `locks`               | ✅ Done | `export_objects_mysql.py` |
-| **Quests**    | `quest_template`           | `quests.json`            | `quests`              | ✅ Done | `export_quests.py`        |
-| **Creatures** | `creature_template`        | `creatures.json`         | `creatures`           | ✅ Done | `export_creatures.py`     |
-| **Factions**  | `aowow_factions`           | `factions.json`          | `factions`            | ✅ Done | `export_factions.py`      |
-| **Spells**    | `spell_template`           | `spells.json`            | `spells`              | ✅ Done | `export_spells.py`        |
-| **Loot**      | `creature_loot_template`   | `creature_loot.json`     | `creature_loot`       | ✅ Done | `export_loot.py`          |
-|               | `reference_loot_template`  | `reference_loot.json`    | `reference_loot`      | ✅ Done | `export_loot.py`          |
-|               | `gameobject_loot_template` | `gameobject_loot.json`   | `gameobject_loot`     | ✅ Done | `export_loot.py`          |
-|               | `item_loot_template`       | `item_loot.json`         | `item_loot`           | ✅ Done | `export_loot.py`          |
-|               | `disenchant_loot_template` | `disenchant_loot.json`   | `disenchant_loot`     | ✅ Done | `export_loot.py`          |
+| Module        | Source Table (MySQL)       | Intermediate File (JSON) | Target Table (SQLite)      | Status  | Import Script             |
+| ------------- | -------------------------- | ------------------------ | -------------------------- | ------- | ------------------------- |
+| **Items**     | `item_template`            | `item_template.json`     | `item_template`            | ✅ Done | `db_import/main.go`       |
+| **Objects**   | `gameobject_template`      | `objects.json`           | `gameobject_template`      | ✅ Done | `export_objects_mysql.py` |
+| **Locks**     | `aowow_lock`               | `locks.json`             | `locks`                    | ✅ Done | `export_objects_mysql.py` |
+| **Quests**    | `quest_template`           | `quests.json`            | `quest_template`           | ✅ Done | `export_quests.py`        |
+| **Creatures** | `creature_template`        | `creatures.json`         | `creature_template`        | ✅ Done | `export_creatures.py`     |
+| **Factions**  | `aowow_factions`           | `factions.json`          | `factions`                 | ✅ Done | `export_factions.py`      |
+| **Spells**    | `spell_template`           | `spells.json`            | `spell_template`           | ✅ Done | `export_spells.py`        |
+| **Loot**      | `creature_loot_template`   | `creature_loot.json`     | `creature_loot_template`   | ✅ Done | `export_loot.py`          |
+|               | `reference_loot_template`  | `reference_loot.json`    | `reference_loot_template`  | ✅ Done | `export_loot.py`          |
+|               | `gameobject_loot_template` | `gameobject_loot.json`   | `gameobject_loot_template` | ✅ Done | `export_loot.py`          |
+|               | `item_loot_template`       | `item_loot.json`         | `item_loot_template`       | ✅ Done | `export_loot.py`          |
+|               | `disenchant_loot_template` | `disenchant_loot.json`   | `disenchant_loot_template` | ✅ Done | `export_loot.py`          |
 
 ### SQLite Table Schema Definitions
 
-Below are the main table structures for the local SQLite database (`data/shelllab.db`).
+Below are the main table structures for the local SQLite database (`data/shelllab.db`). Note that most core tables now follow a 1:1 mapping with the MySQL `_template` tables.
 
-#### 1. Objects
+#### 1. Objects (`gameobject_template`)
 
 ```sql
-CREATE TABLE objects (
+CREATE TABLE gameobject_template (
     entry INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    type INTEGER NOT NULL,
-    display_id INTEGER,
+    type INTEGER,
+    displayId INTEGER,
+    name TEXT,
     size REAL,
-    data0-7 INTEGER  -- Contains critical data like LockID
+    data0-23 INTEGER -- Contains critical data like LockID
+    -- ... and other fields matching MySQL structure
 );
 ```
 
-#### 2. Locks
+#### 2. Locks (`locks`)
 
 Used to derive special Object categories (e.g. Herb, Mine).
 
@@ -355,33 +356,33 @@ CREATE TABLE locks (
 );
 ```
 
-#### 3. Quests
+#### 3. Quests (`quest_template`)
 
 ```sql
-CREATE TABLE quests (
+CREATE TABLE quest_template (
     entry INTEGER PRIMARY KEY,
-    title TEXT,
-    min_level INTEGER,
-    quest_level INTEGER,
-    ... -- Contains detailed text, rewards, objectives, etc.
+    Title TEXT,
+    MinLevel INTEGER,
+    QuestLevel INTEGER,
+    -- ... Full 1:1 mapping of quest fields
 );
 ```
 
-#### 4. Creatures
+#### 4. Creatures (`creature_template`)
 
 ```sql
-CREATE TABLE creatures (
+CREATE TABLE creature_template (
     entry INTEGER PRIMARY KEY,
     name TEXT,
     subname TEXT,
-    level_min/max INTEGER,
-    health_min/max INTEGER,
-    creature_type INTEGER,
-    creature_rank INTEGER,
-    loot_id INTEGER,
-    skin_loot_id INTEGER,
-    pickpocket_loot_id INTEGER
-    ...
+    MinLevel INTEGER,
+    MaxLevel INTEGER,
+    CreatureType INTEGER,
+    Rank INTEGER,
+    LootId INTEGER,
+    SkinningLootId INTEGER,
+    PickpocketLootId INTEGER
+    -- ... Full 1:1 mapping
 );
 ```
 
@@ -390,31 +391,34 @@ CREATE TABLE creatures (
 All loot tables share the same structure:
 
 ```sql
-CREATE TABLE *_loot (
-    entry INTEGER,          -- Related ID (e.g. creature.loot_id)
-    item INTEGER,           -- Item ID (FK: items.entry)
-    chance REAL,            -- Drop rate
-    groupid INTEGER,
-    mincount_or_ref INTEGER, -- Positive=Count, Negative=Reference to other loot table
-    maxcount INTEGER
+CREATE TABLE *_loot_template (
+    Entry INTEGER,          -- Related ID (e.g. creature.LootId)
+    Item INTEGER,           -- Item ID (FK: item_template.entry)
+    Chance REAL,            -- Drop rate
+    GroupId INTEGER,
+    MinCountOrRef INTEGER, -- Positive=Count, Negative=Reference to other loot table
+    MaxCount INTEGER
 );
 ```
 
-#### 6. Spells
+#### 6. Spells (`spell_template`)
 
 Used for displaying spell details and calculating set/item effects.
 
 ```sql
-CREATE TABLE spells (
+CREATE TABLE spell_template (
     entry INTEGER PRIMARY KEY,
     name TEXT,
     description TEXT,
-    effect_base_points1-3 INTEGER,
-    effect_die_sides1-3 INTEGER
+    effectBasePoints1-3 INTEGER,
+    effectDieSides1-3 INTEGER,
+    spellIconId INTEGER,
+    iconName TEXT -- Note: This field is available in the SQLite schema
+    -- ... Full 1:1 mapping
 );
 ```
 
-#### 7. Factions
+#### 7. Factions (`factions`)
 
 ```sql
 CREATE TABLE factions (

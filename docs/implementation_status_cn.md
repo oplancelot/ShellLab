@@ -35,22 +35,22 @@
 - [x] **Items**: 获取详情、搜索、分类建议
 - [x] **Loot**: AtlasLoot 层级浏览、掉落查询
 - [x] **Objects**: 分类浏览 (基于 locks)、搜索
-- [ ] **Quests**: 详情 API、搜索 API
-- [ ] **Creatures**: 详情 API、搜索 API
-- [ ] **Factions**: 列表 API
-- [ ] **Spells**: 详情 API
+- [x] **Quests**: 详情 API、搜索 API
+- [x] **Creatures**: 详情 API、搜索 API
+- [x] **Factions**: 列表 API
+- [x] **Spells**: 详情 API
 
 ### 前端页面 (React)
 
 - [x] **Loot Browser**: 完整的 AtlasLoot 浏览界面
-- [x] **Objects Browser**: 分类浏览、详情展示 (开发中)
-- [ ] **Quest Browser**: 任务列表、详情页
-- [ ] **Creature Browser**: NPC 列表、掉落查看
-- [ ] **Faction Browser**: 阵营列表
-- [ ] **Spell Browser**: 法术查询
+- [x] **Objects Browser**: 分类浏览、详情展示
+- [x] **Quest Browser**: 任务列表、详情页
+- [x] **Creature Browser**: NPC 列表、详情、掉落查看
+- [x] **Faction Browser**: 阵营列表
+- [x] **Spell Browser**: 法术查询、详情页、描述解析 ($s1, $d)
 
 ## 下一步计划
 
-1.  **前端**: 完成 Objects 浏览器的 UI 细节（图标、详细信息展示）。
-2.  **前端**: 开发 Quests 和 Creatures 的浏览页面。
-3.  **后端**: 补充 Item Sets 的导入和 API。
+1.  **后端**: 补充 Item Sets 的导入和 API。
+2.  **前端**: 优化详情页的 UI 细节（如图标、掉落显示）。
+3.  **系统**: 进一步优化 ETL 流程，支持更多数据表的增量更新。
