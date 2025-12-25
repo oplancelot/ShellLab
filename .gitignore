@@ -9,7 +9,6 @@ addons/
 # Go
 go.sum
 vendor/
-data/sql/
 # Frontend
 node_modules/
 frontend/dist/

@@ -101,39 +101,6 @@ On first startup, the application will:
 3. Download missing item icons
 4. This process takes ~1-2 minutes
 
-## Project Structure
-
-```
-ShellLab/
-├── addons/                    # AtlasLoot addon source (Lua files)
-├── backend/
-│   ├── database/
-│   │   ├── importers/         # Data importers (generated + custom)
-│   │   ├── models/            # Data models (generated + custom)
-│   │   ├── repositories/      # Query layer
-│   │   └── schema/            # Database schema definitions
-│   └── services/              # Background services (icons, etc.)
-├── data/                      # JSON data files (not in git)
-│   ├── *_template.json        # MySQL table dumps
-│   ├── atlasloot.json         # AtlasLoot data
-│   ├── item_icons.json        # Icon mappings
-│   └── shelllab.db            # SQLite database (generated)
-├── frontend/
-│   ├── src/
-│   │   ├── components/        # React components
-│   │   ├── pages/             # Page components
-│   │   ├── hooks/             # Custom React hooks
-│   │   └── utils/             # Utility functions
-│   └── public/
-│       └── items/icons/       # Cached item icons (downloaded)
-├── scripts/                   # Data export and code generation
-│   ├── export_*.py            # MySQL → JSON exporters
-│   ├── generate_go_code.py    # Auto-generate Go code from schema
-│   ├── extract_atlasloot.py   # Lua → JSON converter
-│   └── db_config.py           # MySQL connection config
-└── app.go                     # Wails application entry point
-```
-
 ## Development
 
 ### Database Schema
@@ -197,10 +164,7 @@ Icons are cached in `frontend/public/items/icons/` for offline use.
 
 ## Data Sources
 
-- **Turtle WoW Database**: https://database.turtlecraft.gg/
-- **AtlasLoot Enhanced**: Lua addon files
-- **AoWoW Icons**: Item icon mappings
-- **Wowhead Classic**: Icon CDN
+- **Turtle-WoW Emulation Server Source Code**:https://github.com/brian8544/turtle-wow
 
 ## Key Technologies
 
@@ -227,14 +191,5 @@ This project is for educational purposes and community use. Contributions welcom
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
-
-## References
-
-- [Turtle WoW](https://turtle-wow.org/)
-- [Wails Framework](https://wails.io/)
-- [AtlasLoot Enhanced](https://github.com/Otari98/AtlasLoot)
-- [Turtle WoW Database](https://database.turtlecraft.gg/)
-
----
 
 **Built with ❤️ for the Turtle WoW Community**
