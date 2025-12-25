@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"shelllab/backend/database/helpers"
@@ -674,35 +676,54 @@ func (r *ItemRepository) GetTooltipData(itemID int) (*models.TooltipData, error)
 	return tooltip, nil
 }
 
-// resolveSpellText fetches and formats spell description with parameters
-func (r *ItemRepository) resolveSpellText(spellID int) string {
-	// Get spell data including effect values and duration index
-	var name, description string
-	var bp1, bp2, bp3, ds1, ds2, ds3 int
-	var durationIndex int
+// SpellData holds all spell-related data for variable replacement
+type SpellData struct {
+	BasePoints     [3]int
+	DieSides       [3]int
+	Amplitude      [3]int
+	ChainTarget    [3]int
+	MiscValue      [3]int
+	RadiusIndex    [3]int
+	ProcChance     int
+	ProcCharges    int
+	DurationIndex  int
+	RangeID        int
+	DmgMultiplier1 float64
+}
 
-	// Try to query with durationIndex, fallback if column doesn't exist yet
+// resolveSpellText fetches and formats spell description with parameters
+// Implements complete WoW spell variable replacement system
+func (r *ItemRepository) resolveSpellText(spellID int) string {
+	var name, description string
+	var data SpellData
+
+	// Query all needed spell data
 	err := r.db.QueryRow(`
-		SELECT COALESCE(name, ''), COALESCE(description, ''),
+		SELECT 
+			COALESCE(name, ''), COALESCE(description, ''),
 			effectBasePoints1, effectBasePoints2, effectBasePoints3,
 			effectDieSides1, effectDieSides2, effectDieSides3,
-			durationIndex
+			effectAmplitude1, effectAmplitude2, effectAmplitude3,
+			effectChainTarget1, effectChainTarget2, effectChainTarget3,
+			effectMiscValue1, effectMiscValue2, effectMiscValue3,
+			effectRadiusIndex1, effectRadiusIndex2, effectRadiusIndex3,
+			procChance, procCharges, durationIndex, rangeIndex,
+			COALESCE(dmg_multiplier1, 0)
 		FROM spell_template WHERE entry = ?
-	`, spellID).Scan(&name, &description, &bp1, &bp2, &bp3, &ds1, &ds2, &ds3, &durationIndex)
+	`, spellID).Scan(
+		&name, &description,
+		&data.BasePoints[0], &data.BasePoints[1], &data.BasePoints[2],
+		&data.DieSides[0], &data.DieSides[1], &data.DieSides[2],
+		&data.Amplitude[0], &data.Amplitude[1], &data.Amplitude[2],
+		&data.ChainTarget[0], &data.ChainTarget[1], &data.ChainTarget[2],
+		&data.MiscValue[0], &data.MiscValue[1], &data.MiscValue[2],
+		&data.RadiusIndex[0], &data.RadiusIndex[1], &data.RadiusIndex[2],
+		&data.ProcChance, &data.ProcCharges, &data.DurationIndex, &data.RangeID,
+		&data.DmgMultiplier1,
+	)
 
 	if err != nil {
-		// Fallback for old schema (without durationIndex)
-		err = r.db.QueryRow(`
-			SELECT COALESCE(name, ''), COALESCE(description, ''),
-				effectBasePoints1, effectBasePoints2, effectBasePoints3,
-				effectDieSides1, effectDieSides2, effectDieSides3
-			FROM spell_template WHERE entry = ?
-		`, spellID).Scan(&name, &description, &bp1, &bp2, &bp3, &ds1, &ds2, &ds3)
-
-		if err != nil {
-			return ""
-		}
-		durationIndex = 0
+		return ""
 	}
 
 	// Use description if available, otherwise use name
@@ -714,62 +735,241 @@ func (r *ItemRepository) resolveSpellText(spellID int) string {
 		return ""
 	}
 
-	// Calculate actual values (base_points + 1 for typical spells, or base_points + die_sides for ranges)
-	v1 := bp1 + 1
-	v2 := bp2 + 1
-	v3 := bp3 + 1
-	if ds1 > 1 {
-		v1 = bp1 + ds1
-	}
-	if ds2 > 1 {
-		v2 = bp2 + ds2
-	}
-	if ds3 > 1 {
-		v3 = bp3 + ds3
-	}
-
-	// Get Duration
-	var durationText string
-	if durationIndex > 0 {
-		var durationBase int
-		r.db.QueryRow("SELECT duration_base FROM spell_durations WHERE id = ?", durationIndex).Scan(&durationBase)
-		if durationBase > 0 {
-			if durationBase < 0 {
-				durationBase = -durationBase
-			}
-			// Duration is usually in ms
-			seconds := durationBase / 1000
-			if seconds < 60 {
-				durationText = fmt.Sprintf("%d sec", seconds)
-			} else if seconds < 3600 {
-				durationText = fmt.Sprintf("%d min", seconds/60)
-			} else {
-				durationText = fmt.Sprintf("%d hr", seconds/3600)
-			}
-		}
-	}
-	if durationText == "" {
-		durationText = "duration" // fallback
-	}
-
-	// Replace placeholders
-	text = strings.ReplaceAll(text, "$d", durationText)
-	text = strings.ReplaceAll(text, "$s1", fmt.Sprintf("%d", v1))
-	text = strings.ReplaceAll(text, "$s2", fmt.Sprintf("%d", v2))
-	text = strings.ReplaceAll(text, "$s3", fmt.Sprintf("%d", v3))
-	// Over-time effects (damage/healing over duration)
-	text = strings.ReplaceAll(text, "$o1", fmt.Sprintf("%d", v1))
-	text = strings.ReplaceAll(text, "$o2", fmt.Sprintf("%d", v2))
-	text = strings.ReplaceAll(text, "$o3", fmt.Sprintf("%d", v3))
-	// Also handle ${} format
-	text = strings.ReplaceAll(text, "${s1}", fmt.Sprintf("%d", v1))
-	text = strings.ReplaceAll(text, "${s2}", fmt.Sprintf("%d", v2))
-	text = strings.ReplaceAll(text, "${s3}", fmt.Sprintf("%d", v3))
-	text = strings.ReplaceAll(text, "${o1}", fmt.Sprintf("%d", v1))
-	text = strings.ReplaceAll(text, "${o2}", fmt.Sprintf("%d", v2))
-	text = strings.ReplaceAll(text, "${o3}", fmt.Sprintf("%d", v3))
+	// Replace all variable types
+	text = r.replaceSpellVariables(text, spellID, &data)
 
 	return text
+}
+
+// replaceSpellVariables replaces all WoW spell variables in text
+func (r *ItemRepository) replaceSpellVariables(text string, spellID int, data *SpellData) string {
+	// Calculate values (base + 1, or base + diesides for ranges)
+	v := [3]int{}
+	for i := 0; i < 3; i++ {
+		if data.DieSides[i] > 1 {
+			v[i] = data.BasePoints[i] + data.DieSides[i]
+		} else {
+			v[i] = data.BasePoints[i] + 1
+		}
+	}
+
+	// Get duration text
+	durationText := r.getSpellDuration(data.DurationIndex)
+
+	// Simple variable replacements (no cross-spell references)
+	// $s1, $s2, $s3 - spell values
+	text = strings.ReplaceAll(text, "$s1", fmt.Sprintf("%d", v[0]))
+	text = strings.ReplaceAll(text, "$s2", fmt.Sprintf("%d", v[1]))
+	text = strings.ReplaceAll(text, "$s3", fmt.Sprintf("%d", v[2]))
+	text = strings.ReplaceAll(text, "$s", fmt.Sprintf("%d", v[0])) // $s = $s1
+
+	// $o1, $o2, $o3 - over-time values
+	text = r.replaceOvertimeValues(text, data)
+
+	// $d - duration
+	text = strings.ReplaceAll(text, "$d", durationText)
+
+	// $h - proc chance
+	text = strings.ReplaceAll(text, "$h", fmt.Sprintf("%d", data.ProcChance))
+
+	// $n - proc charges
+	text = strings.ReplaceAll(text, "$n", fmt.Sprintf("%d", data.ProcCharges))
+
+	// $t1, $t2, $t3 - ticks/amplitude
+	for i := 0; i < 3; i++ {
+		if data.Amplitude[i] > 0 {
+			ticks := data.Amplitude[i] / 1000
+			text = strings.ReplaceAll(text, fmt.Sprintf("$t%d", i+1), fmt.Sprintf("%d", ticks))
+		}
+	}
+
+	// $x1, $x2, $x3 - chain targets
+	for i := 0; i < 3; i++ {
+		text = strings.ReplaceAll(text, fmt.Sprintf("$x%d", i+1), fmt.Sprintf("%d", data.ChainTarget[i]))
+	}
+
+	// $q1, $q2, $q3 and $u1, $u2, $u3 - misc values
+	for i := 0; i < 3; i++ {
+		text = strings.ReplaceAll(text, fmt.Sprintf("$q%d", i+1), fmt.Sprintf("%d", data.MiscValue[i]))
+		text = strings.ReplaceAll(text, fmt.Sprintf("$u%d", i+1), fmt.Sprintf("%d", data.MiscValue[i]))
+	}
+	text = strings.ReplaceAll(text, "$q", fmt.Sprintf("%d", data.MiscValue[0]))
+	text = strings.ReplaceAll(text, "$u", fmt.Sprintf("%d", data.MiscValue[0]))
+
+	// $m1, $m2, $m3 - multiplier/max values (using base points as fallback)
+	for i := 0; i < 3; i++ {
+		text = strings.ReplaceAll(text, fmt.Sprintf("$m%d", i+1), fmt.Sprintf("%d", v[i]))
+	}
+
+	// $a1, $a2, $a3 - area/radius
+	for i := 0; i < 3; i++ {
+		if data.RadiusIndex[i] > 0 {
+			var radius int
+			r.db.QueryRow("SELECT radiusBase FROM spell_radius WHERE id = ?", data.RadiusIndex[i]).Scan(&radius)
+			text = strings.ReplaceAll(text, fmt.Sprintf("$a%d", i+1), fmt.Sprintf("%d", radius))
+		}
+	}
+
+	// $r - range
+	if data.RangeID > 0 {
+		var rangeMax int
+		r.db.QueryRow("SELECT rangeMax FROM spell_range WHERE id = ?", data.RangeID).Scan(&rangeMax)
+		text = strings.ReplaceAll(text, "$r", fmt.Sprintf("%d", rangeMax))
+	}
+
+	// $f1 - damage multiplier
+	if data.DmgMultiplier1 > 0 {
+		text = strings.ReplaceAll(text, "$f1", fmt.Sprintf("%.1f", data.DmgMultiplier1))
+	}
+
+	// Handle ${} bracket format for all variables
+	text = r.replaceBracketVariables(text, v, data, durationText)
+
+	// Handle cross-spell references (must be last)
+	text = r.replaceCrossSpellReferences(text)
+
+	return text
+}
+
+// replaceOvertimeValues calculates and replaces $o values based on duration and amplitude
+func (r *ItemRepository) replaceOvertimeValues(text string, data *SpellData) string {
+	// Get duration in milliseconds
+	var durationBase int
+	if data.DurationIndex > 0 {
+		r.db.QueryRow("SELECT duration_base FROM spell_durations WHERE id = ?", data.DurationIndex).Scan(&durationBase)
+	}
+	if durationBase < 0 {
+		durationBase = -durationBase
+	}
+
+	for i := 0; i < 3; i++ {
+		baseVal := data.BasePoints[i] + 1
+
+		// Calculate total over-time value
+		var otValue int
+		if data.Amplitude[i] > 0 && durationBase > 0 {
+			// ticks = duration / amplitude
+			ticks := durationBase / data.Amplitude[i]
+			// total = base_value * ticks
+			otValue = baseVal * ticks
+		} else {
+			otValue = baseVal
+		}
+
+		text = strings.ReplaceAll(text, fmt.Sprintf("$o%d", i+1), fmt.Sprintf("%d", otValue))
+	}
+
+	return text
+}
+
+// replaceBracketVariables handles ${variable} format
+func (r *ItemRepository) replaceBracketVariables(text string, v [3]int, data *SpellData, durationText string) string {
+	text = strings.ReplaceAll(text, "${s1}", fmt.Sprintf("%d", v[0]))
+	text = strings.ReplaceAll(text, "${s2}", fmt.Sprintf("%d", v[1]))
+	text = strings.ReplaceAll(text, "${s3}", fmt.Sprintf("%d", v[2]))
+	text = strings.ReplaceAll(text, "${d}", durationText)
+	text = strings.ReplaceAll(text, "${h}", fmt.Sprintf("%d", data.ProcChance))
+	text = strings.ReplaceAll(text, "${n}", fmt.Sprintf("%d", data.ProcCharges))
+	return text
+}
+
+// replaceCrossSpellReferences handles $XXXXXd, $XXXXXs1, etc.
+func (r *ItemRepository) replaceCrossSpellReferences(text string) string {
+	// $XXXXXd - duration of spell XXXXX
+	re := regexp.MustCompile(`\$(\d+)d`)
+	text = re.ReplaceAllStringFunc(text, func(match string) string {
+		spellIDStr := match[1 : len(match)-1]
+		refSpellID, err := strconv.Atoi(spellIDStr)
+		if err != nil {
+			return match
+		}
+
+		var refDurIndex int
+		err = r.db.QueryRow("SELECT durationIndex FROM spell_template WHERE entry = ?", refSpellID).Scan(&refDurIndex)
+		if err != nil || refDurIndex == 0 {
+			return match
+		}
+
+		return r.getSpellDuration(refDurIndex)
+	})
+
+	// $XXXXXs1, $XXXXXs2, $XXXXXs3 - spell values from other spells
+	re = regexp.MustCompile(`\$(\d+)s(\d)`)
+	text = re.ReplaceAllStringFunc(text, func(match string) string {
+		parts := re.FindStringSubmatch(match)
+		if len(parts) < 3 {
+			return match
+		}
+
+		refSpellID, _ := strconv.Atoi(parts[1])
+		effectNum, _ := strconv.Atoi(parts[2])
+		if effectNum < 1 || effectNum > 3 {
+			return match
+		}
+
+		var basePoints, dieSides int
+		query := fmt.Sprintf("SELECT effectBasePoints%d, effectDieSides%d FROM spell_template WHERE entry = ?", effectNum, effectNum)
+		err := r.db.QueryRow(query, refSpellID).Scan(&basePoints, &dieSides)
+		if err != nil {
+			return match
+		}
+
+		value := basePoints + 1
+		if dieSides > 1 {
+			value = basePoints + dieSides
+		}
+
+		return fmt.Sprintf("%d", value)
+	})
+
+	// $XXXXXo1, $XXXXXo2, $XXXXXo3 - over-time values from other spells
+	re = regexp.MustCompile(`\$(\d+)o(\d)`)
+	text = re.ReplaceAllStringFunc(text, func(match string) string {
+		parts := re.FindStringSubmatch(match)
+		if len(parts) < 3 {
+			return match
+		}
+
+		refSpellID, _ := strconv.Atoi(parts[1])
+		effectNum, _ := strconv.Atoi(parts[2])
+		if effectNum < 1 || effectNum > 3 {
+			return match
+		}
+
+		var basePoints int
+		query := fmt.Sprintf("SELECT effectBasePoints%d FROM spell_template WHERE entry = ?", effectNum)
+		r.db.QueryRow(query, refSpellID).Scan(&basePoints)
+
+		return fmt.Sprintf("%d", basePoints+1)
+	})
+
+	return text
+}
+
+// getSpellDuration returns formatted duration text
+func (r *ItemRepository) getSpellDuration(durationIndex int) string {
+	if durationIndex == 0 {
+		return "duration"
+	}
+
+	var durationBase int
+	r.db.QueryRow("SELECT duration_base FROM spell_durations WHERE id = ?", durationIndex).Scan(&durationBase)
+	if durationBase <= 0 {
+		return "duration"
+	}
+
+	if durationBase < 0 {
+		durationBase = -durationBase
+	}
+
+	seconds := durationBase / 1000
+	if seconds < 60 {
+		return fmt.Sprintf("%d sec", seconds)
+	} else if seconds < 3600 {
+		return fmt.Sprintf("%d min", seconds/60)
+	} else {
+		return fmt.Sprintf("%d hr", seconds/3600)
+	}
 }
 
 // formatSpellEffect returns a formatted spell effect string with trigger prefix
