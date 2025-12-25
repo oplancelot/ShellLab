@@ -88,17 +88,10 @@ func (a *App) startup(ctx context.Context) {
 	// Data import using importers
 	dataDir := "data"
 
-	// Import Items
-	fmt.Println("Checking item data...")
-	itemImporter := database.NewItemImporter(db)
-	if err := itemImporter.CheckAndImport(dataDir); err != nil {
-		fmt.Printf("ERROR: Failed to import items: %v\n", err)
-	}
-
-	// Import Objects
+	// Import Objects (locks table - still needed)
 	fmt.Println("Checking object data...")
 	objectImporter := database.NewGameObjectImporter(db)
-	if err := objectImporter.CheckAndImport(dataDir+"/objects.json", dataDir+"/locks.json"); err != nil {
+	if err := objectImporter.CheckAndImport(dataDir + "/locks.json"); err != nil {
 		fmt.Printf("ERROR: Failed to import objects: %v\n", err)
 	}
 
@@ -114,25 +107,10 @@ func (a *App) startup(ctx context.Context) {
 	lootImporter := database.NewLootImporter(db)
 	lootImporter.CheckAndImport(dataDir)
 
-	// Import Quests
-	fmt.Println("Checking quest data...")
-	questImporter := database.NewQuestImporter(db)
-	questImporter.CheckAndImport(dataDir)
-
-	// Import Creatures
-	fmt.Println("Checking creature data...")
-	creatureImporter := database.NewCreatureImporter(db)
-	creatureImporter.CheckAndImport(dataDir)
-
 	// Import Factions
 	fmt.Println("Checking faction data...")
 	factionImporter := database.NewFactionImporter(db)
 	factionImporter.CheckAndImport(dataDir)
-
-	// Import Spells
-	fmt.Println("Checking spell data...")
-	spellImporter := database.NewSpellImporter(db)
-	spellImporter.CheckAndImport(dataDir)
 
 	// Import Metadata (Zones, Skills)
 	fmt.Println("Checking metadata...")
@@ -146,11 +124,61 @@ func (a *App) startup(ctx context.Context) {
 		fmt.Printf("ERROR: Failed to import AtlasLoot: %v\n", err)
 	}
 
+	// Import Full 1:1 MySQL tables (if not already imported)
+	fmt.Println("Checking full MySQL table data...")
+	genImporter := database.NewGeneratedImporter(db)
+	a.importFullTables(genImporter, dataDir)
+
 	// Initialize services
 	a.iconService = services.NewIconService(db)
 	a.iconService.StartDownload()
 
 	fmt.Println("✓ ShellLab ready!")
+}
+
+// importFullTables imports the 1:1 MySQL tables if they are empty
+func (a *App) importFullTables(importer *database.GeneratedImporter, dataDir string) {
+	tables := []struct {
+		name     string
+		jsonFile string
+		importFn func(string) error
+	}{
+		{"item_template", "item_template.json", importer.ImportItemTemplate},
+		{"creature_template", "creature_template.json", importer.ImportCreatureTemplate},
+		{"quest_template", "quest_template.json", importer.ImportQuestTemplate},
+		{"spell_template", "spell_template.json", importer.ImportSpellTemplate},
+		{"gameobject_template", "gameobject_template.json", importer.ImportGameobjectTemplate},
+	}
+
+	for _, t := range tables {
+		var count int
+		a.db.DB().QueryRow("SELECT COUNT(*) FROM " + t.name).Scan(&count)
+		if count == 0 {
+			jsonPath := filepath.Join(dataDir, t.jsonFile)
+			fmt.Printf("  Importing %s from %s...\n", t.name, t.jsonFile)
+			if err := t.importFn(jsonPath); err != nil {
+				fmt.Printf("  ERROR importing %s: %v\n", t.name, err)
+			} else {
+				var newCount int
+				a.db.DB().QueryRow("SELECT COUNT(*) FROM " + t.name).Scan(&newCount)
+				fmt.Printf("  ✓ Imported %d rows into %s\n", newCount, t.name)
+			}
+		}
+
+		// ALWAYS check/refresh icons if the files exist
+		if t.name == "item_template" {
+			fmt.Println("  Refreshing item icons...")
+			if err := importer.ImportItemIcons(filepath.Join(dataDir, "item_icons.json")); err != nil {
+				fmt.Printf("  ERROR updating item icons: %v\n", err)
+			}
+		}
+		if t.name == "spell_template" {
+			fmt.Println("  Refreshing spell icons...")
+			if err := importer.ImportSpellIcons(filepath.Join(dataDir, "spells_enhanced.json")); err != nil {
+				fmt.Printf("  ERROR updating spell icons: %v\n", err)
+			}
+		}
+	}
 }
 
 // buildCategoryCache builds a cache of categories for faster lookups
@@ -494,6 +522,9 @@ func (a *App) GetItemDetail(entry int) (*database.ItemDetail, error) {
 		fmt.Printf("Error getting item detail [%d]: %v\n", entry, err)
 		return nil, err
 	}
+	if i != nil && i.Item != nil {
+		a.enrichItemIcon(i.Item)
+	}
 	return i, nil
 }
 
@@ -559,17 +590,19 @@ func (a *App) GetLoot(categoryName, instanceName, bossKey string) *LegacyBossLoo
 	for _, entry := range lootEntries {
 		lootItems = append(lootItems, LegacyLootItem{
 			ItemID:     entry.ItemID,
-			ItemName:   entry.ItemName,
-			IconName:   entry.IconName,
+			ItemName:   entry.Name,
+			IconName:   entry.IconPath,
 			Quality:    entry.Quality,
 			DropChance: entry.DropChance,
 		})
 	}
 
-	return &LegacyBossLoot{
+	result := &LegacyBossLoot{
 		BossName: bossName,
 		Items:    lootItems,
 	}
+	fmt.Printf("[API] GetLoot returning %d items for %s\n", len(lootItems), bossKey)
+	return result
 }
 
 // Helper to add full icon URLs

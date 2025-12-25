@@ -57,7 +57,7 @@ func (s *IconService) downloadProcess() error {
 	// Items
 	rows, err := s.db.DB().Query(`
 		SELECT DISTINCT icon_path 
-		FROM items 
+		FROM item_template 
 		WHERE icon_path IS NOT NULL AND icon_path != ''
 	`)
 	if err != nil {
@@ -72,24 +72,8 @@ func (s *IconService) downloadProcess() error {
 		}
 	}
 
-	// Spells
-	rows, err = s.db.DB().Query(`
-		SELECT DISTINCT icon_name 
-		FROM spells 
-		WHERE icon_name IS NOT NULL AND icon_name != ''
-	`)
-	if err == nil {
-		defer rows.Close()
-		for rows.Next() {
-			var name string
-			if err := rows.Scan(&name); err == nil && name != "" {
-				iconNames[strings.ToLower(name)] = true
-			}
-		}
-	} else {
-		// Log error but continue (column might not exist yet if migration pending)
-		fmt.Printf("[IconService] Warning: Failed to query spell icons: %v\n", err)
-	}
+	// Note: spell_template doesn't have icon_name column (uses spellIconId instead)
+	// Spell icons would need a separate lookup table if needed
 
 	fmt.Printf("[IconService] Found %d unique icons to check.\n", len(iconNames))
 
@@ -115,9 +99,9 @@ func (s *IconService) downloadProcess() error {
 
 	// Sources to try in order
 	sources := []string{
-		"https://database.turtlecraft.gg/images/icons/large/%s.jpg",
-		"https://wow.zamimg.com/images/wow/icons/large/%s.jpg",
-		"https://aowow.trinitycore.info/static/images/wow/icons/large/%s.jpg",
+		"https://wow.zamimg.com/images/wow/icons/large/%s.jpg",                // Wowhead CDN (supports Classic)
+		"https://database.turtlecraft.gg/images/icons/large/%s.jpg",           // Turtle WoW Database
+		"https://aowow.trinitycore.info/static/images/wow/icons/large/%s.jpg", // Trinity Aowow
 	}
 
 	var successCount, failCount int

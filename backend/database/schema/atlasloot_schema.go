@@ -38,8 +38,9 @@ func AtlasLootSchema() string {
 		item_id INTEGER NOT NULL,
 		drop_chance TEXT,
 		sort_order INTEGER DEFAULT 0,
-		FOREIGN KEY (table_id) REFERENCES atlasloot_tables(id),
-		FOREIGN KEY (item_id) REFERENCES items(entry)
+		FOREIGN KEY (table_id) REFERENCES atlasloot_tables(id)
+		-- Removed FK constraint on item_id to allow custom/missing items
+		-- FOREIGN KEY (item_id) REFERENCES item_template(entry)
 	);
 
 	CREATE INDEX IF NOT EXISTS idx_atlasloot_modules_category ON atlasloot_modules(category_id);
