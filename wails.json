@@ -1,20 +1,3 @@
-{
-    "$schema": "https://wails.io/schemas/config.v2.json",
-    "name": "shelllab",
-    "outputfilename": "ShellLab",
-    "frontend:install": "npm install",
-    "frontend:build": "npm run build",
-    "frontend:dev:watcher": "npm run dev",
-    "frontend:dev:serverUrl": "auto",
-    "author": {
-        "name": "ShellLab Team",
-        "email": "oplancelot@gmail.com"
-    },
-    "info": {
-        "companyName": "ShellLab",
-        "productName": "ShellLab - WoW Toolkit",
-        "productVersion": "0.1.0",
-        "copyright": "Copyright © 2025",
-        "comments": "Comprehensive WoW toolset for Turtle WoW"
-    }
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:4682b1431a81cb4e3c4e95f3b4c38deae397214897a36969ee70f39cb5852778
+size 637
