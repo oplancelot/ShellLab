@@ -67,7 +67,10 @@ function DatabasePage() {
                 {/* Content Area - 4 columns for three-level classification */}
                 <ContentGrid columns={GRID_LAYOUT}>
                     {activeTab === 'items' && (
-                        <ItemsTab tooltipHook={enhancedTooltipHook} />
+                        <ItemsTab 
+                            tooltipHook={enhancedTooltipHook} 
+                            onNavigate={navigateTo}
+                        />
                     )}
                     {activeTab === 'sets' && (
                         <SetsTab tooltipHook={enhancedTooltipHook} />

@@ -9,7 +9,8 @@ const ItemTooltip = ({
     tooltip, 
     style,
     onMouseEnter,
-    onMouseLeave 
+    onMouseLeave,
+    interactive
 }) => {
     // Loading state
     if (!tooltip) {
@@ -22,7 +23,7 @@ const ItemTooltip = ({
                     className="font-bold text-sm leading-tight"
                     style={{ color: getQualityColor(item?.quality) }}
                 >
-                    {item?.itemName || item?.name || 'Unknown Item'}
+                    {item?.name || item?.itemName || 'Unknown Item'}
                 </div>
                 <div className="text-gray-500 italic text-[11px] animate-pulse">Loading...</div>
             </div>
@@ -30,10 +31,13 @@ const ItemTooltip = ({
     }
 
     const qualityColor = getQualityColor(tooltip.quality)
+    const interactionClass = interactive 
+        ? 'select-text pointer-events-auto cursor-auto' 
+        : 'select-none pointer-events-none'
 
     return (
         <div 
-            className="flex flex-col gap-0.5 p-2.5 bg-black/95 border border-border-light rounded pointer-events-none z-[1000] min-w-[240px] max-w-[320px] shadow-2xl font-sans text-xs select-none"
+            className={`flex flex-col gap-0.5 p-2.5 bg-black/95 border border-border-light rounded ${interactionClass} z-[1000] min-w-[240px] max-w-[320px] shadow-2xl font-sans text-xs`}
             style={style}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
@@ -48,18 +52,18 @@ const ItemTooltip = ({
                 <div className="text-wow-gold leading-tight">{tooltip.setName}</div>
             )}
             
-            {/* Item Level */}
-            {tooltip.itemLevel > 0 && (
-                <div className="text-wow-gold leading-tight">Item Level {tooltip.itemLevel}</div>
-            )}
-            
             {/* Binding */}
             {tooltip.binding && (
                 <div className="text-white leading-tight">{tooltip.binding}</div>
             )}
+
+            {/* Unique */}
+            {tooltip.unique && (
+                <div className="text-white leading-tight">Unique</div>
+            )}
             
             {/* Slot / Type */}
-            <div className="flex justify-between items-center text-white leading-tight">
+            <div className="flex flex-row justify-between items-center text-white leading-tight w-full">
                 {tooltip.slotName && <span>{tooltip.slotName}</span>}
                 {tooltip.typeName && <span>{tooltip.typeName}</span>}
             </div>
@@ -70,7 +74,7 @@ const ItemTooltip = ({
             
             {/* Damage */}
             {tooltip.damageText && (
-                <div className="flex justify-between items-center text-white leading-tight">
+                <div className="flex flex-row justify-between items-center text-white leading-tight w-full">
                     <span>{tooltip.damageText}</span>
                     <span className="font-medium">{tooltip.speedText}</span>
                 </div>

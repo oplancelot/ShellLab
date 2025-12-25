@@ -187,8 +187,8 @@ export namespace models {
 	}
 	export class LootItem {
 	    itemId: number;
-	    itemName: string;
-	    icon: string;
+	    name: string;
+	    iconPath: string;
 	    quality: number;
 	    chance: number;
 	    minCount: number;
@@ -201,8 +201,8 @@ export namespace models {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.itemId = source["itemId"];
-	        this.itemName = source["itemName"];
-	        this.icon = source["icon"];
+	        this.name = source["name"];
+	        this.iconPath = source["iconPath"];
 	        this.quality = source["quality"];
 	        this.chance = source["chance"];
 	        this.minCount = source["minCount"];
@@ -388,6 +388,7 @@ export namespace models {
 	    allowableRace?: number;
 	    bonding?: number;
 	    maxDurability?: number;
+	    maxCount?: number;
 	    armor?: number;
 	    statType1?: number;
 	    statValue1?: number;
@@ -413,6 +414,9 @@ export namespace models {
 	    dmgMin1?: number;
 	    dmgMax1?: number;
 	    dmgType1?: number;
+	    dmgMin2?: number;
+	    dmgMax2?: number;
+	    dmgType2?: number;
 	    holyRes?: number;
 	    fireRes?: number;
 	    natureRes?: number;
@@ -450,6 +454,7 @@ export namespace models {
 	        this.allowableRace = source["allowableRace"];
 	        this.bonding = source["bonding"];
 	        this.maxDurability = source["maxDurability"];
+	        this.maxCount = source["maxCount"];
 	        this.armor = source["armor"];
 	        this.statType1 = source["statType1"];
 	        this.statValue1 = source["statValue1"];
@@ -475,6 +480,9 @@ export namespace models {
 	        this.dmgMin1 = source["dmgMin1"];
 	        this.dmgMax1 = source["dmgMax1"];
 	        this.dmgType1 = source["dmgType1"];
+	        this.dmgMin2 = source["dmgMin2"];
+	        this.dmgMax2 = source["dmgMax2"];
+	        this.dmgType2 = source["dmgType2"];
 	        this.holyRes = source["holyRes"];
 	        this.fireRes = source["fireRes"];
 	        this.natureRes = source["natureRes"];
@@ -561,6 +569,30 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class ItemDrop {
+	    entry: number;
+	    name: string;
+	    quality: number;
+	    chance: number;
+	    minCount: number;
+	    maxCount: number;
+	    iconPath: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ItemDrop(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entry = source["entry"];
+	        this.name = source["name"];
+	        this.quality = source["quality"];
+	        this.chance = source["chance"];
+	        this.minCount = source["minCount"];
+	        this.maxCount = source["maxCount"];
+	        this.iconPath = source["iconPath"];
+	    }
+	}
 	export class QuestReward {
 	    entry: number;
 	    title: string;
@@ -596,6 +628,7 @@ export namespace models {
 	    allowableRace?: number;
 	    bonding?: number;
 	    maxDurability?: number;
+	    maxCount?: number;
 	    armor?: number;
 	    statType1?: number;
 	    statValue1?: number;
@@ -621,6 +654,9 @@ export namespace models {
 	    dmgMin1?: number;
 	    dmgMax1?: number;
 	    dmgType1?: number;
+	    dmgMin2?: number;
+	    dmgMax2?: number;
+	    dmgType2?: number;
 	    holyRes?: number;
 	    fireRes?: number;
 	    natureRes?: number;
@@ -647,6 +683,7 @@ export namespace models {
 	    dmgType2: number;
 	    droppedBy: CreatureDrop[];
 	    rewardFrom: QuestReward[];
+	    contains: ItemDrop[];
 	
 	    static createFrom(source: any = {}) {
 	        return new ItemDetail(source);
@@ -670,6 +707,7 @@ export namespace models {
 	        this.allowableRace = source["allowableRace"];
 	        this.bonding = source["bonding"];
 	        this.maxDurability = source["maxDurability"];
+	        this.maxCount = source["maxCount"];
 	        this.armor = source["armor"];
 	        this.statType1 = source["statType1"];
 	        this.statValue1 = source["statValue1"];
@@ -695,6 +733,9 @@ export namespace models {
 	        this.dmgMin1 = source["dmgMin1"];
 	        this.dmgMax1 = source["dmgMax1"];
 	        this.dmgType1 = source["dmgType1"];
+	        this.dmgMin2 = source["dmgMin2"];
+	        this.dmgMax2 = source["dmgMax2"];
+	        this.dmgType2 = source["dmgType2"];
 	        this.holyRes = source["holyRes"];
 	        this.fireRes = source["fireRes"];
 	        this.natureRes = source["natureRes"];
@@ -721,6 +762,7 @@ export namespace models {
 	        this.dmgType2 = source["dmgType2"];
 	        this.droppedBy = this.convertValues(source["droppedBy"], CreatureDrop);
 	        this.rewardFrom = this.convertValues(source["rewardFrom"], QuestReward);
+	        this.contains = this.convertValues(source["contains"], ItemDrop);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -741,6 +783,7 @@ export namespace models {
 		    return a;
 		}
 	}
+	
 	export class ItemSetBrowse {
 	    itemsetId: number;
 	    name: string;
@@ -1194,11 +1237,11 @@ export namespace models {
 	    itemLevel?: number;
 	    binding?: string;
 	    unique?: boolean;
-	    itemType?: string;
-	    slot?: string;
+	    typeName?: string;
+	    slotName?: string;
 	    armor?: number;
-	    damageRange?: string;
-	    attackSpeed?: string;
+	    damageText?: string;
+	    speedText?: string;
 	    dps?: string;
 	    stats?: string[];
 	    resistances?: string[];
@@ -1209,6 +1252,7 @@ export namespace models {
 	    classes?: string;
 	    races?: string;
 	    setInfo?: ItemSetInfo;
+	    description?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new TooltipData(source);
@@ -1222,11 +1266,11 @@ export namespace models {
 	        this.itemLevel = source["itemLevel"];
 	        this.binding = source["binding"];
 	        this.unique = source["unique"];
-	        this.itemType = source["itemType"];
-	        this.slot = source["slot"];
+	        this.typeName = source["typeName"];
+	        this.slotName = source["slotName"];
 	        this.armor = source["armor"];
-	        this.damageRange = source["damageRange"];
-	        this.attackSpeed = source["attackSpeed"];
+	        this.damageText = source["damageText"];
+	        this.speedText = source["speedText"];
 	        this.dps = source["dps"];
 	        this.stats = source["stats"];
 	        this.resistances = source["resistances"];
@@ -1237,6 +1281,7 @@ export namespace models {
 	        this.classes = source["classes"];
 	        this.races = source["races"];
 	        this.setInfo = this.convertValues(source["setInfo"], ItemSetInfo);
+	        this.description = source["description"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -3,7 +3,7 @@ import { GetItemClasses, BrowseItemsByClass } from '../../../../wailsjs/go/main/
 import { SidebarPanel, ContentPanel, ScrollList, SectionHeader, ListItem, LootItem } from '../../ui'
 import { BrowseItemsByClassAndSlot, filterItems } from '../../../utils/databaseApi'
 
-function ItemsTab({ tooltipHook }) {
+function ItemsTab({ tooltipHook, onNavigate }) {
     const [itemClasses, setItemClasses] = useState([])
     const [selectedClass, setSelectedClass] = useState(null)
     const [selectedSubClass, setSelectedSubClass] = useState(null)
@@ -207,6 +207,7 @@ function ItemsTab({ tooltipHook }) {
                                 <LootItem 
                                     key={itemId || idx}
                                     item={item}
+                                    onClick={() => onNavigate && onNavigate('item', itemId)}
                                     {...handlers}
                                 />
                             )

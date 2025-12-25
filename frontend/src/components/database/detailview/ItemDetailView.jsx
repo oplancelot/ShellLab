@@ -8,9 +8,10 @@ import {
     DetailLoading,
     DetailError
 } from '../../ui'
-import { ItemTooltip } from '../../ui'
+import { ItemTooltip, LootItem } from '../../ui'
 
-const ItemDetailView = ({ entry, onBack, onNavigate, setHoveredItem, tooltipCache, loadTooltipData }) => {
+const ItemDetailView = ({ entry, onBack, onNavigate, tooltipHook }) => {
+    const { tooltipCache, loadTooltipData } = tooltipHook
     const [detail, setDetail] = useState(null)
     const [loading, setLoading] = useState(true)
 
@@ -22,6 +23,12 @@ const ItemDetailView = ({ entry, onBack, onNavigate, setHoveredItem, tooltipCach
         })
     }, [entry])
 
+    useEffect(() => {
+        if (!tooltipCache[entry]) {
+            loadTooltipData(entry)
+        }
+    }, [entry, tooltipCache, loadTooltipData])
+
     const renderTooltipBlock = () => {
         if (!detail) return null
         const dummyItem = { 
@@ -29,16 +36,14 @@ const ItemDetailView = ({ entry, onBack, onNavigate, setHoveredItem, tooltipCach
             quality: detail.quality, 
             name: detail.name 
         }
-        if (!tooltipCache[entry]) {
-            loadTooltipData(entry)
-        }
         
         return (
             <div className="inline-block align-top min-w-[300px]">
                 <ItemTooltip 
                     item={dummyItem} 
                     tooltip={tooltipCache[entry]} 
-                    style={{ position: 'static' }} 
+                    style={{ position: 'static' }}
+                    interactive={true} 
                 />
             </div>
         )
@@ -55,9 +60,16 @@ const ItemDetailView = ({ entry, onBack, onNavigate, setHoveredItem, tooltipCach
                 icon={
                     detail.iconPath ? (
                         <img 
-                            src={`/items/icons/${detail.iconPath}.jpg`} 
+                            src={`/items/icons/${detail.iconPath.toLowerCase()}.jpg`} 
                             className="w-full h-full object-cover" 
                             alt="" 
+                            onError={(e) => {
+                                if (!e.target.src.includes('zamimg.com')) {
+                                    e.target.src = `https://wow.zamimg.com/images/wow/icons/medium/${detail.iconPath.toLowerCase()}.jpg`
+                                } else {
+                                    e.target.style.display = 'none'
+                                }
+                            }}
                         />
                     ) : '?'
                 }
@@ -101,6 +113,7 @@ const ItemDetailView = ({ entry, onBack, onNavigate, setHoveredItem, tooltipCach
                     )}
                     
                     {/* Reward From */}
+                    {/* Reward From */}
                     {detail.rewardFrom?.length > 0 && (
                         <DetailSection title="Reward From">
                             <div className="space-y-1">
@@ -124,6 +137,25 @@ const ItemDetailView = ({ entry, onBack, onNavigate, setHoveredItem, tooltipCach
                                             </div>
                                         </div>
                                     </div>
+                                ))}
+                            </div>
+                        </DetailSection>
+                    )}
+
+                    {/* Contains */}
+                    {detail.contains?.length > 0 && (
+                        <DetailSection title="Contains">
+                            <div className="grid grid-cols-1 gap-1">
+                                {detail.contains.map(item => (
+                                    <LootItem 
+                                        key={item.entry}
+                                        item={{ 
+                                            ...item, 
+                                            dropChance: item.chance ? item.chance.toFixed(1) + '%' : null
+                                        }}
+                                        showDropChance={true}
+                                        onClick={() => onNavigate('item', item.entry)}
+                                    />
                                 ))}
                             </div>
                         </DetailSection>
