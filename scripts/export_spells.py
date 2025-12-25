@@ -14,21 +14,14 @@ def export_spells():
         
         print("Fetching spells from MySQL...")
         # Note: spell_template usually in tw_world (or world db)
-        mysql_cursor.execute("""
-            SELECT 
-                entry, name, description,
-                effectBasePoints1, effectBasePoints2, effectBasePoints3,
-                effectDieSides1, effectDieSides2, effectDieSides3
-            FROM spell_template
-            ORDER BY entry
-        """)
+        mysql_cursor.execute("SELECT * FROM spell_template")
         spells = mysql_cursor.fetchall()
         print(f"Found {len(spells)} spells")
         mysql_cursor.close()
         mysql_conn.close()
         
         os.makedirs(DATA_DIR, exist_ok=True)
-        json_path = os.path.join(DATA_DIR, 'spells.json')
+        json_path = os.path.join(DATA_DIR, 'spell_template.json')
         print(f"Exporting to {json_path}...")
         
         with open(json_path, 'w', encoding='utf-8') as f:

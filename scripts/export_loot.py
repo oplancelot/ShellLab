@@ -43,19 +43,19 @@ def export_loot():
         mysql_cursor = mysql_conn.cursor(dictionary=True)
         
         # 1. creature_loot_template
-        export_table_to_json(mysql_cursor, "creature_loot_template", "creature_loot.json")
+        export_table_to_json(mysql_cursor, "creature_loot_template", "creature_loot_template.json")
         
         # 2. reference_loot_template
-        export_table_to_json(mysql_cursor, "reference_loot_template", "reference_loot.json")
+        export_table_to_json(mysql_cursor, "reference_loot_template", "reference_loot_template.json")
         
         # 3. gameobject_loot_template
-        export_table_to_json(mysql_cursor, "gameobject_loot_template", "gameobject_loot.json")
+        export_table_to_json(mysql_cursor, "gameobject_loot_template", "gameobject_loot_template.json")
         
         # 4. item_loot_template (disenchanting/milling/prospecting usually)
-        export_table_to_json(mysql_cursor, "item_loot_template", "item_loot.json")
+        export_table_to_json(mysql_cursor, "item_loot_template", "item_loot_template.json")
         
         # 5. disenchant_loot_template
-        export_table_to_json(mysql_cursor, "disenchant_loot_template", "disenchant_loot.json")
+        export_table_to_json(mysql_cursor, "disenchant_loot_template", "disenchant_loot_template.json")
 
         mysql_cursor.close()
         mysql_conn.close()

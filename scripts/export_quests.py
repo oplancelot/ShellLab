@@ -14,22 +14,7 @@ def export_quests():
         
         print("Fetching quests...")
         # Fetching all details needed for the detail page
-        query = """
-            SELECT 
-                entry, Title, MinLevel, QuestLevel, Type, ZoneOrSort, 
-                Details, Objectives, OfferRewardText, EndText,
-                RewXP, RewOrReqMoney, RewMoneyMaxLevel, RewSpell,
-                RewItemId1, RewItemId2, RewItemId3, RewItemId4,
-                RewItemCount1, RewItemCount2, RewItemCount3, RewItemCount4,
-                RewChoiceItemId1, RewChoiceItemId2, RewChoiceItemId3, RewChoiceItemId4, RewChoiceItemId5, RewChoiceItemId6,
-                RewChoiceItemCount1, RewChoiceItemCount2, RewChoiceItemCount3, RewChoiceItemCount4, RewChoiceItemCount5, RewChoiceItemCount6,
-                RewRepFaction1, RewRepFaction2, RewRepFaction3, RewRepFaction4, RewRepFaction5,
-                RewRepValue1, RewRepValue2, RewRepValue3, RewRepValue4, RewRepValue5,
-                PrevQuestId, NextQuestId, ExclusiveGroup, NextQuestInChain,
-                RequiredRaces, RequiredClasses, SrcItemId
-            FROM quest_template
-            ORDER BY entry
-        """
+        query = "SELECT * FROM quest_template"
         mysql_cursor.execute(query)
         quests = mysql_cursor.fetchall()
         print(f"Found {len(quests)} quests")
@@ -40,7 +25,7 @@ def export_quests():
         os.makedirs(DATA_DIR, exist_ok=True)
         
         # Export to JSON
-        json_path = os.path.join(DATA_DIR, 'quests.json')
+        json_path = os.path.join(DATA_DIR, 'quest_template.json')
         print(f"Exporting to {json_path}...")
         
         with open(json_path, 'w', encoding='utf-8') as f:

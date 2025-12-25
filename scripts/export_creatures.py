@@ -13,14 +13,7 @@ def export_creatures():
         mysql_cursor = mysql_conn.cursor(dictionary=True)
         
         print("Fetching creatures...")
-        mysql_cursor.execute("""
-            SELECT entry, name, subname, level_min, level_max, 
-                health_min, health_max, mana_min, mana_max,
-                `type` as creature_type, `rank` as creature_rank, faction, npc_flags,
-                loot_id, skinning_loot_id, pickpocket_loot_id
-            FROM creature_template 
-            ORDER BY entry
-        """)
+        mysql_cursor.execute("SELECT * FROM creature_template")
         creatures = mysql_cursor.fetchall()
         print(f"Found {len(creatures)} creatures")
         mysql_cursor.close()
@@ -29,7 +22,7 @@ def export_creatures():
         # Ensure data directory exists
         os.makedirs(DATA_DIR, exist_ok=True)
         
-        json_path = os.path.join(DATA_DIR, 'creatures.json')
+        json_path = os.path.join(DATA_DIR, 'creature_template.json')
         print(f"Exporting to {json_path}...")
         
         with open(json_path, 'w', encoding='utf-8') as f:

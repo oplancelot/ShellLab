@@ -25,10 +25,9 @@ def export_items():
         
         print("Fetching item_template from MySQL...")
         # Select all columns
-        mysql_cursor.execute("SELECT * FROM item_template ORDER BY entry")
+        mysql_cursor.execute("SELECT * FROM item_template")
         
         # Fetch all results
-        # Assuming memory is sufficient (usually ~100MB for vanilla/t-wow databases)
         items = mysql_cursor.fetchall()
         print(f"Found {len(items)} items")
         
