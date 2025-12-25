@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"shelllab/backend/database"
+	"shelllab/backend/database/models"
 	"shelllab/backend/services"
 )
 
@@ -630,6 +631,15 @@ func (a *App) GetSpellSkillCategories() []*database.SpellSkillCategory {
 		return []*database.SpellSkillCategory{}
 	}
 	return cats
+}
+
+// GetSpellDetail returns detailed information about a spell
+func (a *App) GetSpellDetail(entry int) *models.SpellDetail {
+	spell := a.spellRepo.GetSpellDetail(entry)
+	if spell == nil {
+		return nil
+	}
+	return spell
 }
 
 // GetSpellSkillsByCategory returns skills for a category

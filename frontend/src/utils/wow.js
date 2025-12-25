@@ -10,3 +10,8 @@ export const getQualityColor = (quality) => {
     }
     return colors[quality] || '#ffffff'
 }
+
+export const getIconPath = (icon) => {
+    if (!icon) return '/items/icons/inv_misc_questionmark.jpg';
+    return `/items/icons/${icon.toLowerCase()}.jpg`;
+}

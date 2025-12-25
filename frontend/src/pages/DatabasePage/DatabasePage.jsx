@@ -7,7 +7,7 @@ import {
     TabBar,
     ItemTooltip 
 } from '../../components/ui'
-import { NPCDetailView, QuestDetailView, ItemDetailView } from '../../components/database/detailview'
+import { NPCDetailView, QuestDetailView, ItemDetailView, SpellDetailView } from '../../components/database/detailview'
 import { GRID_LAYOUT } from '../../components/common/layout'
 
 // Import tab components
@@ -90,7 +90,7 @@ function DatabasePage() {
                         <ObjectsTab />
                     )}
                     {activeTab === 'spells' && (
-                        <SpellsTab />
+                        <SpellsTab onNavigate={navigateTo} />
                     )}
                     {activeTab === 'factions' && (
                         <FactionsTab />
@@ -135,6 +135,14 @@ function DatabasePage() {
                         )}
                         {currentDetail.type === 'item' && (
                             <ItemDetailView 
+                                entry={currentDetail.entry} 
+                                onNavigate={navigateTo}
+                                onBack={goBack}
+                                tooltipHook={enhancedTooltipHook}
+                            />
+                        )}
+                        {currentDetail.type === 'spell' && (
+                            <SpellDetailView 
                                 entry={currentDetail.entry} 
                                 onNavigate={navigateTo}
                                 onBack={goBack}

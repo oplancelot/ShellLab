@@ -30,3 +30,11 @@ export const GetItemDetail = (entry) => {
     }
     return Promise.resolve(null)
 }
+
+export const GetSpellDetail = (entry) => {
+    console.log(`[API] Fetching Spell Detail for: ${entry}`);
+    if (window?.go?.main?.App?.GetSpellDetail) {
+        return window.go.main.App.GetSpellDetail(entry);
+    }
+    return Promise.resolve(null)
+}

@@ -4,7 +4,7 @@ import { GetSpellSkillCategories, GetSpellSkillsByCategory, GetSpellsBySkill, fi
 
 const SPELL_COLOR = '#772ce8'
 
-function SpellsTab() {
+function SpellsTab({ onNavigate }) {
     const [categories, setCategories] = useState([])
     const [skills, setSkills] = useState([])
     const [spells, setSpells] = useState([])
@@ -148,8 +148,9 @@ function SpellsTab() {
                         {filteredSpells.map(spell => (
                             <div 
                                 key={spell.entry}
-                                className="flex items-center gap-3 p-2 bg-white/[0.02] hover:bg-white/5 border-l-[3px] transition-colors rounded-r"
+                                className="flex items-center gap-3 p-2 bg-white/[0.02] hover:bg-white/5 border-l-[3px] transition-colors rounded-r cursor-pointer"
                                 style={{ borderLeftColor: SPELL_COLOR }}
+                                onClick={() => onNavigate && onNavigate('spell', spell.entry)}
                             >
                                 {spell.icon ? (
                                     <div 
