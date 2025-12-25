@@ -1,226 +1,239 @@
-# ShellLab - WoW Toolkit Desktop Edition
+# ShellLab - World of Warcraft Database Browser
 
-A comprehensive, cross-platform desktop application suite for World of Warcraft (Turtle WoW), providing powerful tools for item browsing, character planning, and gameplay optimization.
+A comprehensive desktop application for browsing and exploring World of Warcraft (Turtle WoW) game data, built with Wails, Go, and React.
 
-## 🎯 Project Overview
+## Features
 
-**ShellLab** is a standalone desktop application that brings essential WoW utilities outside the game client. Built with modern web technologies, it provides a fast, feature-rich environment for:
+### Database Browser
 
-- 📦 **Loot Browser** - Browse AtlasLoot database with advanced search
-- 🌳 **Talent Simulator** - Plan and optimize talent builds (planned)
-- ⚔️ **Equipment Manager** - Simulate gear setups and compare stats (planned)
-- 📊 **Stat Calculator** - Calculate character attributes with precision (planned)
-- 💥 **DPS Simulator** - Analyze and optimize damage output (planned)
-- ✨ **Enchant Browser** - Explore enchantment effects and combinations (planned)
+- **Items**: Complete item database with detailed statistics
+  - Search by name, class, subclass, and inventory slot
+  - WoW-style tooltips with complete item information
+  - Icon display with local cache and CDN fallback
+- **AtlasLoot Integration**: Complete loot table browser
 
-## 🏗️ Architecture
+  - 7 categories: Instances, Sets, Factions, PvP, World Bosses, World Events, Crafting
+  - Hierarchical navigation (Category → Module → Table → Items)
+  - Drop chance information where available
+
+- **Creatures**: Browse creature database
+
+  - Search by name and type
+  - Paginated results for performance
+  - View creature loot tables
+
+- **Quests**: Explore quest database
+
+  - Browse by zone or quest category
+  - View quest details and objectives
+
+- **Spells**: Search spell database
+
+  - Browse by class and skill category
+  - View spell effects and icons
+
+- **Game Objects**: Browse object database
+
+  - Search by name and type
+  - View object loot tables
+
+- **Factions**: View faction database
+  - Reputation and faction rewards
+
+## Architecture
 
 ### Technology Stack
 
-- **Backend**: Go + Wails + SQLite
-- **Frontend**: React + TypeScript + Vite
-- **Database**: SQLite (items, loot tables, icons)
-- **Data Sources**:
-  - AtlasLoot Enhanced (Lua files)
-  - Turtle WoW Database (SQL dumps)
-  - AoWoW Icon Database
+- **Backend**: Go 1.24 + Wails v2.11
+- **Frontend**: React 18 + TypeScript + Vite
+- **Database**: SQLite 3
+- **Styling**: Tailwind CSS with custom WoW theme
 
 ### Data Pipeline
 
-**New Architecture (ETF: MySQL -> JSON -> SQLite)**
-
-To decouple the application from the production MySQL database, we use a JSON-based intermediate format:
-
-1.  **Extract (Python)**: Export data from MySQL tables to JSON files (`data/*.json`).
-2.  **Import (Go)**: On application startup, the Go backend reads these JSON files and populates the local SQLite database.
-
-```mermaid
-graph LR
-    MySQL[(MySQL TW/AOWOW)] -->|Python Scripts| JSON[JSON Files]
-    JSON -->|Go Import| SQLite[(Local SQLite)]
-    SQLite --> App[ShellLab Desktop]
+```
+MySQL (Turtle WoW DB)
+  ↓ Python export scripts
+JSON Files (data/*.json)
+  ↓ Go importers (auto-generated)
+SQLite Database (shelllab.db)
+  ↓ Go repositories
+React Frontend
 ```
 
-## 🚀 Getting Started
+**Key Components**:
 
-### 1. Run Application
+1. **Export Scripts** (`scripts/export_*.py`): Extract data from MySQL to JSON
+2. **Code Generator** (`scripts/generate_go_code.py`): Auto-generate Go importers from MySQL schema
+3. **Importers** (`backend/database/importers/`): Load JSON data into SQLite on first run
+4. **Repositories** (`backend/database/repositories/`): Query layer for frontend
+5. **Icon Service** (`backend/services/`): Downloads and caches item icons
 
-Start the application. It will automatically detect the JSON files in `data/` and import them into the internal SQLite database on startup.
+## Getting Started
+
+### Prerequisites
+
+- Go 1.24+
+- Node.js 18+
+- Wails v2.11+
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/yourusername/ShellLab.git
+cd ShellLab
+
+# Install dependencies
+go mod download
+cd frontend && npm install && cd ..
+
+# Run in development mode
 wails dev
 ```
 
-## 📊 Data Import Pipeline
+### First Run
 
-### Initial Setup
+On first startup, the application will:
 
-```bash
-# 1. Initialize database schema
-go run scripts/db_import/main.go init
+1. Create SQLite database schema
+2. Import all JSON data files from `data/` directory
+3. Download missing item icons
+4. This process takes ~1-2 minutes
 
-# 2. Extract items from SQL (one-time or when SQL updates)
-go run scripts/db_import/main.go extract-sql
+## Project Structure
 
-# 3. Import items to database
-go run scripts/db_import/main.go import-items
-
-# 4. Import icon mappings
-go run scripts/import_icons/main.go
-
-# 5. Extract AtlasLoot data
-go run scripts/extract_atlasloot/main.go
-
-# 6. Download item icons (optional)
-go run scripts/download_icons/main.go
+```
+ShellLab/
+├── addons/                    # AtlasLoot addon source (Lua files)
+├── backend/
+│   ├── database/
+│   │   ├── importers/         # Data importers (generated + custom)
+│   │   ├── models/            # Data models (generated + custom)
+│   │   ├── repositories/      # Query layer
+│   │   └── schema/            # Database schema definitions
+│   └── services/              # Background services (icons, etc.)
+├── data/                      # JSON data files (not in git)
+│   ├── *_template.json        # MySQL table dumps
+│   ├── atlasloot.json         # AtlasLoot data
+│   ├── item_icons.json        # Icon mappings
+│   └── shelllab.db            # SQLite database (generated)
+├── frontend/
+│   ├── src/
+│   │   ├── components/        # React components
+│   │   ├── pages/             # Page components
+│   │   ├── hooks/             # Custom React hooks
+│   │   └── utils/             # Utility functions
+│   └── public/
+│       └── items/icons/       # Cached item icons (downloaded)
+├── scripts/                   # Data export and code generation
+│   ├── export_*.py            # MySQL → JSON exporters
+│   ├── generate_go_code.py    # Auto-generate Go code from schema
+│   ├── extract_atlasloot.py   # Lua → JSON converter
+│   └── db_config.py           # MySQL connection config
+└── app.go                     # Wails application entry point
 ```
 
-### Incremental Updates
-
-For custom item modifications, use `data/item_template_update.json`:
-
-```bash
-# Edit update file
-cp data/item_template_update.json.example data/item_template_update.json
-edit data/item_template_update.json
-
-# Re-import (auto-applies updates)
-go run scripts/db_import/main.go import-items
-```
-
-See `scripts/db_import/README.md` for detailed pipeline documentation.
-
-## 🎮 Features
-
-### Current: Loot Browser ✅
-
-- 📚 **Complete AtlasLoot Integration**
-
-  - 7 categories, 27 modules, 895+ loot tables
-  - 7,248 items with full stats and tooltips
-  - Hierarchical navigation (Category → Module → Table → Items)
-
-- 🔍 **Advanced Search**
-
-  - Search by item name
-  - Filter by quality, class, level
-  - Quick access to loot sources
-
-- 💎 **WoW-Style Tooltips**
-  - Authentic item stat display
-  - Color-coded quality indicators
-  - Complete item information
-
-### Planned Features 🚧
-
-- 🌳 **Talent Simulator**
-
-  - All class talent trees
-  - Build sharing and import/export
-  - Talent point calculator
-
-- ⚔️ **Equipment Manager**
-
-  - Virtual gear slots
-  - Set bonus tracking
-  - Gear comparison tools
-
-- 📊 **Stat Calculator**
-
-  - Real-time attribute calculation
-  - Stat weight analysis
-  - Optimization suggestions
-
-- 💥 **DPS Simulator**
-
-  - Combat rotation simulation
-  - Gear impact analysis
-  - DPS ranking and comparison
-
-- ✨ **Enchant Browser**
-  - All enchantment effects
-  - Slot-specific filtering
-  - Cost and requirements display
-
-## 📚 Documentation
-
-- `scripts/db_import/README.md` - Data import pipeline
-- `docs/` - Additional documentation (TBD)
-
-## 🔧 Development
+## Development
 
 ### Database Schema
 
-```sql
--- Core tables
-items              -- Item templates (60K+ items)
-atlasloot_*        -- Loot hierarchy (4-tier structure)
-icons              -- Icon mappings (planned)
+The application uses a SQLite database with 30+ tables:
 
--- Future tables
-talents            -- Talent tree data
-enchants           -- Enchantment effects
-item_sets          -- Set bonuses
+**Core Tables**:
+
+- `item_template`: Items (1:1 MySQL mapping)
+- `creature_template`: Creatures
+- `quest_template`: Quests
+- `spell_template`: Spells
+- `gameobject_template`: Objects
+
+**AtlasLoot Tables**:
+
+- `atlasloot_categories`: Categories
+- `atlasloot_modules`: Modules
+- `atlasloot_tables`: Loot tables
+- `atlasloot_items`: Loot entries
+
+**Loot Tables**:
+
+- `creature_loot_template`
+- `item_loot_template`
+- `gameobject_loot_template`
+- `reference_loot_template`
+- `disenchant_loot_template`
+
+### Data Update Workflow
+
+1. **Export from MySQL** (when source data changes):
+
+```bash
+cd scripts
+python export_all_data.py  # Exports all tables to JSON
 ```
 
-### API Structure
+2. **Regenerate Go Code** (when schema changes):
 
-```go
-// Backend (Go)
-GetRootCategories()           // AtlasLoot categories
-GetChildCategories(parentId)  // Modules under category
-GetTables(parentId)           // Boss/table list
-GetTableLoot(tableId)         // Item list for table
-GetItemTooltip(itemId)        // Tooltip data
-
-// Future APIs
-GetTalentTree(classId)
-CalculateStats(gear[])
-SimulateDPS(config)
+```bash
+python generate_go_code.py  # Creates importers, models, schemas
 ```
 
-## 🤝 Contributing
+3. **Rebuild Database**:
 
-Contributions are welcome! This is an educational project for the Turtle WoW community.
+```bash
+rm data/shelllab.db  # Remove old database
+wails dev            # Reimport on startup
+```
 
-## 📝 License
+### Icon Management
 
-This project is for educational and personal use.
+Icons are automatically downloaded from:
 
-## 🔗 References
+1. **Wowhead CDN** (`wow.zamimg.com`) - Primary source
+2. **Turtle WoW Database** (`database.turtlecraft.gg`) - Fallback
+3. **Trinity AoWoW** (`aowow.trinitycore.info`) - Fallback
+
+Icons are cached in `frontend/public/items/icons/` for offline use.
+
+## Data Sources
+
+- **Turtle WoW Database**: https://database.turtlecraft.gg/
+- **AtlasLoot Enhanced**: Lua addon files
+- **AoWoW Icons**: Item icon mappings
+- **Wowhead Classic**: Icon CDN
+
+## Key Technologies
+
+- **Wails**: Go-powered desktop apps with web UI
+- **SQLite**: Embedded database (no server needed)
+- **Code Generation**: Python scripts auto-generate Go code
+- **React Hooks**: Modern state management
+- **Tailwind CSS**: Utility-first styling
+
+## Future Enhancements
+
+- Talent tree browser and calculator
+- Equipment set manager
+- Stat calculator and comparison
+- DPS simulator
+- Enchant and gem browser
+- Character planner
+- Export/import functionality
+
+## Contributing
+
+This project is for educational purposes and community use. Contributions welcome!
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+## References
 
 - [Turtle WoW](https://turtle-wow.org/)
+- [Wails Framework](https://wails.io/)
 - [AtlasLoot Enhanced](https://github.com/Otari98/AtlasLoot)
-- [AoWoW Database](https://github.com/Sarjuuk/aowow)
-- [TradeSkills Data](https://github.com/refaim/TradeSkillsData)
-- [Turtle-WoW Emulation Server Source Code](https://github.com/brian8544/turtle-wow)
-
-## 🎯 Roadmap
-
-- [x] **Phase 1**: Loot Browser
-
-  - [x] Database schema
-  - [x] Data import pipeline
-  - [x] AtlasLoot integration
-  - [x] Item tooltips
-  - [x] Search functionality
-
-- [ ] **Phase 2**: Talent Simulator
-
-  - [ ] Talent tree data extraction
-  - [ ] Interactive tree UI
-  - [ ] Build calculator
-
-- [ ] **Phase 3**: Equipment Manager
-
-  - [ ] Gear slot system
-  - [ ] Stat calculation engine
-  - [ ] Set bonus tracking
-
-- [ ] **Phase 4**: Advanced Simulators
-  - [ ] DPS simulation
-  - [ ] Stat optimization
-  - [ ] Enchant browser
+- [Turtle WoW Database](https://database.turtlecraft.gg/)
 
 ---
 

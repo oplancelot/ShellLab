@@ -48,3 +48,4 @@ data/shelllab_back.db
 data/shelllab.db
 .agent/
 __pycache__/
+import_log.txt
