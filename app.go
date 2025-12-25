@@ -133,6 +133,17 @@ func (a *App) startup(ctx context.Context) {
 	a.iconService = services.NewIconService(db)
 	a.iconService.StartDownload()
 
+	// Fix missing icons (limit to 50 per startup to avoid delays)
+	fmt.Println("Checking for missing item icons...")
+	iconFixService := services.NewIconFixService(db.DB(), filepath.Join("frontend", "public", "items", "icons"))
+	successCount, downloadCount, err := iconFixService.FixMissingIcons(50)
+	if err != nil {
+		fmt.Printf("  Warning: Icon fix encountered errors: %v\n", err)
+	}
+	if successCount > 0 {
+		fmt.Printf("  ✓ Fixed %d icons, downloaded %d images\n", successCount, downloadCount)
+	}
+
 	fmt.Println("✓ ShellLab ready!")
 }
 

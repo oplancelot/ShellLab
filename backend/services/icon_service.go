@@ -1,11 +1,13 @@
 package services
 
 import (
+	"database/sql"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -169,4 +171,329 @@ func (s *IconService) downloadFile(url, name string) error {
 
 	_, err = io.Copy(file, resp.Body)
 	return err
+}
+
+// DownloadSingleIcon downloads a single icon from URL to destination path
+func (s *IconService) DownloadSingleIcon(url, destPath string) error {
+	// Ensure directory exists
+	if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	resp, err := s.client.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("HTTP status %d", resp.StatusCode)
+	}
+
+	file, err := os.Create(destPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		os.Remove(destPath) // Clean up on error
+		return err
+	}
+
+	return nil
+}
+
+// ============================================================================
+// Icon Fix Methods
+// ============================================================================
+
+// IconFixService handles fetching and fixing missing item icons
+type IconFixService struct {
+	db      *sql.DB
+	iconDir string
+	baseURL string
+	delayMs int
+	client  *http.Client
+}
+
+// NewIconFixService creates a new icon fix service
+func NewIconFixService(db *sql.DB, iconDir string) *IconFixService {
+	return &IconFixService{
+		db:      db,
+		iconDir: iconDir,
+		baseURL: "https://database.turtlecraft.gg/?item=",
+		delayMs: 500, // Be nice to the server
+		client: &http.Client{
+			Timeout: 10 * time.Second,
+		},
+	}
+}
+
+// MissingIconItem represents an item with missing icon
+type MissingIconItem struct {
+	Entry int
+	Name  string
+}
+
+// GetMissingIcons returns list of items with missing icon_path
+func (s *IconFixService) GetMissingIcons() ([]MissingIconItem, error) {
+	rows, err := s.db.Query(`
+		SELECT entry, name 
+		FROM item_template 
+		WHERE icon_path IS NULL OR icon_path = ''
+		ORDER BY entry
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []MissingIconItem
+	for rows.Next() {
+		var item MissingIconItem
+		if err := rows.Scan(&item.Entry, &item.Name); err != nil {
+			continue
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
+}
+
+// GetMissingSpellIcons returns list of spells with missing icon
+func (s *IconFixService) GetMissingSpellIcons() ([]MissingIconItem, error) {
+	rows, err := s.db.Query(`
+		SELECT entry, name 
+		FROM spell_template 
+		WHERE iconName IS NULL OR iconName = ''
+		ORDER BY entry
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var spells []MissingIconItem
+	for rows.Next() {
+		var spell MissingIconItem
+		if err := rows.Scan(&spell.Entry, &spell.Name); err != nil {
+			continue
+		}
+		spells = append(spells, spell)
+	}
+
+	return spells, nil
+}
+
+// FetchIconFromWebsite fetches icon name from Turtle WoW database website
+func (s *IconFixService) FetchIconFromWebsite(entry int) (string, error) {
+	url := fmt.Sprintf("%s%d", s.baseURL, entry)
+
+	resp, err := s.client.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("HTTP status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// Look for icon in JavaScript data
+	// The website uses: Icon.create('iconName', ...) or _[itemId]={icon: 'iconName'}
+
+	// Try pattern 1: Icon.create('iconName', ...)
+	re1 := regexp.MustCompile(`Icon\.create\('([^']+)',`)
+	matches := re1.FindStringSubmatch(string(body))
+	if len(matches) > 1 {
+		return matches[1], nil
+	}
+
+	// Try pattern 2: _[itemId]={icon: 'iconName'}
+	re2 := regexp.MustCompile(fmt.Sprintf(`_\[%d\]=\{icon:\s*'([^']+)'\}`, entry))
+	matches = re2.FindStringSubmatch(string(body))
+	if len(matches) > 1 {
+		return matches[1], nil
+	}
+
+	// Try pattern 3: g_items[itemId] = {icon: 'iconName'}
+	re3 := regexp.MustCompile(fmt.Sprintf(`g_items\[%d\]\s*=\s*\{[^}]*icon:\s*'([^']+)'`, entry))
+	matches = re3.FindStringSubmatch(string(body))
+	if len(matches) > 1 {
+		return matches[1], nil
+	}
+
+	return "", fmt.Errorf("icon not found in HTML")
+}
+
+// UpdateIconPath updates icon_path in database
+func (s *IconFixService) UpdateIconPath(entry int, iconName string) error {
+	_, err := s.db.Exec(`
+		UPDATE item_template 
+		SET icon_path = ? 
+		WHERE entry = ?
+	`, iconName, entry)
+	return err
+}
+
+// FixSingleItem fixes icon for a single item (complete workflow)
+// Returns: success, iconName, error
+func (s *IconFixService) FixSingleItem(db *sql.DB, itemID int) (bool, string, error) {
+	// Check if item exists
+	var currentIcon string
+	err := db.QueryRow("SELECT COALESCE(icon_path, '') FROM item_template WHERE entry = ?", itemID).Scan(&currentIcon)
+	if err != nil {
+		return false, "", fmt.Errorf("item %d not found", itemID)
+	}
+
+	// Allow updating if icon is empty or is a placeholder
+	placeholders := []string{"template", "temp", ""}
+	isPlaceholder := false
+	currentIconLower := strings.ToLower(currentIcon)
+	for _, ph := range placeholders {
+		if currentIconLower == ph || strings.HasPrefix(currentIconLower, ph) {
+			isPlaceholder = true
+			break
+		}
+	}
+
+	if currentIcon != "" && !isPlaceholder {
+		return false, "", fmt.Errorf("already has valid icon: %s", currentIcon)
+	}
+
+	// Fetch icon name from website
+	iconName, err := s.FetchIconFromWebsite(itemID)
+	if err != nil {
+		return false, "", err
+	}
+
+	// Normalize to lowercase
+	iconName = strings.ToLower(iconName)
+
+	// Update database
+	if err := s.UpdateIconPath(itemID, iconName); err != nil {
+		return false, "", fmt.Errorf("failed to update database: %w", err)
+	}
+
+	// Download icon immediately
+	iconPath := filepath.Join(s.iconDir, iconName+".jpg")
+	if _, err := os.Stat(iconPath); os.IsNotExist(err) {
+		turtleURL := fmt.Sprintf("https://database.turtlecraft.gg/images/icons/large/%s.png", iconName)
+
+		// Create a temporary IconService for downloading
+		iconService := &IconService{
+			client:    s.client,
+			outputDir: s.iconDir,
+		}
+
+		if err := iconService.DownloadSingleIcon(turtleURL, iconPath); err != nil {
+			// Fallback to Wowhead
+			wowheadURL := fmt.Sprintf("https://wow.zamimg.com/images/wow/icons/medium/%s.jpg", iconName)
+			iconService.DownloadSingleIcon(wowheadURL, iconPath) // Ignore error
+		}
+	}
+
+	return true, iconName, nil
+}
+
+// UpdateSpellIcon updates iconName in spell_template
+func (s *IconFixService) UpdateSpellIcon(spellID int, iconName string) error {
+	_, err := s.db.Exec(`
+		UPDATE spell_template 
+		SET iconName = ? 
+		WHERE entry = ?
+	`, iconName, spellID)
+	return err
+}
+
+// FixSingleSpell fixes icon for a single spell (complete workflow)
+// Returns: success, iconName, error
+func (s *IconFixService) FixSingleSpell(db *sql.DB, spellID int) (bool, string, error) {
+	// Check if spell exists
+	var currentIcon string
+	err := db.QueryRow("SELECT COALESCE(iconName, '') FROM spell_template WHERE entry = ?", spellID).Scan(&currentIcon)
+	if err != nil {
+		return false, "", fmt.Errorf("spell %d not found", spellID)
+	}
+
+	// Allow updating if icon is empty or is a placeholder
+	placeholders := []string{"template", "temp", ""}
+	isPlaceholder := false
+	currentIconLower := strings.ToLower(currentIcon)
+	for _, ph := range placeholders {
+		if currentIconLower == ph || strings.HasPrefix(currentIconLower, ph) {
+			isPlaceholder = true
+			break
+		}
+	}
+
+	if currentIcon != "" && !isPlaceholder {
+		return false, "", fmt.Errorf("already has valid icon: %s", currentIcon)
+	}
+
+	// Fetch icon name from website (note: spell uses ?spell= parameter)
+	url := fmt.Sprintf("https://database.turtlecraft.gg/?spell=%d", spellID)
+	resp, err := s.client.Get(url)
+	if err != nil {
+		return false, "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return false, "", fmt.Errorf("HTTP status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, "", err
+	}
+
+	// Use same patterns to extract icon
+	var iconName string
+	re1 := regexp.MustCompile(`Icon\.create\('([^']+)',`)
+	matches := re1.FindStringSubmatch(string(body))
+	if len(matches) > 1 {
+		iconName = matches[1]
+	} else {
+		re2 := regexp.MustCompile(fmt.Sprintf(`_\[%d\]=\{icon:\s*'([^']+)'\}`, spellID))
+		matches = re2.FindStringSubmatch(string(body))
+		if len(matches) > 1 {
+			iconName = matches[1]
+		} else {
+			return false, "", fmt.Errorf("icon not found in HTML")
+		}
+	}
+
+	// Normalize to lowercase
+	iconName = strings.ToLower(iconName)
+
+	// Update database
+	if err := s.UpdateSpellIcon(spellID, iconName); err != nil {
+		return false, "", fmt.Errorf("failed to update database: %w", err)
+	}
+
+	// Download icon immediately
+	iconPath := filepath.Join(s.iconDir, iconName+".jpg")
+	if _, err := os.Stat(iconPath); os.IsNotExist(err) {
+		turtleURL := fmt.Sprintf("https://database.turtlecraft.gg/images/icons/large/%s.png", iconName)
+
+		iconService := &IconService{
+			client:    s.client,
+			outputDir: s.iconDir,
+		}
+
+		if err := iconService.DownloadSingleIcon(turtleURL, iconPath); err != nil {
+			wowheadURL := fmt.Sprintf("https://wow.zamimg.com/images/wow/icons/medium/%s.jpg", iconName)
+			iconService.DownloadSingleIcon(wowheadURL, iconPath) // Ignore error
+		}
+	}
+
+	return true, iconName, nil
 }
