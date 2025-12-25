@@ -2,6 +2,7 @@ import { useState } from 'react'
 import AtlasLootPage from './components/AtlasLootPage'
 import DatabasePage from './pages/DatabasePage/DatabasePage'
 import SearchPage from './components/SearchPage'
+import SettingsPage from './pages/SettingsPage'
 import { TabButton } from './components/ui'
 
 function App() {
@@ -35,6 +36,12 @@ function App() {
                         >
                             Search
                         </TabButton>
+                        <TabButton 
+                            active={activeTab === 'settings'} 
+                            onClick={() => setActiveTab('settings')}
+                        >
+                            Settings
+                        </TabButton>
                     </nav>
                 </div>
             </header>
@@ -44,6 +51,7 @@ function App() {
                 {activeTab === 'atlas' && <AtlasLootPage />}
                 {activeTab === 'database' && <DatabasePage />}
                 {activeTab === 'search' && <SearchPage />}
+                {activeTab === 'settings' && <SettingsPage />}
             </main>
         </div>
     )

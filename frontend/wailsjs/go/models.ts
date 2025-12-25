@@ -34,6 +34,24 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class FixMissingIconsResult {
+	    totalMissing: number;
+	    fixed: number;
+	    failed: number;
+	    message: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new FixMissingIconsResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.totalMissing = source["totalMissing"];
+	        this.fixed = source["fixed"];
+	        this.failed = source["failed"];
+	        this.message = source["message"];
+	    }
+	}
 	export class LegacyLootItem {
 	    itemId: number;
 	    itemName: string;

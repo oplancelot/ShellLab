@@ -13,6 +13,10 @@ export function BrowseItemsByClass(arg1:number,arg2:number,arg3:string):Promise<
 
 export function BrowseItemsByClassAndSlot(arg1:number,arg2:number,arg3:number,arg4:string):Promise<Array<models.Item>>;
 
+export function FixMissingIcons(arg1:string,arg2:number):Promise<main.FixMissingIconsResult>;
+
+export function FixSingleItemIcon(arg1:number):Promise<main.FixMissingIconsResult>;
+
 export function GetCategories():Promise<Array<string>>;
 
 export function GetCategoryItems(arg1:number):Promise<Array<models.Item>>;

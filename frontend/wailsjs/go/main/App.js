@@ -22,6 +22,14 @@ export function BrowseItemsByClassAndSlot(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['BrowseItemsByClassAndSlot'](arg1, arg2, arg3, arg4);
 }
 
+export function FixMissingIcons(arg1, arg2) {
+  return window['go']['main']['App']['FixMissingIcons'](arg1, arg2);
+}
+
+export function FixSingleItemIcon(arg1) {
+  return window['go']['main']['App']['FixSingleItemIcon'](arg1);
+}
+
 export function GetCategories() {
   return window['go']['main']['App']['GetCategories']();
 }
