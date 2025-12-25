@@ -16,6 +16,7 @@ import {
   LootItem,
   ItemTooltip,
 } from "./ui";
+import { ItemDetailView } from "./database/detailview";
 import { filterItems } from "../utils/databaseApi";
 import { GRID_LAYOUT } from "./common/layout";
 import { getQualityColor } from "../utils/wow";
@@ -46,6 +47,21 @@ function AtlasLootPage() {
   const [moduleFilter, setModuleFilter] = useState("");
   const [tableFilter, setTableFilter] = useState("");
   const [itemFilter, setItemFilter] = useState("");
+
+  // Detail view navigation
+  const [detailStack, setDetailStack] = useState([]); // Stack of views: { type, entry }
+  
+  const navigateTo = (type, entry) => {
+    console.log(`[AtlasLootPage] Navigating to ${type} with entry: ${entry}`);
+    setDetailStack(prev => [...prev, { type, entry }]);
+  };
+  
+  const goBack = () => {
+    console.log(`[AtlasLootPage] Going back. Previous stack size: ${detailStack.length}`);
+    setDetailStack(prev => prev.slice(0, -1));
+  };
+
+  const currentDetail = detailStack.length > 0 ? detailStack[detailStack.length - 1] : null;
 
   // Use shared tooltip hook
   const {
@@ -173,166 +189,210 @@ function AtlasLootPage() {
 
   return (
     <PageLayout>
-      {error && (
-        <div className="mx-3 mt-3 p-3 bg-red-900/30 border border-red-500/30 rounded flex items-center gap-3 text-red-400">
-          <span>❌</span>
-          <span>{error}</span>
-        </div>
-      )}
+      {/* Main Loot Browser - Hidden when detail active */}
+      <div className={`flex flex-col h-full flex-1 overflow-hidden ${currentDetail ? 'hidden' : ''}`}>
+        {error && (
+          <div className="mx-3 mt-3 p-3 bg-red-900/30 border border-red-500/30 rounded flex items-center gap-3 text-red-400">
+            <span>❌</span>
+            <span>{error}</span>
+          </div>
+        )}
 
-      <ContentGrid columns={GRID_LAYOUT}>
-        {/* Column 1: Categories */}
-        <SidebarPanel>
-          <SectionHeader
-            title={`Categories (${filteredCategories.length})`}
-            placeholder="Filter categories..."
-            onFilterChange={setCategoryFilter}
-          />
-          <ScrollList>
-            {loading && categories.length === 0 && (
-              <div className="p-4 text-center text-wow-gold italic animate-pulse">
-                Loading...
-              </div>
-            )}
-            {filteredCategories.map((cat) => (
-              <ListItem
-                key={cat}
-                active={selectedCategory === cat}
-                onClick={() => {
-                  setSelectedCategory(cat);
-                  setCategoryFilter("");
-                }}
-              >
-                {cat}
-              </ListItem>
-            ))}
-          </ScrollList>
-        </SidebarPanel>
-
-        {/* Column 2: Modules/Instances */}
-        <SidebarPanel>
-          <SectionHeader
-            title={
-              selectedCategory
-                ? `${selectedCategory} (${filteredModules.length})`
-                : "Select Category"
-            }
-            placeholder="Filter modules..."
-            onFilterChange={setModuleFilter}
-          />
-          <ScrollList>
-            {loading && modules.length === 0 && selectedCategory && (
-              <div className="p-4 text-center text-wow-gold italic animate-pulse">
-                Loading...
-              </div>
-            )}
-            {filteredModules.map((mod) => (
-              <ListItem
-                key={mod}
-                active={selectedModule === mod}
-                onClick={() => {
-                  setSelectedModule(mod);
-                  setModuleFilter("");
-                }}
-              >
-                {mod}
-              </ListItem>
-            ))}
-          </ScrollList>
-        </SidebarPanel>
-
-        {/* Column 3: Tables/Bosses */}
-        <SidebarPanel>
-          <SectionHeader
-            title={
-              selectedModule
-                ? `${selectedModule} (${filteredTables.length})`
-                : "Select Instance"
-            }
-            placeholder="Filter bosses..."
-            onFilterChange={setTableFilter}
-          />
-          <ScrollList>
-            {loading && tables.length === 0 && selectedModule && (
-              <div className="p-4 text-center text-wow-gold italic animate-pulse">
-                Loading...
-              </div>
-            )}
-            {filteredTables.map((tbl, idx) => {
-              const originalTable = tbl.original;
-              const tableKey =
-                typeof originalTable === "string"
-                  ? originalTable
-                  : originalTable.key || originalTable;
-              return (
+        <ContentGrid columns={GRID_LAYOUT}>
+          {/* Column 1: Categories */}
+          <SidebarPanel>
+            <SectionHeader
+              title={`Categories (${filteredCategories.length})`}
+              placeholder="Filter categories..."
+              onFilterChange={setCategoryFilter}
+            />
+            <ScrollList>
+              {loading && categories.length === 0 && (
+                <div className="p-4 text-center text-wow-gold italic animate-pulse">
+                  Loading...
+                </div>
+              )}
+              {filteredCategories.map((cat) => (
                 <ListItem
-                  key={tableKey || idx}
-                  active={selectedTable === tableKey}
+                  key={cat}
+                  active={selectedCategory === cat}
                   onClick={() => {
-                    loadLoot(tableKey);
-                    setTableFilter("");
+                    setSelectedCategory(cat); // Original logic
+                    setCategoryFilter("");
                   }}
                 >
-                  {tbl.name}
+                  {cat}
                 </ListItem>
-              );
-            })}
-          </ScrollList>
-        </SidebarPanel>
+              ))}
+            </ScrollList>
+          </SidebarPanel>
 
-        {/* Column 4: Loot Display */}
-        <ContentPanel>
-          <SectionHeader
-            title={
-              loot ? `${loot.bossName} (${filteredItems.length})` : "Loot Table"
-            }
-            placeholder="Filter items..."
-            onFilterChange={setItemFilter}
-          />
+          {/* Column 2: Modules/Instances */}
+          <SidebarPanel>
+            <SectionHeader
+              title={
+                selectedCategory
+                  ? `${selectedCategory} (${filteredModules.length})`
+                  : "Select Category" // Original text
+              }
+              placeholder="Filter modules..."
+              onFilterChange={setModuleFilter}
+            />
+            <ScrollList>
+              {loading && modules.length === 0 && selectedCategory && ( // Original loading condition
+                <div className="p-4 text-center text-wow-gold italic animate-pulse">
+                  Loading...
+                </div>
+              )}
+              {filteredModules.map((mod) => (
+                <ListItem
+                  key={mod}
+                  active={selectedModule === mod}
+                  onClick={() => {
+                    setSelectedModule(mod); // Original logic
+                    setModuleFilter("");
+                  }}
+                >
+                  {mod}
+                </ListItem>
+              ))}
+            </ScrollList>
+          </SidebarPanel>
 
-          {loading && !loot && selectedTable && (
-            <div className="flex-1 flex items-center justify-center text-wow-gold italic animate-pulse">
-              Loading loot...
-            </div>
-          )}
-
-          {filteredItems.length > 0 && (
-            <ScrollList className="grid grid-cols-1 xl:grid-cols-2 gap-1 p-2 auto-rows-min">
-              {filteredItems.map((item, idx) => {
-                const itemId = item.itemId || item.entry || item.id;
+          {/* Column 3: Tables/Bosses */}
+          <SidebarPanel>
+            <SectionHeader
+              title={
+                selectedModule
+                  ? `${selectedModule} (${filteredTables.length})`
+                  : "Select Instance" // Original text
+              }
+              placeholder="Filter bosses..."
+              onFilterChange={setTableFilter}
+            />
+            <ScrollList>
+              {loading && tables.length === 0 && selectedModule && ( // Original loading condition
+                <div className="p-4 text-center text-wow-gold italic animate-pulse">
+                  Loading...
+                </div>
+              )}
+              {filteredTables.map((tbl, idx) => { // Original idx for key
+                const originalTable = tbl.original; // Original logic
+                const tableKey =
+                  typeof originalTable === "string"
+                    ? originalTable
+                    : originalTable.key || originalTable;
                 return (
-                  <LootItem
-                    key={itemId || idx}
-                    item={{
-                      entry: itemId,
-                      name: item.itemName || item.name,
-                      quality: item.quality,
-                      iconPath: item.iconName || item.iconPath,
-                      dropChance: item.dropChance,
+                  <ListItem
+                    key={tableKey || idx} // Original key logic
+                    active={selectedTable === tableKey}
+                    onClick={() => {
+                      loadLoot(tableKey);
+                      setTableFilter("");
                     }}
-                    showDropChance
-                    onMouseEnter={() => handleItemEnter(itemId)}
-                    onMouseMove={(e) => handleMouseMove(e, itemId)}
-                    onMouseLeave={() => setHoveredItem(null)}
-                  />
+                  >
+                    {tbl.name}
+                  </ListItem>
                 );
               })}
             </ScrollList>
-          )}
+          </SidebarPanel>
 
-          {!loading && filteredItems.length === 0 && selectedTable && (
-            <div className="flex-1 flex items-center justify-center text-gray-600 italic">
-              No loot data found for {selectedTable}
-            </div>
-          )}
+          {/* Column 4: Loot Display */}
+          <ContentPanel>
+            <SectionHeader
+              title={
+                loot ? `${loot.bossName} (${filteredItems.length})` : "Loot Table"
+              }
+              placeholder="Filter items..."
+              onFilterChange={setItemFilter}
+            />
 
-          {!selectedTable && (
-            <div className="flex-1 flex items-center justify-center text-gray-600 italic">
-              Select a boss to view loot
-            </div>
-          )}
-        </ContentPanel>
-      </ContentGrid>
+            {loading && !loot && selectedTable && (
+              <div className="flex-1 flex items-center justify-center text-wow-gold italic animate-pulse">
+                Loading loot...
+              </div>
+            )}
+
+            {filteredItems.length > 0 && (
+              <ScrollList className="grid grid-cols-1 xl:grid-cols-2 gap-1 p-2 auto-rows-min">
+                {filteredItems.map((item, idx) => {
+                  const itemId = item.itemId || item.entry || item.id;
+                  return (
+                    <LootItem
+                      key={itemId || idx}
+                      item={{
+                        entry: itemId,
+                        name: item.itemName || item.name,
+                        quality: item.quality,
+                        iconPath: item.iconName || item.iconPath,
+                        dropChance: item.dropChance,
+                      }}
+                      showDropChance
+                      onClick={() => navigateTo('item', itemId)}
+                      onMouseEnter={() => handleItemEnter(itemId)}
+                      onMouseMove={(e) => handleMouseMove(e, itemId)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                    />
+                  );
+                })}
+              </ScrollList>
+            )}
+
+            {!loading && filteredItems.length === 0 && selectedTable && (
+              <div className="flex-1 flex items-center justify-center text-gray-600 italic">
+                No loot data found for {selectedTable}
+              </div>
+            )}
+
+            {!selectedTable && (
+              <div className="flex-1 flex items-center justify-center text-gray-600 italic">
+                Select a boss to view loot
+              </div>
+            )}
+          </ContentPanel>
+        </ContentGrid>
+      </div>
+
+      {/* Detail View Overlay */}
+      {currentDetail && (
+        <div className="flex flex-col h-full flex-1 overflow-hidden">
+          {/* Detail Header with breadcrumb */}
+          <div className="bg-bg-hover px-4 py-2 border-b border-border-dark flex items-center gap-4">
+            <button 
+              onClick={goBack}
+              className="bg-bg-panel border border-border-light text-gray-400 px-4 py-1.5 rounded hover:bg-bg-active hover:text-white transition-colors text-sm"
+            >
+              ← Back
+            </button>
+            <span className="text-gray-500 text-sm">
+              Viewing: <b className="text-gray-300 uppercase">{currentDetail.type}</b> 
+              <span className="ml-2 font-mono bg-black/20 px-1.5 py-0.5 rounded">#{currentDetail.entry}</span>
+            </span>
+          </div>
+          
+          {/* Detail Content */}
+          <div className="flex-1 overflow-auto">
+            {currentDetail.type === 'item' && (
+              <ItemDetailView 
+                entry={currentDetail.entry} 
+                onNavigate={navigateTo}
+                onBack={goBack}
+                tooltipHook={{
+                  hoveredItem,
+                  setHoveredItem,
+                  tooltipCache,
+                  loadTooltipData,
+                  handleMouseMove,
+                  handleItemEnter,
+                  getTooltipStyle,
+                  renderTooltip: () => null, // This is the specific change for tooltipHook
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Global Tooltip Layer */}
       {hoveredItem && tooltipCache[hoveredItem] && (
