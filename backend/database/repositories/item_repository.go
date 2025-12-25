@@ -534,7 +534,10 @@ func (r *ItemRepository) GetTooltipData(itemID int) (*models.TooltipData, error)
 	tooltip.Binding = helpers.GetBondingName(item.Bonding)
 
 	// Item Type and Slot
-	tooltip.ItemType = strings.ReplaceAll(helpers.GetSubClassName(item.Class, item.SubClass), " (One-Handed)", "")
+	itemType := helpers.GetSubClassName(item.Class, item.SubClass)
+	itemType = strings.ReplaceAll(itemType, " (One-Handed)", "")
+	itemType = strings.ReplaceAll(itemType, " (Two-Handed)", "")
+	tooltip.ItemType = itemType
 	tooltip.Slot = helpers.GetInventoryTypeName(item.InventoryType)
 
 	// Armor
@@ -708,7 +711,7 @@ func (r *ItemRepository) resolveSpellText(spellID int) string {
 			effectMiscValue1, effectMiscValue2, effectMiscValue3,
 			effectRadiusIndex1, effectRadiusIndex2, effectRadiusIndex3,
 			procChance, procCharges, durationIndex, rangeIndex,
-			COALESCE(dmg_multiplier1, 0)
+			COALESCE(dmgMultiplier1, 0)
 		FROM spell_template WHERE entry = ?
 	`, spellID).Scan(
 		&name, &description,
