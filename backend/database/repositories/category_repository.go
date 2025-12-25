@@ -86,7 +86,7 @@ func (r *CategoryRepository) GetCategoryItems(categoryID int) ([]*models.Item, e
 	rows, err := r.db.Query(`
 		SELECT i.entry, i.name, i.quality, i.item_level, i.required_level,
 			i.class, i.subclass, i.inventory_type, i.icon_path, ci.drop_rate
-		FROM items i
+		FROM item_template i
 		JOIN category_items ci ON i.entry = ci.item_id
 		WHERE ci.category_id = ?
 		ORDER BY ci.sort_order, i.quality DESC, i.item_level DESC
@@ -136,3 +136,4 @@ func (r *CategoryRepository) scanCategories(rows *sql.Rows) ([]*models.Category,
 	}
 	return cats, nil
 }
+

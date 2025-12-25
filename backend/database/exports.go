@@ -152,22 +152,6 @@ var FormatSpellDesc = helpers.FormatSpellDesc
 
 // === Importer Factory Functions ===
 
-func NewItemImporter(db *SQLiteDB) *importers.ItemImporter {
-	return importers.NewItemImporter(db.DB())
-}
-
-func NewCreatureImporter(db *SQLiteDB) *importers.CreatureImporter {
-	return importers.NewCreatureImporter(db.DB())
-}
-
-func NewQuestImporter(db *SQLiteDB) *importers.QuestImporter {
-	return importers.NewQuestImporter(db.DB())
-}
-
-func NewSpellImporter(db *SQLiteDB) *importers.SpellImporter {
-	return importers.NewSpellImporter(db.DB())
-}
-
 func NewLootImporter(db *SQLiteDB) *importers.LootImporter {
 	return importers.NewLootImporter(db.DB())
 }
@@ -190,4 +174,11 @@ func NewAtlasLootImporter(db *SQLiteDB) *importers.AtlasLootImporter {
 
 func NewMetadataImporter(db *SQLiteDB) *importers.MetadataImporter {
 	return importers.NewMetadataImporter(db.DB())
+}
+
+// GeneratedImporter for 1:1 MySQL tables
+type GeneratedImporter = importers.GeneratedImporter
+
+func NewGeneratedImporter(db *SQLiteDB) *GeneratedImporter {
+	return importers.NewGeneratedImporter(db.DB())
 }

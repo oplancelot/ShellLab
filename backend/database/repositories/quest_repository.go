@@ -41,9 +41,9 @@ func (r *QuestRepository) GetQuestCategories() ([]*models.QuestCategory, error) 
 
 	// Now count quests per category
 	rows2, err := r.db.Query(`
-		SELECT zone_or_sort, COUNT(*) 
-		FROM quests 
-		GROUP BY zone_or_sort
+		SELECT ZoneOrSort, COUNT(*) 
+		FROM quest_template 
+		GROUP BY ZoneOrSort
 	`)
 	if err != nil {
 		return catList, nil
@@ -74,14 +74,14 @@ func (r *QuestRepository) GetQuestCategories() ([]*models.QuestCategory, error) 
 // GetQuestsByCategory returns quests filtered by category (zone or sort)
 func (r *QuestRepository) GetQuestsByCategory(categoryID int) ([]*models.Quest, error) {
 	rows, err := r.db.Query(`
-		SELECT entry, IFNULL(title,''), IFNULL(quest_level,0), IFNULL(min_level,0), 
-			IFNULL(type,0), IFNULL(zone_or_sort,0),
-			IFNULL(rew_xp,0), IFNULL(rew_money,0),
-			IFNULL(required_races,0), IFNULL(required_classes,0), IFNULL(src_item_id,0),
-			IFNULL(prev_quest_id,0), IFNULL(next_quest_id,0), IFNULL(exclusive_group,0), IFNULL(next_quest_in_chain,0)
-		FROM quests
-		WHERE zone_or_sort = ?
-		ORDER BY quest_level, title
+		SELECT entry, IFNULL(Title,''), IFNULL(QuestLevel,0), IFNULL(MinLevel,0), 
+			IFNULL(Type,0), IFNULL(ZoneOrSort,0),
+			IFNULL(RewXP,0), IFNULL(RewOrReqMoney,0),
+			IFNULL(RequiredRaces,0), IFNULL(RequiredClasses,0), IFNULL(SrcItemId,0),
+			IFNULL(PrevQuestId,0), IFNULL(NextQuestId,0), IFNULL(ExclusiveGroup,0), IFNULL(NextQuestInChain,0)
+		FROM quest_template
+		WHERE ZoneOrSort = ?
+		ORDER BY QuestLevel, Title
 	`, categoryID)
 	if err != nil {
 		return nil, err
@@ -110,16 +110,16 @@ func (r *QuestRepository) GetQuestsByCategory(categoryID int) ([]*models.Quest, 
 // SearchQuests searches for quests by title
 func (r *QuestRepository) SearchQuests(query string) ([]*models.Quest, error) {
 	rows, err := r.db.Query(`
-		SELECT q.entry, IFNULL(q.title,''), IFNULL(q.quest_level,0), IFNULL(q.min_level,0), 
-			IFNULL(q.type,0), IFNULL(q.zone_or_sort,0),
-			IFNULL(q.rew_xp,0), IFNULL(q.rew_money,0),
-			IFNULL(q.required_races,0), IFNULL(q.required_classes,0), IFNULL(q.src_item_id,0),
-			IFNULL(q.prev_quest_id,0), IFNULL(q.next_quest_id,0), IFNULL(q.exclusive_group,0), IFNULL(q.next_quest_in_chain,0),
+		SELECT q.entry, IFNULL(q.Title,''), IFNULL(q.QuestLevel,0), IFNULL(q.MinLevel,0), 
+			IFNULL(q.Type,0), IFNULL(q.ZoneOrSort,0),
+			IFNULL(q.RewXP,0), IFNULL(q.RewOrReqMoney,0),
+			IFNULL(q.RequiredRaces,0), IFNULL(q.RequiredClasses,0), IFNULL(q.SrcItemId,0),
+			IFNULL(q.PrevQuestId,0), IFNULL(q.NextQuestId,0), IFNULL(q.ExclusiveGroup,0), IFNULL(q.NextQuestInChain,0),
 			c.name
-		FROM quests q
-		LEFT JOIN quest_categories c ON q.zone_or_sort = c.id
-		WHERE q.title LIKE ?
-		ORDER BY length(q.title), q.title
+		FROM quest_template q
+		LEFT JOIN quest_categories c ON q.ZoneOrSort = c.id
+		WHERE q.Title LIKE ?
+		ORDER BY length(q.Title), q.Title
 		LIMIT 50
 	`, "%"+query+"%")
 	if err != nil {
@@ -175,7 +175,7 @@ func (r *QuestRepository) GetQuestCategoryGroups() ([]*models.QuestCategoryGroup
 func (r *QuestRepository) GetQuestCategoriesByGroup(groupID int) ([]*models.QuestCategoryEnhanced, error) {
 	rows, err := r.db.Query(`
 		SELECT qce.id, qce.group_id, qce.name, 
-			COALESCE((SELECT COUNT(*) FROM quests WHERE zone_or_sort = qce.id), 0) as quest_count
+			COALESCE((SELECT COUNT(*) FROM quest_template WHERE ZoneOrSort = qce.id), 0) as quest_count
 		FROM quest_categories_enhanced qce
 		WHERE qce.group_id = ?
 		ORDER BY quest_count DESC, qce.name
@@ -198,7 +198,7 @@ func (r *QuestRepository) GetQuestCategoriesByGroup(groupID int) ([]*models.Ques
 
 // GetQuestsByEnhancedCategory returns quests for a given category (ZoneOrSort value)
 func (r *QuestRepository) GetQuestsByEnhancedCategory(categoryID int, nameFilter string) ([]*models.Quest, error) {
-	whereClause := "WHERE zone_or_sort = ?"
+	whereClause := "WHERE ZoneOrSort = ?"
 	args := []interface{}{categoryID}
 
 	if nameFilter != "" {
@@ -207,10 +207,10 @@ func (r *QuestRepository) GetQuestsByEnhancedCategory(categoryID int, nameFilter
 	}
 
 	query := fmt.Sprintf(`
-		SELECT entry, title, quest_level, min_level, type, zone_or_sort, rew_xp
-		FROM quests 
+		SELECT entry, Title, QuestLevel, MinLevel, Type, ZoneOrSort, RewXP
+		FROM quest_template 
 		%s
-		ORDER BY quest_level, title
+		ORDER BY QuestLevel, Title
 		LIMIT 10000
 	`, whereClause)
 
@@ -234,24 +234,24 @@ func (r *QuestRepository) GetQuestsByEnhancedCategory(categoryID int, nameFilter
 // GetQuestCount returns the total number of quests
 func (r *QuestRepository) GetQuestCount() (int, error) {
 	var count int
-	err := r.db.QueryRow("SELECT COUNT(*) FROM quests").Scan(&count)
+	err := r.db.QueryRow("SELECT COUNT(*) FROM quest_template").Scan(&count)
 	return count, err
 }
 
 // GetQuestDetail returns full quest information
 func (r *QuestRepository) GetQuestDetail(entry int) (*models.QuestDetail, error) {
 	row := r.db.QueryRow(`
-		SELECT entry, title, details, objectives, offer_reward_text, end_text,
-			quest_level, min_level, type, zone_or_sort,
-			required_races, required_classes,
-			rew_xp, rew_money, rew_spell,
-			rew_item1, rew_item2, rew_item3, rew_item4,
-			rew_item_count1, rew_item_count2, rew_item_count3, rew_item_count4,
-			rew_choice_item1, rew_choice_item2, rew_choice_item3, rew_choice_item4, rew_choice_item5, rew_choice_item6,
-			rew_choice_item_count1, rew_choice_item_count2, rew_choice_item_count3, rew_choice_item_count4, rew_choice_item_count5, rew_choice_item_count6,
-			rew_rep_faction1, rew_rep_faction2, rew_rep_value1, rew_rep_value2,
-			prev_quest_id, next_quest_id, exclusive_group, next_quest_in_chain
-		FROM quests WHERE entry = ?
+		SELECT entry, Title, Details, Objectives, OfferRewardText, EndText,
+			QuestLevel, MinLevel, Type, ZoneOrSort,
+			RequiredRaces, RequiredClasses,
+			RewXP, RewOrReqMoney, RewSpell,
+			RewItemId1, RewItemId2, RewItemId3, RewItemId4,
+			RewItemCount1, RewItemCount2, RewItemCount3, RewItemCount4,
+			RewChoiceItemId1, RewChoiceItemId2, RewChoiceItemId3, RewChoiceItemId4, RewChoiceItemId5, RewChoiceItemId6,
+			RewChoiceItemCount1, RewChoiceItemCount2, RewChoiceItemCount3, RewChoiceItemCount4, RewChoiceItemCount5, RewChoiceItemCount6,
+			RewRepFaction1, RewRepFaction2, RewRepValue1, RewRepValue2,
+			PrevQuestId, NextQuestId, ExclusiveGroup, NextQuestInChain
+		FROM quest_template WHERE entry = ?
 	`, entry)
 
 	q := &models.QuestDetail{}
@@ -299,7 +299,7 @@ func (r *QuestRepository) GetQuestDetail(entry int) (*models.QuestDetail, error)
 			item := &models.QuestItem{Entry: rewItems[i], Count: rewItemCounts[i]}
 			var name, icon string
 			var quality int
-			r.db.QueryRow("SELECT name, COALESCE(icon_path, ''), quality FROM items WHERE entry = ?", rewItems[i]).Scan(&name, &icon, &quality)
+			r.db.QueryRow("SELECT name, COALESCE(icon_path, ''), quality FROM item_template WHERE entry = ?", rewItems[i]).Scan(&name, &icon, &quality)
 			item.Name = name
 			item.Icon = icon
 			item.Quality = quality
@@ -313,7 +313,7 @@ func (r *QuestRepository) GetQuestDetail(entry int) (*models.QuestDetail, error)
 			item := &models.QuestItem{Entry: rewChoiceItems[i], Count: rewChoiceItemCounts[i]}
 			var name, icon string
 			var quality int
-			r.db.QueryRow("SELECT name, COALESCE(icon_path, ''), quality FROM items WHERE entry = ?", rewChoiceItems[i]).Scan(&name, &icon, &quality)
+			r.db.QueryRow("SELECT name, COALESCE(icon_path, ''), quality FROM item_template WHERE entry = ?", rewChoiceItems[i]).Scan(&name, &icon, &quality)
 			item.Name = name
 			item.Icon = icon
 			item.Quality = quality
@@ -324,14 +324,14 @@ func (r *QuestRepository) GetQuestDetail(entry int) (*models.QuestDetail, error)
 	// Process prev quests
 	if prevQuestID != 0 {
 		var title string
-		r.db.QueryRow("SELECT title FROM quests WHERE entry = ?", prevQuestID).Scan(&title)
+		r.db.QueryRow("SELECT Title FROM quest_template WHERE entry = ?", prevQuestID).Scan(&title)
 		q.PrevQuests = append(q.PrevQuests, &models.QuestSeriesItem{Entry: prevQuestID, Title: title})
 	}
 
 	// Process next/series quests
 	if nextQuestInChain != 0 {
 		var title string
-		r.db.QueryRow("SELECT title FROM quests WHERE entry = ?", nextQuestInChain).Scan(&title)
+		r.db.QueryRow("SELECT Title FROM quest_template WHERE entry = ?", nextQuestInChain).Scan(&title)
 		q.Series = append(q.Series, &models.QuestSeriesItem{Entry: nextQuestInChain, Title: title})
 	}
 

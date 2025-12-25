@@ -52,7 +52,12 @@ func (s *SQLiteDB) InitSchema() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Create core tables
+	// Create generated 1:1 MySQL tables FIRST (item_template, creature_template, etc.)
+	if _, err := s.db.Exec(schema.GeneratedSchema()); err != nil {
+		return fmt.Errorf("failed to create generated schema: %w", err)
+	}
+
+	// Create core tables (depends on 1:1 tables for indexes)
 	if _, err := s.db.Exec(schema.CoreSchema()); err != nil {
 		return fmt.Errorf("failed to create core schema: %w", err)
 	}

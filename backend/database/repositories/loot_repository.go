@@ -19,9 +19,9 @@ func NewLootRepository(db *sql.DB) *LootRepository {
 
 // GetCreatureLoot returns the flattened loot table for a creature
 func (r *LootRepository) GetCreatureLoot(creatureEntry int) ([]*models.LootItem, error) {
-	// 1. Get loot_id from creatures table
+	// 1. Get loot_id FROM creature_template table
 	var lootID int
-	err := r.db.QueryRow("SELECT loot_id FROM creatures WHERE entry = ?", creatureEntry).Scan(&lootID)
+	err := r.db.QueryRow("SELECT loot_id FROM creature_template WHERE entry = ?", creatureEntry).Scan(&lootID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return []*models.LootItem{}, nil
@@ -45,11 +45,11 @@ func (r *LootRepository) GetCreatureLoot(creatureEntry int) ([]*models.LootItem,
 		// Enrich with name, icon, quality
 		var name, icon string
 		var quality int
-		err := r.db.QueryRow("SELECT name, quality, icon_path FROM items WHERE entry = ?", itemID).Scan(&name, &quality, &icon)
+		err := r.db.QueryRow("SELECT name, quality, icon_path FROM item_template WHERE entry = ?", itemID).Scan(&name, &quality, &icon)
 		if err == nil {
-			item.ItemName = name
+			item.Name = name
 			item.Quality = quality
-			item.Icon = icon
+			item.IconPath = icon
 			lootList = append(lootList, item)
 		}
 	}
@@ -63,9 +63,9 @@ func (r *LootRepository) processLoot(entry int, multiplier float64, isRef bool, 
 		return nil // Prevent infinite recursion
 	}
 
-	tableName := "creature_loot"
+	tableName := "creature_loot_template"
 	if isRef {
-		tableName = "reference_loot"
+		tableName = "reference_loot_template"
 	}
 
 	rows, err := r.db.Query(`

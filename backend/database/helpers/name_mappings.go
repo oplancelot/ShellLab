@@ -354,3 +354,25 @@ func GetTriggerPrefix(trigger int) string {
 		return ""
 	}
 }
+
+// GetSchoolName returns the magic school name for damage types
+func GetSchoolName(school int) string {
+	switch school {
+	case 0:
+		return "Physical"
+	case 1:
+		return "Holy"
+	case 2:
+		return "Fire"
+	case 3:
+		return "Nature"
+	case 4:
+		return "Frost"
+	case 5:
+		return "Shadow"
+	case 6:
+		return "Arcane"
+	default:
+		return "Physical"
+	}
+}

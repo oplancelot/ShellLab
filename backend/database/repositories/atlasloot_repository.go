@@ -98,7 +98,7 @@ func (r *AtlasLootRepository) GetLootItems(catName, modName, tableKey string) ([
 		JOIN atlasloot_tables t ON al.table_id = t.id
 		JOIN atlasloot_modules m ON t.module_id = m.id
 		JOIN atlasloot_categories c ON m.category_id = c.id
-		JOIN items i ON al.item_id = i.entry
+		JOIN item_template i ON al.item_id = i.entry
 		WHERE c.display_name = ? AND m.display_name = ? AND t.table_key = ?
 		ORDER BY al.sort_order, i.name
 	`, catName, modName, tableKey)
@@ -111,7 +111,7 @@ func (r *AtlasLootRepository) GetLootItems(catName, modName, tableKey string) ([
 	for rows.Next() {
 		entry := &models.LootEntry{}
 		var sortOrder int
-		if err := rows.Scan(&entry.ItemID, &entry.DropChance, &sortOrder, &entry.ItemName, &entry.IconName, &entry.Quality); err != nil {
+		if err := rows.Scan(&entry.ItemID, &entry.DropChance, &sortOrder, &entry.Name, &entry.IconPath, &entry.Quality); err != nil {
 			return nil, err
 		}
 		items = append(items, entry)

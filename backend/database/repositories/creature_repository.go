@@ -21,10 +21,10 @@ func NewCreatureRepository(db *sql.DB) *CreatureRepository {
 // GetCreatureTypes returns all creature types with counts
 func (r *CreatureRepository) GetCreatureTypes() ([]*models.CreatureType, error) {
 	rows, err := r.db.Query(`
-		SELECT creature_type, COUNT(*) as count
-		FROM creatures
-		GROUP BY creature_type
-		ORDER BY creature_type
+		SELECT type, COUNT(*) as count
+		FROM creature_template
+		GROUP BY type
+		ORDER BY type
 	`)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (r *CreatureRepository) GetCreatureTypes() ([]*models.CreatureType, error) 
 
 // GetCreaturesByType returns creatures filtered by type
 func (r *CreatureRepository) GetCreaturesByType(creatureType int, nameFilter string, limit, offset int) ([]*models.Creature, int, error) {
-	whereClause := "WHERE creature_type = ?"
+	whereClause := "WHERE type = ?"
 	args := []interface{}{creatureType}
 
 	if nameFilter != "" {
@@ -56,7 +56,7 @@ func (r *CreatureRepository) GetCreaturesByType(creatureType int, nameFilter str
 
 	// Count
 	var count int
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM creatures %s", whereClause)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM creature_template %s", whereClause)
 	err := r.db.QueryRow(countQuery, args...).Scan(&count)
 	if err != nil {
 		return nil, 0, err
@@ -67,8 +67,8 @@ func (r *CreatureRepository) GetCreaturesByType(creatureType int, nameFilter str
 	dataQuery := fmt.Sprintf(`
 		SELECT entry, name, subname, level_min, level_max, 
 			health_min, health_max, mana_min, mana_max,
-			creature_type, creature_rank, faction, npc_flags
-		FROM creatures
+			type, rank, faction, npc_flags
+		FROM creature_template
 		%s
 		ORDER BY level_max DESC, name
 		LIMIT ? OFFSET ?
@@ -108,8 +108,8 @@ func (r *CreatureRepository) SearchCreatures(query string, limit int) ([]*models
 	rows, err := r.db.Query(`
 		SELECT entry, name, subname, level_min, level_max, 
 			health_min, health_max, mana_min, mana_max,
-			creature_type, creature_rank, faction, npc_flags
-		FROM creatures
+			type, rank, faction, npc_flags
+		FROM creature_template
 		WHERE name LIKE ?
 		ORDER BY length(name), name
 		LIMIT ?
@@ -149,8 +149,8 @@ func (r *CreatureRepository) GetCreatureByID(entry int) (*models.Creature, error
 	err := r.db.QueryRow(`
 		SELECT entry, name, subname, level_min, level_max, 
 			health_min, health_max, mana_min, mana_max,
-			creature_type, creature_rank, faction, npc_flags
-		FROM creatures WHERE entry = ?
+			type, rank, faction, npc_flags
+		FROM creature_template WHERE entry = ?
 	`, entry).Scan(
 		&c.Entry, &c.Name, &subname, &c.LevelMin, &c.LevelMax,
 		&c.HealthMin, &c.HealthMax, &c.ManaMin, &c.ManaMax,
@@ -170,7 +170,7 @@ func (r *CreatureRepository) GetCreatureByID(entry int) (*models.Creature, error
 // GetCreatureCount returns the total number of creatures
 func (r *CreatureRepository) GetCreatureCount() (int, error) {
 	var count int
-	err := r.db.QueryRow("SELECT COUNT(*) FROM creatures").Scan(&count)
+	err := r.db.QueryRow("SELECT COUNT(*) FROM creature_template").Scan(&count)
 	return count, err
 }
 
@@ -192,9 +192,9 @@ func (r *CreatureRepository) GetCreatureDetail(entry int) (*models.CreatureDetai
 
 	// Get quests this creature starts
 	rows, err := r.db.Query(`
-		SELECT q.entry, q.title
+		SELECT q.entry, q.Title
 		FROM npc_quest_start nqs
-		JOIN quests q ON nqs.quest = q.entry
+		JOIN quest_template q ON nqs.quest = q.entry
 		WHERE nqs.entry = ?
 	`, entry)
 	if err == nil {
@@ -208,9 +208,9 @@ func (r *CreatureRepository) GetCreatureDetail(entry int) (*models.CreatureDetai
 
 	// Get quests this creature ends
 	rows2, err := r.db.Query(`
-		SELECT q.entry, q.title
+		SELECT q.entry, q.Title
 		FROM npc_quest_end nqe
-		JOIN quests q ON nqe.quest = q.entry
+		JOIN quest_template q ON nqe.quest = q.entry
 		WHERE nqe.entry = ?
 	`, entry)
 	if err == nil {

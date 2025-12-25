@@ -24,7 +24,7 @@ func (r *GameObjectRepository) GetObjectTypes() ([]*models.ObjectType, error) {
 	countDerived := func(propID int, name string, id int) {
 		var count int
 		r.db.QueryRow(`
-			SELECT COUNT(DISTINCT o.entry) FROM objects o
+			SELECT COUNT(DISTINCT o.entry) FROM gameobject_template o
 			JOIN locks l ON o.data0 = l.id
 			WHERE o.type = 3 AND (l.prop1 = ? OR l.prop2 = ? OR l.prop3 = ? OR l.prop4 = ? OR l.prop5 = ?)
 		`, propID, propID, propID, propID, propID).Scan(&count)
@@ -49,7 +49,7 @@ func (r *GameObjectRepository) GetObjectTypes() ([]*models.ObjectType, error) {
 
 	for _, st := range standardTypes {
 		var count int
-		r.db.QueryRow("SELECT COUNT(*) FROM objects WHERE type = ?", st.ID).Scan(&count)
+		r.db.QueryRow("SELECT COUNT(*) FROM gameobject_template WHERE type = ?", st.ID).Scan(&count)
 		if count > 0 {
 			types = append(types, &models.ObjectType{ID: st.ID, Name: st.Name, Count: count})
 		}
@@ -63,7 +63,7 @@ func (r *GameObjectRepository) GetObjectsByType(typeID int, nameFilter string) (
 	var query string
 	var args []interface{}
 
-	baseSelect := "SELECT entry, name, type, display_id, size FROM objects o"
+	baseSelect := "SELECT entry, name, type, displayId as display_id, size FROM gameobject_template o"
 
 	if typeID < 0 {
 		var propID int
@@ -111,7 +111,7 @@ func (r *GameObjectRepository) GetObjectsByType(typeID int, nameFilter string) (
 // SearchObjects searches for objects by name
 func (r *GameObjectRepository) SearchObjects(query string) ([]*models.GameObject, error) {
 	rows, err := r.db.Query(`
-		SELECT entry, name, type, display_id, size FROM objects
+		SELECT entry, name, type, displayId as display_id, size FROM gameobject_template
 		WHERE name LIKE ? ORDER BY length(name), name LIMIT 50
 	`, "%"+query+"%")
 	if err != nil {
@@ -133,6 +133,6 @@ func (r *GameObjectRepository) SearchObjects(query string) ([]*models.GameObject
 // GetObjectCount returns total count
 func (r *GameObjectRepository) GetObjectCount() (int, error) {
 	var count int
-	err := r.db.QueryRow("SELECT COUNT(*) FROM objects").Scan(&count)
+	err := r.db.QueryRow("SELECT COUNT(*) FROM gameobject_template").Scan(&count)
 	return count, err
 }

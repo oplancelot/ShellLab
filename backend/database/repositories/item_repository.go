@@ -4,6 +4,7 @@ package repositories
 import (
 	"database/sql"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -26,7 +27,7 @@ func (r *ItemRepository) SearchItems(query string, limit int) ([]*models.Item, e
 	rows, err := r.db.Query(`
 		SELECT entry, name, quality, item_level, required_level, 
 			class, subclass, inventory_type, COALESCE(icon_path, '')
-		FROM items
+		FROM item_template
 		WHERE name LIKE ?
 		ORDER BY length(name), name
 		LIMIT ?
@@ -55,27 +56,29 @@ func (r *ItemRepository) SearchItems(query string, limit int) ([]*models.Item, e
 func (r *ItemRepository) GetItemByID(id int) (*models.Item, error) {
 	item := &models.Item{}
 	err := r.db.QueryRow(`
-		SELECT entry, name, description, quality, item_level, required_level,
+		SELECT entry, name, COALESCE(description, ''), quality, item_level, required_level,
 			class, subclass, inventory_type, COALESCE(icon_path, ''), sell_price,
-			allowable_class, allowable_race, bonding, max_durability, armor,
+			allowable_class, allowable_race, bonding, max_durability, max_count, armor,
 			stat_type1, stat_value1, stat_type2, stat_value2, stat_type3, stat_value3,
 			stat_type4, stat_value4, stat_type5, stat_value5, stat_type6, stat_value6,
 			stat_type7, stat_value7, stat_type8, stat_value8, stat_type9, stat_value9,
 			stat_type10, stat_value10,
 			delay, dmg_min1, dmg_max1, dmg_type1,
+			dmg_min2, dmg_max2, dmg_type2,
 			holy_res, fire_res, nature_res, frost_res, shadow_res, arcane_res,
-			spell_id1, spell_trigger1, spell_id2, spell_trigger2, spell_id3, spell_trigger3,
+			spellid_1, spelltrigger_1, spellid_2, spelltrigger_2, spellid_3, spelltrigger_3,
 			set_id
-		FROM items WHERE entry = ?
+		FROM item_template WHERE entry = ?
 	`, id).Scan(
 		&item.Entry, &item.Name, &item.Description, &item.Quality, &item.ItemLevel, &item.RequiredLevel,
 		&item.Class, &item.SubClass, &item.InventoryType, &item.IconPath, &item.SellPrice,
-		&item.AllowableClass, &item.AllowableRace, &item.Bonding, &item.MaxDurability, &item.Armor,
+		&item.AllowableClass, &item.AllowableRace, &item.Bonding, &item.MaxDurability, &item.MaxCount, &item.Armor,
 		&item.StatType1, &item.StatValue1, &item.StatType2, &item.StatValue2, &item.StatType3, &item.StatValue3,
 		&item.StatType4, &item.StatValue4, &item.StatType5, &item.StatValue5, &item.StatType6, &item.StatValue6,
 		&item.StatType7, &item.StatValue7, &item.StatType8, &item.StatValue8, &item.StatType9, &item.StatValue9,
 		&item.StatType10, &item.StatValue10,
 		&item.Delay, &item.DmgMin1, &item.DmgMax1, &item.DmgType1,
+		&item.DmgMin2, &item.DmgMax2, &item.DmgType2,
 		&item.HolyRes, &item.FireRes, &item.NatureRes, &item.FrostRes, &item.ShadowRes, &item.ArcaneRes,
 		&item.SpellID1, &item.SpellTrigger1, &item.SpellID2, &item.SpellTrigger2, &item.SpellID3, &item.SpellTrigger3,
 		&item.SetID,
@@ -89,7 +92,7 @@ func (r *ItemRepository) GetItemByID(id int) (*models.Item, error) {
 // GetItemCount returns the total number of items
 func (r *ItemRepository) GetItemCount() (int, error) {
 	var count int
-	err := r.db.QueryRow("SELECT COUNT(*) FROM items").Scan(&count)
+	err := r.db.QueryRow("SELECT COUNT(*) FROM item_template").Scan(&count)
 	return count, err
 }
 
@@ -97,7 +100,7 @@ func (r *ItemRepository) GetItemCount() (int, error) {
 func (r *ItemRepository) GetItemClasses() ([]*models.ItemClass, error) {
 	rows, err := r.db.Query(`
 		SELECT DISTINCT class, subclass, inventory_type
-		FROM items
+		FROM item_template
 		WHERE class IN (0,1,2,4,6,7,9,11,12,13,15)
 		ORDER BY class, subclass, inventory_type
 	`)
@@ -173,7 +176,7 @@ func (r *ItemRepository) GetItemsByClass(class, subClass int, nameFilter string,
 
 	// Count
 	var count int
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM items %s", whereClause)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM item_template %s", whereClause)
 	err := r.db.QueryRow(countQuery, args...).Scan(&count)
 	if err != nil {
 		return nil, 0, err
@@ -183,7 +186,7 @@ func (r *ItemRepository) GetItemsByClass(class, subClass int, nameFilter string,
 	dataArgs := append(args, limit, offset)
 	dataQuery := fmt.Sprintf(`
 		SELECT entry, name, quality, item_level, required_level, class, subclass, inventory_type, COALESCE(icon_path, '')
-		FROM items %s
+		FROM item_template %s
 		ORDER BY quality DESC, item_level DESC
 		LIMIT ? OFFSET ?
 	`, whereClause)
@@ -222,7 +225,7 @@ func (r *ItemRepository) GetItemsByClassAndSlot(class, subClass, inventoryType i
 
 	// Count
 	var count int
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM items %s", whereClause)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM item_template %s", whereClause)
 	err := r.db.QueryRow(countQuery, args...).Scan(&count)
 	if err != nil {
 		return nil, 0, err
@@ -232,7 +235,7 @@ func (r *ItemRepository) GetItemsByClassAndSlot(class, subClass, inventoryType i
 	dataArgs := append(args, limit, offset)
 	dataQuery := fmt.Sprintf(`
 		SELECT entry, name, quality, item_level, required_level, class, subclass, inventory_type, COALESCE(icon_path, '')
-		FROM items %s
+		FROM item_template %s
 		ORDER BY quality DESC, item_level DESC
 		LIMIT ? OFFSET ?
 	`, whereClause)
@@ -344,7 +347,7 @@ func (r *ItemRepository) AdvancedSearch(filter models.SearchFilter) (*models.Sea
 	}
 
 	// Count query
-	countQuery := "SELECT COUNT(*) FROM items " + whereClause
+	countQuery := "SELECT COUNT(*) FROM item_template " + whereClause
 	var totalCount int
 	err := r.db.QueryRow(countQuery, args...).Scan(&totalCount)
 	if err != nil {
@@ -354,7 +357,7 @@ func (r *ItemRepository) AdvancedSearch(filter models.SearchFilter) (*models.Sea
 	// Data query
 	dataQuery := fmt.Sprintf(`
 		SELECT entry, name, quality, item_level, required_level, class, subclass, inventory_type, COALESCE(icon_path, '')
-		FROM items
+		FROM item_template
 		%s
 		ORDER BY quality DESC, item_level DESC
 		LIMIT ? OFFSET ?
@@ -517,13 +520,19 @@ func (r *ItemRepository) GetTooltipData(itemID int) (*models.TooltipData, error)
 		ItemLevel:     item.ItemLevel,
 		RequiredLevel: item.RequiredLevel,
 		SellPrice:     item.SellPrice,
+		Description:   item.Description,
+	}
+
+	// Unique
+	if item.MaxCount == 1 {
+		tooltip.Unique = true
 	}
 
 	// Binding
 	tooltip.Binding = helpers.GetBondingName(item.Bonding)
 
 	// Item Type and Slot
-	tooltip.ItemType = helpers.GetSubClassName(item.Class, item.SubClass)
+	tooltip.ItemType = strings.ReplaceAll(helpers.GetSubClassName(item.Class, item.SubClass), " (One-Handed)", "")
 	tooltip.Slot = helpers.GetInventoryTypeName(item.InventoryType)
 
 	// Armor
@@ -538,8 +547,16 @@ func (r *ItemRepository) GetTooltipData(itemID int) (*models.TooltipData, error)
 			speed := float64(item.Delay) / 1000.0
 			tooltip.AttackSpeed = fmt.Sprintf("Speed %.2f", speed)
 			dps := (item.DmgMin1 + item.DmgMax1) / 2.0 / speed
-			tooltip.DPS = fmt.Sprintf("(%.1f damage per second)", dps)
+			// Round half up for DPS
+			dpsRounded := math.Round(dps*10) / 10
+			tooltip.DPS = fmt.Sprintf("(%.1f damage per second)", dpsRounded)
 		}
+	}
+
+	// Bonus Damage (e.g. Shadow Damage)
+	if item.DmgMin2 > 0 || item.DmgMax2 > 0 {
+		typeName := helpers.GetSchoolName(item.DmgType2)
+		tooltip.Stats = append(tooltip.Stats, fmt.Sprintf("+%.0f - %.0f %s Damage", item.DmgMin2, item.DmgMax2, typeName))
 	}
 
 	// Stats
@@ -626,7 +643,7 @@ func (r *ItemRepository) GetTooltipData(itemID int) (*models.TooltipData, error)
 			for _, id := range itemIDs {
 				if id > 0 {
 					var itemName string
-					r.db.QueryRow("SELECT name FROM items WHERE entry = ?", id).Scan(&itemName)
+					r.db.QueryRow("SELECT name FROM item_template WHERE entry = ?", id).Scan(&itemName)
 					setInfo.Items = append(setInfo.Items, itemName)
 				}
 			}
@@ -664,22 +681,22 @@ func (r *ItemRepository) resolveSpellText(spellID int) string {
 	var bp1, bp2, bp3, ds1, ds2, ds3 int
 	var durationIndex int
 
-	// Try to query with duration_index, fallback if column doesn't exist yet
+	// Try to query with durationIndex, fallback if column doesn't exist yet
 	err := r.db.QueryRow(`
 		SELECT COALESCE(name, ''), COALESCE(description, ''),
-			effect_base_points1, effect_base_points2, effect_base_points3,
-			effect_die_sides1, effect_die_sides2, effect_die_sides3,
-			duration_index
-		FROM spells WHERE entry = ?
+			effectBasePoints1, effectBasePoints2, effectBasePoints3,
+			effectDieSides1, effectDieSides2, effectDieSides3,
+			durationIndex
+		FROM spell_template WHERE entry = ?
 	`, spellID).Scan(&name, &description, &bp1, &bp2, &bp3, &ds1, &ds2, &ds3, &durationIndex)
 
 	if err != nil {
-		// Fallback for old schema (without duration_index)
+		// Fallback for old schema (without durationIndex)
 		err = r.db.QueryRow(`
 			SELECT COALESCE(name, ''), COALESCE(description, ''),
-				effect_base_points1, effect_base_points2, effect_base_points3,
-				effect_die_sides1, effect_die_sides2, effect_die_sides3
-			FROM spells WHERE entry = ?
+				effectBasePoints1, effectBasePoints2, effectBasePoints3,
+				effectDieSides1, effectDieSides2, effectDieSides3
+			FROM spell_template WHERE entry = ?
 		`, spellID).Scan(&name, &description, &bp1, &bp2, &bp3, &ds1, &ds2, &ds3)
 
 		if err != nil {
@@ -789,8 +806,8 @@ func (r *ItemRepository) GetItemDetail(entry int) (*models.ItemDetail, error) {
 	// Get dropped by creatures
 	rows, err := r.db.Query(`
 		SELECT c.entry, c.name, c.level_min, c.level_max, cl.chance
-		FROM creature_loot cl
-		JOIN creatures c ON cl.entry = c.loot_id
+		FROM creature_loot_template cl
+		JOIN creature_template c ON cl.entry = c.loot_id
 		WHERE cl.item = ?
 		ORDER BY cl.chance DESC
 		LIMIT 20
@@ -806,14 +823,14 @@ func (r *ItemRepository) GetItemDetail(entry int) (*models.ItemDetail, error) {
 
 	// Get quest rewards
 	rows2, err := r.db.Query(`
-		SELECT entry, title, quest_level, 0 as is_choice
-		FROM quests
-		WHERE rew_item1 = ? OR rew_item2 = ? OR rew_item3 = ? OR rew_item4 = ?
+		SELECT entry, Title, QuestLevel, 0 as is_choice
+		FROM quest_template
+		WHERE RewItemId1 = ? OR RewItemId2 = ? OR RewItemId3 = ? OR RewItemId4 = ?
 		UNION
-		SELECT entry, title, quest_level, 1 as is_choice
-		FROM quests
-		WHERE rew_choice_item1 = ? OR rew_choice_item2 = ? OR rew_choice_item3 = ? 
-		   OR rew_choice_item4 = ? OR rew_choice_item5 = ? OR rew_choice_item6 = ?
+		SELECT entry, Title, QuestLevel, 1 as is_choice
+		FROM quest_template
+		WHERE RewChoiceItemId1 = ? OR RewChoiceItemId2 = ? OR RewChoiceItemId3 = ? 
+		   OR RewChoiceItemId4 = ? OR RewChoiceItemId5 = ? OR RewChoiceItemId6 = ?
 		LIMIT 20
 	`, entry, entry, entry, entry, entry, entry, entry, entry, entry, entry)
 	if err == nil {
@@ -824,6 +841,23 @@ func (r *ItemRepository) GetItemDetail(entry int) (*models.ItemDetail, error) {
 			rows2.Scan(&reward.Entry, &reward.Title, &reward.Level, &isChoice)
 			reward.IsChoice = isChoice == 1
 			detail.RewardFrom = append(detail.RewardFrom, reward)
+		}
+	}
+
+	// Get contains (if item is a container)
+	rows3, err := r.db.Query(`
+		SELECT i.entry, i.name, i.quality, COALESCE(i.icon_path, ''), il.chance, il.mincount_or_ref, il.maxcount
+		FROM item_loot_template il
+		JOIN item_template i ON il.item = i.entry
+		WHERE il.entry = ?
+		ORDER BY il.chance DESC
+	`, entry)
+	if err == nil {
+		defer rows3.Close()
+		for rows3.Next() {
+			drop := &models.ItemDrop{}
+			rows3.Scan(&drop.Entry, &drop.Name, &drop.Quality, &drop.IconPath, &drop.Chance, &drop.MinCount, &drop.MaxCount)
+			detail.Contains = append(detail.Contains, drop)
 		}
 	}
 

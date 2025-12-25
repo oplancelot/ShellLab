@@ -19,6 +19,7 @@ type Item struct {
 	AllowableRace  int    `json:"allowableRace,omitempty"`
 	Bonding        int    `json:"bonding,omitempty"`
 	MaxDurability  int    `json:"maxDurability,omitempty"`
+	MaxCount       int    `json:"maxCount,omitempty"`
 	Armor          int    `json:"armor,omitempty"`
 	// Stats
 	StatType1   int `json:"statType1,omitempty"`
@@ -46,6 +47,9 @@ type Item struct {
 	DmgMin1  float64 `json:"dmgMin1,omitempty"`
 	DmgMax1  float64 `json:"dmgMax1,omitempty"`
 	DmgType1 int     `json:"dmgType1,omitempty"`
+	DmgMin2  float64 `json:"dmgMin2,omitempty"`
+	DmgMax2  float64 `json:"dmgMax2,omitempty"`
+	DmgType2 int     `json:"dmgType2,omitempty"`
 	// Resistances
 	HolyRes   int `json:"holyRes,omitempty"`
 	FireRes   int `json:"fireRes,omitempty"`
@@ -182,11 +186,11 @@ type TooltipData struct {
 	ItemLevel     int          `json:"itemLevel,omitempty"`
 	Binding       string       `json:"binding,omitempty"`
 	Unique        bool         `json:"unique,omitempty"`
-	ItemType      string       `json:"itemType,omitempty"`
-	Slot          string       `json:"slot,omitempty"`
+	ItemType      string       `json:"typeName,omitempty"`
+	Slot          string       `json:"slotName,omitempty"`
 	Armor         int          `json:"armor,omitempty"`
-	DamageRange   string       `json:"damageRange,omitempty"`
-	AttackSpeed   string       `json:"attackSpeed,omitempty"`
+	DamageRange   string       `json:"damageText,omitempty"`
+	AttackSpeed   string       `json:"speedText,omitempty"`
 	DPS           string       `json:"dps,omitempty"`
 	Stats         []string     `json:"stats,omitempty"`
 	Resistances   []string     `json:"resistances,omitempty"`
@@ -197,6 +201,7 @@ type TooltipData struct {
 	Classes       string       `json:"classes,omitempty"`
 	Races         string       `json:"races,omitempty"`
 	SetInfo       *ItemSetInfo `json:"setInfo,omitempty"`
+	Description   string       `json:"description,omitempty"`
 }
 
 // ItemClass represents a WoW item class (Weapon, Armor, etc.)
@@ -237,6 +242,18 @@ type ItemDetail struct {
 	DmgType2       int             `json:"dmgType2"`
 	DroppedBy      []*CreatureDrop `json:"droppedBy"`
 	RewardFrom     []*QuestReward  `json:"rewardFrom"`
+	Contains       []*ItemDrop     `json:"contains"`
+}
+
+// ItemDrop represents an item dropped by another item (e.g. from chest/clam)
+type ItemDrop struct {
+	Entry    int     `json:"entry"`
+	Name     string  `json:"name"`
+	Quality  int     `json:"quality"`
+	Chance   float64 `json:"chance"`
+	MinCount int     `json:"minCount"`
+	MaxCount int     `json:"maxCount"`
+	IconPath string  `json:"iconPath"`
 }
 
 // CreatureDrop represents a creature that drops an item
@@ -291,6 +308,7 @@ type ItemTemplateEntry struct {
 	AllowableClass int     `json:"allowable_class"`
 	AllowableRace  int     `json:"allowable_race"`
 	Stackable      int     `json:"stackable"`
+	MaxCount       int     `json:"max_count"`
 	Bonding        int     `json:"bonding"`
 	MaxDurability  int     `json:"max_durability"`
 	ContainerSlots int     `json:"container_slots"`

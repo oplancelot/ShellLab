@@ -57,11 +57,11 @@ func (l *LootImporter) ImportFromJSON(tableName, jsonPath string) error {
 // ImportAll imports all defined loot tables if they exist
 func (l *LootImporter) ImportAll(dataDir string) error {
 	lootFiles := map[string]string{
-		"creature_loot":   "creature_loot.json",
-		"reference_loot":  "reference_loot.json",
-		"gameobject_loot": "gameobject_loot.json",
-		"item_loot":       "item_loot.json",
-		"disenchant_loot": "disenchant_loot.json",
+		"creature_loot_template":   "creature_loot_template.json",
+		"reference_loot_template":  "reference_loot_template.json",
+		"gameobject_loot_template": "gameobject_loot_template.json",
+		"item_loot_template":       "item_loot_template.json",
+		"disenchant_loot_template": "disenchant_loot_template.json",
 	}
 
 	for table, file := range lootFiles {
@@ -77,7 +77,7 @@ func (l *LootImporter) ImportAll(dataDir string) error {
 // CheckAndImport checks if creature_loot table is empty and imports all loot if so
 func (l *LootImporter) CheckAndImport(dataDir string) error {
 	var count int
-	if err := l.db.QueryRow("SELECT COUNT(*) FROM creature_loot").Scan(&count); err != nil {
+	if err := l.db.QueryRow("SELECT COUNT(*) FROM creature_loot_template").Scan(&count); err != nil {
 		return nil
 	}
 	if count == 0 {

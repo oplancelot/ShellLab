@@ -3,8 +3,8 @@ package models
 // LootItem represents an item drop with chance information
 type LootItem struct {
 	ItemID   int     `json:"itemId"`
-	ItemName string  `json:"itemName"`
-	Icon     string  `json:"icon"`
+	Name     string  `json:"name"`
+	IconPath string  `json:"iconPath"`
 	Quality  int     `json:"quality"`
 	Chance   float64 `json:"chance"`
 	MinCount int     `json:"minCount"`
@@ -14,8 +14,8 @@ type LootItem struct {
 // LootEntry represents a loot item with metadata (for AtlasLoot)
 type LootEntry struct {
 	ItemID     int    `json:"itemId"`
-	ItemName   string `json:"itemName"`
-	IconName   string `json:"iconName"`
+	Name       string `json:"name"`
+	IconPath   string `json:"iconPath"`
 	Quality    int    `json:"quality"`
 	DropChance string `json:"dropChance,omitempty"`
 }

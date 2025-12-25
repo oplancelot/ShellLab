@@ -20,8 +20,8 @@ func NewSpellRepository(db *sql.DB) *SpellRepository {
 // SearchSpells searches for spells by name
 func (r *SpellRepository) SearchSpells(query string) ([]*models.Spell, error) {
 	rows, err := r.db.Query(`
-		SELECT entry, name, description, COALESCE(icon_name, '')
-		FROM spells
+		SELECT entry, name, description, iconName
+		FROM spell_template
 		WHERE name LIKE ?
 		ORDER BY length(name), name
 		LIMIT 100
@@ -35,15 +35,13 @@ func (r *SpellRepository) SearchSpells(query string) ([]*models.Spell, error) {
 	for rows.Next() {
 		s := &models.Spell{}
 		var desc *string
-		var icon string
-		if err := rows.Scan(&s.Entry, &s.Name, &desc, &icon); err != nil {
+		if err := rows.Scan(&s.Entry, &s.Name, &desc, &s.Icon); err != nil {
 			fmt.Printf("Scan error: %v\n", err)
 			continue
 		}
 		if desc != nil {
 			s.Description = *desc
 		}
-		s.Icon = icon
 		spells = append(spells, s)
 	}
 	return spells, nil
@@ -106,8 +104,8 @@ func (r *SpellRepository) GetSpellsBySkill(skillID int, nameFilter string) ([]*m
 	}
 
 	query := fmt.Sprintf(`
-		SELECT sp.entry, sp.name, sp.description, COALESCE(sp.icon_name, '')
-		FROM spells sp
+		SELECT sp.entry, sp.name, sp.description, sp.iconName
+		FROM spell_template sp
 		INNER JOIN spell_skill_spells ss ON ss.spell_id = sp.entry
 		%s
 		ORDER BY sp.name
@@ -124,14 +122,12 @@ func (r *SpellRepository) GetSpellsBySkill(skillID int, nameFilter string) ([]*m
 	for rows.Next() {
 		s := &models.Spell{}
 		var desc *string
-		var icon string
-		if err := rows.Scan(&s.Entry, &s.Name, &desc, &icon); err != nil {
+		if err := rows.Scan(&s.Entry, &s.Name, &desc, &s.Icon); err != nil {
 			continue
 		}
 		if desc != nil {
 			s.Description = *desc
 		}
-		s.Icon = icon
 		spells = append(spells, s)
 	}
 	return spells, nil
@@ -141,18 +137,16 @@ func (r *SpellRepository) GetSpellsBySkill(skillID int, nameFilter string) ([]*m
 func (r *SpellRepository) GetSpellByID(entry int) (*models.Spell, error) {
 	s := &models.Spell{}
 	var desc *string
-	var icon string
 	err := r.db.QueryRow(`
-		SELECT entry, name, description, COALESCE(icon_name, '')
-		FROM spells WHERE entry = ?
-	`, entry).Scan(&s.Entry, &s.Name, &desc, &icon)
+		SELECT entry, name, description, iconName
+		FROM spell_template WHERE entry = ?
+	`, entry).Scan(&s.Entry, &s.Name, &desc, &s.Icon)
 	if err != nil {
 		return nil, err
 	}
 	if desc != nil {
 		s.Description = *desc
 	}
-	s.Icon = icon
 	return s, nil
 }
 
@@ -161,8 +155,8 @@ func (r *SpellRepository) GetSpellDescription(spellID int) (string, []int) {
 	var desc string
 	var bp1, bp2, bp3 int
 	err := r.db.QueryRow(`
-		SELECT description, effect_base_points1, effect_base_points2, effect_base_points3
-		FROM spells WHERE entry = ?
+		SELECT description, effectBasePoints1, effectBasePoints2, effectBasePoints3
+		FROM spell_template WHERE entry = ?
 	`, spellID).Scan(&desc, &bp1, &bp2, &bp3)
 	if err != nil {
 		return "", nil
