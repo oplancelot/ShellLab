@@ -14,7 +14,7 @@ function App() {
             <header className="bg-gradient-to-b from-[#2a2a3a] to-bg-main border-b-[3px] border-bg-dark px-5 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-5">
                     <h1 className="text-2xl text-wow-gold font-normal drop-shadow-md flex items-center gap-2.5">
-                        <img src="/shelllab-logo.svg" alt="ShellLab" className="w-8 h-8" />
+                        <img src="/logo.png" alt="ShellLab" className="w-8 h-8" />
                         ShellLab
                     </h1>
                     <nav className="flex gap-1">
