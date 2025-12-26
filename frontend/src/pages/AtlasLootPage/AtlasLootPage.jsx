@@ -3,8 +3,8 @@ import {
   GetCategories,
   GetInstances,
   GetTables,
-} from "../../wailsjs/go/main/App";
-import { useItemTooltip } from "../hooks/useItemTooltip";
+} from "../../../wailsjs/go/main/App";
+import { useItemTooltip } from "../../hooks/useItemTooltip";
 import {
   PageLayout,
   ContentGrid,
@@ -15,11 +15,11 @@ import {
   ListItem,
   LootItem,
   ItemTooltip,
-} from "./ui";
-import { ItemDetailView, QuestDetailView, NPCDetailView } from "./database/detailview";
-import { filterItems } from "../utils/databaseApi";
-import { GRID_LAYOUT } from "./common/layout";
-import { getQualityColor } from "../utils/wow";
+} from "../../components/ui";
+import { ItemDetailView, QuestDetailView, NPCDetailView } from "../../components/database/detailview";
+import { filterItems } from "../../utils/databaseApi";
+import { GRID_LAYOUT } from "../../components/common/layout";
+import { getQualityColor } from "../../utils/wow";
 
 // Direct call to GetLoot - using window binding
 const GetLoot = (category, instance, boss) => {

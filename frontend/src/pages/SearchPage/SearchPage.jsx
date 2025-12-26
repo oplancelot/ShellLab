@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { AdvancedSearch } from '../../wailsjs/go/main/App'
-import { getQualityColor } from '../utils/wow'
+import { AdvancedSearch } from '../../../wailsjs/go/main/App'
+import { getQualityColor } from '../../utils/wow'
 
 const QUALITIES = [
     { id: 0, name: 'Poor', color: '#9d9d9d' },

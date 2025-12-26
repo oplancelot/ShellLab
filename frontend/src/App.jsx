@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import AtlasLootPage from './components/AtlasLootPage'
+import AtlasLootPage from './pages/AtlasLootPage/AtlasLootPage'
 import DatabasePage from './pages/DatabasePage/DatabasePage'
-import SearchPage from './components/SearchPage'
+import SearchPage from './pages/SearchPage/SearchPage'
 import SettingsPage from './pages/SettingsPage'
 import { TabButton } from './components/ui'
 
