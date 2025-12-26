@@ -10,10 +10,13 @@ SCRIPTS = [
     'export_quests.py',
     'export_creatures.py',
     'export_factions.py',
+    'export_spells.py',
     'export_spells_enhanced.py',
     'export_loot.py',
     'export_metadata.py',
     'extract_atlasloot.py',
+    'export_quest_categories_enhanced.py',
+    'export_relations.py',
 ]
 
 def run_scripts():
